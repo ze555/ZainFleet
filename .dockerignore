@@ -1,0 +1,7 @@
+.git
+.vs
+**/bin
+**/obj
+**/TestResults
+**/.DS_Store
+README.md
