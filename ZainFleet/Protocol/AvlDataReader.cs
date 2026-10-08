@@ -4,8 +4,10 @@ namespace ZainFleet.Protocol;
 
 internal sealed class AvlDataReader(ReadOnlyMemory<byte> data)
 {
-    private readonly ReadOnlyMemory<byte> _data = data;
+    private readonly ReadOnlyMemory<byte> _data;
     private int _offset;
+
+    public int Position => _offset;
 
     public byte ReadByte() => Read(1).Span[0];
     public ushort ReadUInt16() => BinaryPrimitives.ReadUInt16BigEndian(Read(2).Span);
