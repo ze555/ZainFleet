@@ -75,4 +75,40 @@ const ack = createAvlAcknowledgement(2);
 console.assert(ack[0] === 0 && ack[1] === 0 && ack[2] === 0 && ack[3] === 2, 'ACK mismatch');
 console.log('✓ AVL ACK contains big-endian record count (4 bytes)');
 
+// Test 7: Variable-length IO with length 0 (like Id=241 GSM operator code on real FMB140)
+const packetWithVar0 = buildCodec8TestPacket();
+// Find where IO elements are and test a frame with var-length count=1, id=241, length=0
+const testData: number[] = [0x08, 1]; // Codec 8, 1 record
+testData.push(...[0, 0, 1, 161, 32, 67, 73, 163]); // timestamp
+testData.push(1); // priority
+testData.push(...[0, 0, 0, 0]); // lon
+testData.push(...[0, 0, 0, 0]); // lat
+testData.push(...[0, 0]); // alt
+testData.push(...[0, 0]); // angle
+testData.push(10); // sats
+testData.push(...[0, 0]); // speed
+// IO: eventId=1, total=1, group1=0, group2=0, group4=0, group8=0, varGroup=1 (id=241, len=0)
+testData.push(1, 1, 0, 0, 0, 0, 1, 241, 0);
+testData.push(1); // Second record count
+const dataField7 = new Uint8Array(testData);
+const crc7 = computeTeltonikaCrc16(dataField7);
+const frame7 = new Uint8Array(8 + dataField7.length + 4);
+frame7[4] = (dataField7.length >>> 24) & 0xff;
+frame7[5] = (dataField7.length >>> 16) & 0xff;
+frame7[6] = (dataField7.length >>> 8) & 0xff;
+frame7[7] = dataField7.length & 0xff;
+frame7.set(dataField7, 8);
+const crcOff7 = 8 + dataField7.length;
+frame7[crcOff7] = (crc7 >>> 24) & 0xff;
+frame7[crcOff7 + 1] = (crc7 >>> 16) & 0xff;
+frame7[crcOff7 + 2] = (crc7 >>> 8) & 0xff;
+frame7[crcOff7 + 3] = crc7 & 0xff;
+
+const decoded7 = decodeTeltonikaFrame(frame7);
+console.assert(decoded7.records.length === 1, 'Should decode 1 record');
+console.assert(decoded7.records[0].ioElements.length === 1, 'Should have 1 IO element');
+console.assert(decoded7.records[0].ioElements[0].id === 241, 'IO id should be 241');
+console.assert(decoded7.records[0].ioElements[0].value === '', 'IO value should be empty string for length 0');
+console.log('✓ Successfully decoded variable-length IO element with length=0 (FMB140 ID 241)');
+
 console.log('--- ALL UNIT TESTS PASSED ---');

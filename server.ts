@@ -116,6 +116,13 @@ try {
 
 // --- Teltonika TCP Server (raw TCP socket) ---
 const TCP_PORT = parseInt(process.env.TCP_PORT || '5000', 10);
+let HTTP_PORT = parseInt(process.env.PORT || '3000', 10);
+if (HTTP_PORT === TCP_PORT) {
+  // If user set PORT=5000 in Railway variables, avoid port collision with TCP listener
+  const fallback = process.env.NODE_ENV === 'production' ? 8080 : 3000;
+  console.warn(`[Port Config] PORT and TCP_PORT both configured to ${TCP_PORT}. Directing HTTP server to ${fallback}.`);
+  HTTP_PORT = fallback;
+}
 const TCP_IDLE_TIMEOUT_MS = parseInt(process.env.TCP_IDLE_TIMEOUT_SECONDS || '300', 10) * 1000;
 const TCP_MAX_PACKET_BYTES = parseInt(process.env.TCP_MAX_PACKET_BYTES || '1048576', 10);
 
@@ -261,6 +268,7 @@ app.get('/health', (_req: Request, res: Response) => {
     uptimeSeconds: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
     tcpPort: TCP_PORT,
+    httpPort: HTTP_PORT,
   });
 });
 
@@ -377,7 +385,6 @@ app.post('/api/devices/:imei/toggle-connection', (req: Request, res: Response) =
 });
 
 // Setup Vite or static serving
-const PORT = parseInt(process.env.PORT || '3000', 10);
 const isProd = process.env.NODE_ENV === 'production';
 
 async function startServer() {
@@ -395,13 +402,13 @@ async function startServer() {
     });
   }
 
-  const serverInstance = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`ZainFleet HTTP server running on http://0.0.0.0:${PORT}`);
+  const serverInstance = app.listen(HTTP_PORT, '0.0.0.0', () => {
+    console.log(`ZainFleet HTTP server running on http://0.0.0.0:${HTTP_PORT}`);
   });
 
   serverInstance.on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
-      console.warn(`[HTTP Server Notice] Port ${PORT} is already in use (EADDRINUSE). Another instance is already serving traffic.`);
+      console.warn(`[HTTP Server Notice] Port ${HTTP_PORT} is already in use (EADDRINUSE). Another instance is already serving traffic.`);
     } else {
       console.error(`[HTTP Server Error]`, err);
     }

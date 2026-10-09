@@ -113,10 +113,10 @@ function readCodec8Io(reader: AvlDataReader): IoData {
     for (let i = 0; i < count; i++) {
       const id = reader.readByte();
       const length = reader.readByte();
-      if (length === 0 || length > reader.remaining) {
+      if (length < 0 || length > reader.remaining) {
         throw new Error(`Invalid variable-length IO element. Id=${id}, Length=${length}`);
       }
-      const rawHex = bufferToHex(reader.readBytes(length));
+      const rawHex = length > 0 ? bufferToHex(reader.readBytes(length)) : '';
       values.push({ id, value: rawHex, byteLength: length });
     }
     return count;
@@ -156,10 +156,10 @@ function readCodec8ExtendedIo(reader: AvlDataReader): IoData {
     for (let i = 0; i < count; i++) {
       const id = reader.readUInt16();
       const length = reader.readUInt16();
-      if (length === 0 || length > reader.remaining) {
+      if (length < 0 || length > reader.remaining) {
         throw new Error(`Invalid variable-length IO element. Id=${id}, Length=${length}`);
       }
-      const rawHex = bufferToHex(reader.readBytes(length));
+      const rawHex = length > 0 ? bufferToHex(reader.readBytes(length)) : '';
       values.push({ id, value: rawHex, byteLength: length });
     }
     return count;
