@@ -1,0 +1,7 @@
+{
+  "name": "ZainFleet Teltonika Server",
+  "description": "Teltonika GPS tracking protocol server and fleet management dashboard for AVL Codec 8 and Codec 8 Extended packets.",
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,5 +1,0 @@
-<Solution>
-  <Project Path="ZainFleet/ZainFleet.csproj" />
-  <Project Path="ZainFleet.Tests/ZainFleet.Tests.csproj" />
-  <Project Path="Teltonika.TestClient/Teltonika.TestClient.csproj" />
-</Solution>
