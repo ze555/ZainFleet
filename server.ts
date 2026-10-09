@@ -232,13 +232,22 @@ const tcpServer = net.createServer((socket) => {
   });
 });
 
-// Try to listen on TCP_PORT, gracefully handle port restrictions
-tcpServer.listen(TCP_PORT, '0.0.0.0', () => {
-  console.log(`Teltonika TCP listener started on 0.0.0.0:${TCP_PORT}`);
-});
+// Try to listen on TCP_PORT, gracefully handle port restrictions or existing instances
 tcpServer.on('error', (err: any) => {
-  console.warn(`[TCP Server Notice] Could not bind TCP port ${TCP_PORT}: ${err.message}. HTTP simulation endpoints remain fully operational.`);
+  if (err.code === 'EADDRINUSE') {
+    console.warn(`[TCP Server Notice] Port ${TCP_PORT} is already in use (EADDRINUSE). Another instance or process is currently holding the TCP socket.`);
+  } else {
+    console.warn(`[TCP Server Notice] Could not bind TCP port ${TCP_PORT}: ${err.message}. HTTP simulation endpoints remain fully operational.`);
+  }
 });
+
+try {
+  tcpServer.listen(TCP_PORT, '0.0.0.0', () => {
+    console.log(`Teltonika TCP listener started on 0.0.0.0:${TCP_PORT}`);
+  });
+} catch (err: any) {
+  console.warn(`[TCP Server] listen error:`, err.message);
+}
 
 // --- HTTP Management & API Server ---
 const app = express();
@@ -386,12 +395,19 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  const serverInstance = app.listen(PORT, '0.0.0.0', () => {
     console.log(`ZainFleet HTTP server running on http://0.0.0.0:${PORT}`);
+  });
+
+  serverInstance.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`[HTTP Server Notice] Port ${PORT} is already in use (EADDRINUSE). Another instance is already serving traffic.`);
+    } else {
+      console.error(`[HTTP Server Error]`, err);
+    }
   });
 }
 
 startServer().catch((err) => {
   console.error('Failed to start server:', err);
-  process.exit(1);
 });
