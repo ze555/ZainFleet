@@ -129,6 +129,10 @@ const tcpServer = net.createServer((socket) => {
   const remote = `${socket.remoteAddress}:${socket.remotePort}`;
   console.log(`[TCP] DEVICE CONNECTED ${remote}`);
 
+  // Disable Nagle algorithm to immediately flush 1-byte handshake and 4-byte ACK
+  socket.setNoDelay(true);
+  socket.setKeepAlive(true, 15000);
+
   let imei: string | null = null;
   let buffer = Buffer.alloc(0);
   let handshakeDone = false;
@@ -141,6 +145,9 @@ const tcpServer = net.createServer((socket) => {
   });
 
   socket.on('data', (chunk) => {
+    console.log(
+      `[TCP RAW IN] ${remote} (IMEI=${imei || 'pending'}): ${chunk.length} bytes (hex: ${chunk.toString('hex').slice(0, 48)}${chunk.length > 24 ? '...' : ''})`
+    );
     buffer = Buffer.concat([buffer, chunk]);
 
     try {
@@ -171,7 +178,11 @@ const tcpServer = net.createServer((socket) => {
 
         deviceRepo.upsert(imei, new Date().toISOString(), true);
         console.log(`[TCP] DEVICE IMEI ${imei} connected from ${remote}`);
-        socket.write(Buffer.from(createImeiResponse(true)));
+        const acceptResp = Buffer.from(createImeiResponse(true));
+        socket.write(acceptResp, (err) => {
+          if (err) console.error(`[TCP] Failed to write IMEI accept 0x01:`, err);
+          else console.log(`[TCP] Sent IMEI ACCEPT (0x01) to ${imei}`);
+        });
       }
 
       // Read AVL packets from stream
@@ -179,7 +190,7 @@ const tcpServer = net.createServer((socket) => {
         // Preamble: 4 zero bytes
         const p0 = buffer.readUInt32BE(0);
         if (p0 !== 0) {
-          console.warn(`[TCP] Invalid packet preamble: 0x${p0.toString(16)}`);
+          console.warn(`[TCP] Invalid packet preamble: 0x${p0.toString(16)} (buffer length=${buffer.length})`);
           socket.destroy();
           return;
         }
@@ -193,7 +204,7 @@ const tcpServer = net.createServer((socket) => {
 
         const totalPacketLength = 8 + dataLength + 4;
         if (buffer.length < totalPacketLength) {
-          // Wait for more bytes
+          console.log(`[TCP] Waiting for full packet: have ${buffer.length}/${totalPacketLength} bytes`);
           break;
         }
 
@@ -215,8 +226,10 @@ const tcpServer = net.createServer((socket) => {
 
         // Send 4-byte big-endian ACK
         const ack = Buffer.from(createAvlAcknowledgement(decoded.records.length));
-        socket.write(ack);
-        console.log(`[TCP] PACKET ACK ${imei}: ${decoded.records.length} records`);
+        socket.write(ack, (err) => {
+          if (err) console.error(`[TCP] Failed to write ACK to ${imei}:`, err);
+          else console.log(`[TCP] PACKET ACK sent to ${imei}: ${decoded.records.length} records (0x${ack.toString('hex')})`);
+        });
       }
     } catch (err) {
       console.error(`[TCP] Error processing data from ${remote}:`, err);
@@ -224,12 +237,12 @@ const tcpServer = net.createServer((socket) => {
     }
   });
 
-  socket.on('close', () => {
+  socket.on('close', (hadError) => {
     if (imei) {
       deviceRepo.upsert(imei, new Date().toISOString(), false);
-      console.log(`[TCP] DEVICE DISCONNECTED ${imei}`);
+      console.log(`[TCP] DEVICE DISCONNECTED ${imei} (hadError=${hadError}, bufferRemaining=${buffer.length})`);
     } else {
-      console.log(`[TCP] DEVICE DISCONNECTED ${remote}`);
+      console.log(`[TCP] DEVICE DISCONNECTED ${remote} (hadError=${hadError}, bufferRemaining=${buffer.length})`);
     }
   });
 
