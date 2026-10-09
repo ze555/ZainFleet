@@ -12,10 +12,10 @@ ENV NODE_ENV=production
 ENV PORT=8080
 ENV TCP_PORT=5000
 COPY package*.json ./
-RUN npm install --omit=dev && npm install tsx
+RUN npm install --omit=dev
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/server.ts ./
 COPY --from=builder /app/src ./src
 COPY --from=builder /app/tsconfig*.json ./
 EXPOSE 8080 5000
-CMD ["npx", "tsx", "server.ts"]
+CMD ["npm", "start"]

@@ -111,4 +111,40 @@ console.assert(decoded7.records[0].ioElements[0].id === 241, 'IO id should be 24
 console.assert(decoded7.records[0].ioElements[0].value === '', 'IO value should be empty string for length 0');
 console.log('✓ Successfully decoded variable-length IO element with length=0 (FMB140 ID 241)');
 
+// Test 8: Real-world multi-record Codec 8 (multiple consecutive records with no trailing 5th group)
+const multiData: number[] = [0x08, 2]; // Codec 8, 2 records
+for (let r = 0; r < 2; r++) {
+  multiData.push(...[0, 0, 1, 160, 134, 228, 225, 112]); // timestamp
+  multiData.push(0); // priority
+  multiData.push(...[7, 223, 172, 11]); // lon
+  multiData.push(...[0, 240, 10, 20]); // lat
+  multiData.push(...[0, 120]); // alt
+  multiData.push(...[0, 90]); // angle
+  multiData.push(12); // sats
+  multiData.push(...[0, 45]); // speed
+  // IO: eventId=1, total=1, N1=1 (id=1, val=1), N2=0, N4=0, N8=0 -> NO 5TH ZERO
+  multiData.push(1, 1, 1, 1, 1, 0, 0, 0);
+}
+multiData.push(2); // Second record count = 2
+const dataField8 = new Uint8Array(multiData);
+const crc8 = computeTeltonikaCrc16(dataField8);
+const frame8 = new Uint8Array(8 + dataField8.length + 4);
+frame8[4] = (dataField8.length >>> 24) & 0xff;
+frame8[5] = (dataField8.length >>> 16) & 0xff;
+frame8[6] = (dataField8.length >>> 8) & 0xff;
+frame8[7] = dataField8.length & 0xff;
+frame8.set(dataField8, 8);
+const crcOff8 = 8 + dataField8.length;
+frame8[crcOff8] = (crc8 >>> 24) & 0xff;
+frame8[crcOff8 + 1] = (crc8 >>> 16) & 0xff;
+frame8[crcOff8 + 2] = (crc8 >>> 8) & 0xff;
+frame8[crcOff8 + 3] = crc8 & 0xff;
+
+const decoded8 = decodeTeltonikaFrame(frame8);
+console.assert(decoded8.records.length === 2, 'Should decode 2 records');
+console.assert(decoded8.records[0].speed === 45, 'Record 1 speed should be 45');
+console.assert(decoded8.records[1].speed === 45, 'Record 2 speed should be 45');
+console.assert(decoded8.records[1].satellites === 12, 'Record 2 satellites should be 12');
+console.log('✓ Successfully decoded multi-record Codec 8 packet with standard Teltonika byte layout');
+
 console.log('--- ALL UNIT TESTS PASSED ---');

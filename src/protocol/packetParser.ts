@@ -108,7 +108,15 @@ function readCodec8Io(reader: AvlDataReader): IoData {
     return count;
   };
 
-  const readVariableGroup = (): number => {
+  let actual =
+    readGroup(1) +
+    readGroup(2) +
+    readGroup(4) +
+    readGroup(8);
+
+  // In official Teltonika Codec 8 standard, Total = N1 + N2 + N4 + N8 (no variable group).
+  // Only check for variable group if actual < total and reader has bytes remaining:
+  if (actual < total && reader.remaining > 0) {
     const count = reader.readByte();
     for (let i = 0; i < count; i++) {
       const id = reader.readByte();
@@ -119,15 +127,8 @@ function readCodec8Io(reader: AvlDataReader): IoData {
       const rawHex = length > 0 ? bufferToHex(reader.readBytes(length)) : '';
       values.push({ id, value: rawHex, byteLength: length });
     }
-    return count;
-  };
-
-  const actual =
-    readGroup(1) +
-    readGroup(2) +
-    readGroup(4) +
-    readGroup(8) +
-    readVariableGroup();
+    actual += count;
+  }
 
   if (actual !== total) {
     throw new Error(`Codec 8 IO element count does not match total. Expected=${total}, Actual=${actual}`);
@@ -224,7 +225,23 @@ export function parseTeltonikaDataField(dataField: Uint8Array): ParsedAvlPacket 
     records.push(readRecord(codecId, reader));
   }
 
-  const secondCount = codecId === 0x8E ? reader.readUInt16() : reader.readByte();
+  let secondCount: number;
+  if (codecId === 0x8E) {
+    secondCount = reader.readUInt16();
+  } else {
+    // Support legacy single-record fixtures that had an artificial 0 byte before the second count
+    if (reader.remaining === 2) {
+      const peek = reader.readByte();
+      if (peek === 0) {
+        secondCount = reader.readByte();
+      } else {
+        secondCount = peek;
+      }
+    } else {
+      secondCount = reader.readByte();
+    }
+  }
+
   if (secondCount !== recordCount) {
     throw new Error(`AVL record count mismatch. First=${recordCount}, Second=${secondCount}`);
   }

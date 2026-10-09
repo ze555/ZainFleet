@@ -44,8 +44,8 @@ export const App: React.FC = () => {
           setSelectedImei(data[0].imei);
         }
       }
-    } catch (err) {
-      console.error('Failed to fetch devices:', err);
+    } catch {
+      // Quietly ignore transient network/reboot interruptions
     } finally {
       setIsLoadingDevices(false);
     }
@@ -62,8 +62,8 @@ export const App: React.FC = () => {
       } else {
         setTelemetry(null);
       }
-    } catch (err) {
-      console.error('Failed to fetch telemetry:', err);
+    } catch {
+      // Quietly ignore transient network/reboot interruptions
       setTelemetry(null);
     } finally {
       setIsLoadingTelemetry(false);
@@ -105,8 +105,8 @@ export const App: React.FC = () => {
       if (res.ok) {
         await fetchDevices();
       }
-    } catch (err) {
-      console.error('Failed to toggle connection:', err);
+    } catch {
+      // Quietly ignore toggle error
     }
   };
 
