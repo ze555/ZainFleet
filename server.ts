@@ -1,7 +1,6 @@
 import net from 'node:net';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
-import { createServer as createViteServer } from 'vite';
 import {
   decodeTeltonikaFrame,
   createAvlAcknowledgement,
@@ -389,6 +388,7 @@ const isProd = process.env.NODE_ENV === 'production';
 
 async function startServer() {
   if (!isProd) {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
