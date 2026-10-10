@@ -1,6 +1,4 @@
 import net from 'node:net';
-import fs from 'node:fs';
-import path from 'node:path';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import {
@@ -8,48 +6,18 @@ import {
   createAvlAcknowledgement,
   createImeiResponse,
 } from './src/protocol/packetParser.js';
-import { tryParseImei } from './src/protocol/imeiParser.js';
-import { hexStringToBytes } from './src/protocol/fixtures.js';
+import { tryParseImei, isValidImei } from './src/protocol/imeiParser.js';
+import {
+  buildCodec8TestPacket,
+  buildCodec8ExtendedTestPacket,
+  bytesToHexString,
+  hexStringToBytes,
+} from './src/protocol/fixtures.js';
 import { DeviceInfo, TelemetrySnapshot, AvlRecord } from './src/types/fleet.js';
-import { segmentRecordsIntoTrips } from './src/utils/canBusDecoder.js';
 
-// --- Persistent File Storage for Real Vehicle Telemetry ---
-const DATA_DIR = path.resolve(process.cwd(), 'data');
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-}
-
-class PersistentDeviceRepository {
+// --- In-Memory Repositories ---
+class InMemoryDeviceRepository {
   private devices = new Map<string, DeviceInfo>();
-  private filePath = path.join(DATA_DIR, 'devices.json');
-
-  constructor() {
-    this.load();
-  }
-
-  private load() {
-    try {
-      if (fs.existsSync(this.filePath)) {
-        const raw = fs.readFileSync(this.filePath, 'utf-8');
-        const list: DeviceInfo[] = JSON.parse(raw);
-        for (const d of list) {
-          // Devices start marked disconnected until TCP socket connects
-          this.devices.set(d.imei, { ...d, connected: false });
-        }
-      }
-    } catch (e) {
-      console.warn('[Storage] Notice loading devices:', e);
-    }
-  }
-
-  private save() {
-    try {
-      const list = Array.from(this.devices.values());
-      fs.writeFileSync(this.filePath, JSON.stringify(list, null, 2), 'utf-8');
-    } catch (e) {
-      console.warn('[Storage] Notice saving devices:', e);
-    }
-  }
 
   upsert(imei: string, seenAt: string, connected: boolean): DeviceInfo {
     const existing = this.devices.get(imei);
@@ -58,20 +26,9 @@ class PersistentDeviceRepository {
       firstSeen: existing ? existing.firstSeen : seenAt,
       lastSeen: seenAt,
       connected,
-      totalRecords: existing?.totalRecords || 0,
-      totalDistanceKm: existing?.totalDistanceKm || 0,
     };
     this.devices.set(imei, updated);
-    this.save();
     return updated;
-  }
-
-  incrementRecords(imei: string, count: number): void {
-    const d = this.devices.get(imei);
-    if (d) {
-      d.totalRecords = (d.totalRecords || 0) + count;
-      this.save();
-    }
   }
 
   get(imei: string): DeviceInfo | null {
@@ -81,91 +38,32 @@ class PersistentDeviceRepository {
   getAll(): DeviceInfo[] {
     return Array.from(this.devices.values());
   }
-
-  delete(imei: string): boolean {
-    const res = this.devices.delete(imei);
-    this.save();
-    return res;
-  }
 }
 
-class PersistentTelemetryRepository {
+class InMemoryTelemetryRepository {
   private latest = new Map<string, TelemetrySnapshot>();
-  private history = new Map<string, TelemetrySnapshot[]>();
-  private readonly MAX_HISTORY = 10000;
-
-  constructor() {
-    this.loadAll();
-  }
-
-  private getHistoryPath(imei: string): string {
-    return path.join(DATA_DIR, `telemetry_${imei}.json`);
-  }
-
-  private loadAll() {
-    try {
-      const files = fs.readdirSync(DATA_DIR);
-      for (const file of files) {
-        if (file.startsWith('telemetry_') && file.endsWith('.json')) {
-          const imei = file.replace('telemetry_', '').replace('.json', '');
-          const fullPath = path.join(DATA_DIR, file);
-          const raw = fs.readFileSync(fullPath, 'utf-8');
-          const points: TelemetrySnapshot[] = JSON.parse(raw);
-          if (Array.isArray(points) && points.length > 0) {
-            this.history.set(imei, points);
-            this.latest.set(imei, points[points.length - 1]);
-          }
-        }
-      }
-    } catch (e) {
-      console.warn('[Storage] Notice loading telemetry history:', e);
-    }
-  }
-
-  private saveHistory(imei: string) {
-    try {
-      const points = this.history.get(imei) || [];
-      fs.writeFileSync(this.getHistoryPath(imei), JSON.stringify(points), 'utf-8');
-    } catch (e) {
-      console.warn(`[Storage] Notice saving telemetry for ${imei}:`, e);
-    }
-  }
 
   store(imei: string, record: AvlRecord, receivedAt: string): void {
-    const snapshot: TelemetrySnapshot = { imei, record, receivedAt };
-    this.latest.set(imei, snapshot);
-
-    const list = this.history.get(imei) || [];
-    list.push(snapshot);
-    if (list.length > this.MAX_HISTORY) {
-      list.splice(0, list.length - this.MAX_HISTORY);
-    }
-    this.history.set(imei, list);
-    this.saveHistory(imei);
+    this.latest.set(imei, {
+      imei,
+      record,
+      receivedAt,
+    });
   }
 
   getLatest(imei: string): TelemetrySnapshot | null {
     return this.latest.get(imei) ?? null;
   }
 
-  getHistory(imei: string, limit = 1000): TelemetrySnapshot[] {
-    const list = this.history.get(imei) || [];
-    if (list.length <= limit) return list;
-    return list.slice(list.length - limit);
-  }
-
-  clearHistory(imei: string): void {
-    this.history.delete(imei);
-    this.latest.delete(imei);
-    try {
-      const p = this.getHistoryPath(imei);
-      if (fs.existsSync(p)) fs.unlinkSync(p);
-    } catch {}
+  getAll(): TelemetrySnapshot[] {
+    return Array.from(this.latest.values());
   }
 }
 
-const deviceRepo = new PersistentDeviceRepository();
-const telemetryRepo = new PersistentTelemetryRepository();
+const deviceRepo = new InMemoryDeviceRepository();
+const telemetryRepo = new InMemoryTelemetryRepository();
+
+// No mock or simulation devices seeded. Only authentic live hardware devices connecting via TCP are stored.
 
 // --- Teltonika TCP Server (raw TCP socket) ---
 const TCP_PORT = parseInt(process.env.TCP_PORT || '5000', 10);
@@ -394,36 +292,70 @@ app.post('/api/packets/decode', (req: Request, res: Response) => {
   }
 });
 
-// Telemetry History endpoint
-app.get('/api/devices/:imei/history', (req: Request, res: Response) => {
-  const imei = String(req.params.imei);
-  const limit = Math.min(5000, parseInt(String(req.query.limit || '1000'), 10));
-  const history = telemetryRepo.getHistory(imei, limit);
-  res.json(history);
+// Simulation endpoint: Ingest packet for an IMEI or run fixture test
+app.post('/api/simulate/packet', (req: Request, res: Response) => {
+  try {
+    const { imei, type, latitude, longitude, speed, altitude, angle, satellites } = req.body;
+    const targetImei = imei || '123456789012345';
+    if (!isValidImei(targetImei)) {
+      res.status(400).json({ error: 'IMEI must contain exactly 15 digits' });
+      return;
+    }
+
+    let frameBytes: Uint8Array;
+    if (type === 'codec8ext') {
+      frameBytes = buildCodec8ExtendedTestPacket({
+        timestampMs: Date.now(),
+        latitude: typeof latitude === 'number' ? latitude : 24.7136,
+        longitude: typeof longitude === 'number' ? longitude : 46.6753,
+        speed: typeof speed === 'number' ? speed : 55,
+        altitude: typeof altitude === 'number' ? altitude : 610,
+        angle: typeof angle === 'number' ? angle : 120,
+        satellites: typeof satellites === 'number' ? satellites : 11,
+      });
+    } else {
+      frameBytes = buildCodec8TestPacket({
+        timestampMs: Date.now(),
+        latitude: typeof latitude === 'number' ? latitude : 24.7136,
+        longitude: typeof longitude === 'number' ? longitude : 46.6753,
+        speed: typeof speed === 'number' ? speed : 72,
+        altitude: typeof altitude === 'number' ? altitude : 615,
+        angle: typeof angle === 'number' ? angle : 95,
+        satellites: typeof satellites === 'number' ? satellites : 14,
+      });
+    }
+
+    const decoded = decodeTeltonikaFrame(frameBytes);
+    const now = new Date().toISOString();
+    deviceRepo.upsert(targetImei, now, true);
+    for (const rec of decoded.records) {
+      telemetryRepo.store(targetImei, rec, now);
+    }
+
+    res.json({
+      success: true,
+      imei: targetImei,
+      recordsIngested: decoded.records.length,
+      codecId: decoded.codecId,
+      acknowledgementHex: decoded.acknowledgementHex,
+      latestRecord: decoded.records[0],
+      rawFrameHex: bytesToHexString(frameBytes),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || 'Simulation failed' });
+  }
 });
 
-// Trips endpoint: Segments recorded history into discrete vehicle trips
-app.get('/api/devices/:imei/trips', (req: Request, res: Response) => {
+// Device status toggling
+app.post('/api/devices/:imei/toggle-connection', (req: Request, res: Response) => {
   const imei = String(req.params.imei);
-  const history = telemetryRepo.getHistory(imei, 5000);
-  const records = history.map((h) => h.record);
-  const trips = segmentRecordsIntoTrips(records);
-  res.json(trips);
-});
-
-// Delete history endpoint
-app.delete('/api/devices/:imei/history', (req: Request, res: Response) => {
-  const imei = String(req.params.imei);
-  telemetryRepo.clearHistory(imei);
-  res.json({ success: true, message: 'History cleared' });
-});
-
-// Delete device endpoint
-app.delete('/api/devices/:imei', (req: Request, res: Response) => {
-  const imei = String(req.params.imei);
-  deviceRepo.delete(imei);
-  telemetryRepo.clearHistory(imei);
-  res.json({ success: true });
+  const current = deviceRepo.get(imei);
+  if (!current) {
+    res.status(404).json({ error: 'Device not found' });
+    return;
+  }
+  const updated = deviceRepo.upsert(imei, new Date().toISOString(), !current.connected);
+  res.json(updated);
 });
 
 // Setup Vite or static serving
