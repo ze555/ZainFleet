@@ -63,7 +63,55 @@ class InMemoryTelemetryRepository {
 const deviceRepo = new InMemoryDeviceRepository();
 const telemetryRepo = new InMemoryTelemetryRepository();
 
-// No mock or simulation devices seeded. Only authentic live hardware devices connecting via TCP are stored.
+// Seed initial test device with realistic fixture data
+const initialImei = '123456789012345';
+const nowIso = new Date().toISOString();
+deviceRepo.upsert(initialImei, nowIso, true);
+
+// Parse initial fixture to seed telemetry
+try {
+  const seedBytes = buildCodec8TestPacket({
+    timestampMs: Date.now(),
+    latitude: 24.7136, // Riyadh coordinates as example
+    longitude: 46.6753,
+    altitude: 612,
+    speed: 65,
+    angle: 145,
+    satellites: 12,
+    priority: 1,
+    eventIoId: 1,
+    ioValue: 12400,
+  });
+  const decoded = decodeTeltonikaFrame(seedBytes);
+  if (decoded.records.length > 0) {
+    telemetryRepo.store(initialImei, decoded.records[0], nowIso);
+  }
+} catch (e) {
+  console.warn('Initial telemetry seeding note:', e);
+}
+
+// Seed second demo vehicle
+const demoImei2 = '860293048172941';
+const demoIso = new Date(Date.now() - 1000 * 60 * 5).toISOString();
+deviceRepo.upsert(demoImei2, demoIso, false);
+try {
+  const seedExt = buildCodec8ExtendedTestPacket({
+    timestampMs: Date.now() - 1000 * 60 * 5,
+    latitude: 24.7210,
+    longitude: 46.6912,
+    altitude: 618,
+    speed: 0,
+    angle: 80,
+    satellites: 9,
+    priority: 0,
+  });
+  const decodedExt = decodeTeltonikaFrame(seedExt);
+  if (decodedExt.records.length > 0) {
+    telemetryRepo.store(demoImei2, decodedExt.records[0], demoIso);
+  }
+} catch (e) {
+  console.warn('Second demo seeding note:', e);
+}
 
 // --- Teltonika TCP Server (raw TCP socket) ---
 const TCP_PORT = parseInt(process.env.TCP_PORT || '5000', 10);

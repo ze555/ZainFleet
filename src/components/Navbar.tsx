@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Radio, Gauge, ShieldCheck, Compass } from 'lucide-react';
+import { Activity, Radio, Cpu, ShieldCheck, Terminal, Compass } from 'lucide-react';
 
 interface NavbarProps {
   currentTab: string;
@@ -45,15 +45,27 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, setCurrentTab, serve
             </button>
 
             <button
-              onClick={() => setCurrentTab('canbus')}
+              onClick={() => setCurrentTab('inspector')}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                currentTab === 'canbus'
+                currentTab === 'inspector'
                   ? 'bg-blue-50 text-blue-700'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <Gauge className="w-4 h-4" />
-              <span>CAN Bus Live Telemetry</span>
+              <Terminal className="w-4 h-4" />
+              <span>Packet Inspector</span>
+            </button>
+
+            <button
+              onClick={() => setCurrentTab('simulator')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                currentTab === 'simulator'
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Cpu className="w-4 h-4" />
+              <span>Test Simulator</span>
             </button>
 
             <button

@@ -7,6 +7,7 @@ import {
   Signal,
   CheckCircle2,
   XCircle,
+  Cpu,
   RotateCw,
   Copy,
   ExternalLink
@@ -17,6 +18,7 @@ interface DeviceDetailProps {
   telemetry: TelemetrySnapshot | null;
   isLoadingTelemetry: boolean;
   onRefreshTelemetry: () => void;
+  onToggleConnection: (imei: string) => void;
   onSimulateForDevice: (imei: string) => void;
 }
 
@@ -25,6 +27,7 @@ export const DeviceDetail: React.FC<DeviceDetailProps> = ({
   telemetry,
   isLoadingTelemetry,
   onRefreshTelemetry,
+  onToggleConnection,
   onSimulateForDevice,
 }) => {
   const [copied, setCopied] = React.useState(false);
@@ -37,22 +40,6 @@ export const DeviceDetail: React.FC<DeviceDetailProps> = ({
   };
 
   const record = telemetry?.record;
-
-  const ignitionElement = record?.ioElements?.find(
-    (el) => el.id === 239 || el.id === 1
-  );
-  const isIgnitionOn = ignitionElement
-    ? ignitionElement.value === '1' || parseInt(ignitionElement.value, 10) > 0
-    : null;
-
-  const movementElement = record?.ioElements?.find((el) => el.id === 240);
-  const isMoving = movementElement
-    ? movementElement.value === '1' || parseInt(movementElement.value, 10) > 0
-    : (record ? record.speed > 3 : false);
-
-  // If vehicle ignition is OFF, small speeds (< 15 km/h) are GPS drift (multipath fluctuations)
-  const isGpsDrift = isIgnitionOn === false && !!record && record.speed > 0;
-  const effectiveSpeed = isGpsDrift ? 0 : (record?.speed ?? 0);
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col h-full overflow-y-auto">
@@ -84,11 +71,21 @@ export const DeviceDetail: React.FC<DeviceDetailProps> = ({
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => onSimulateForDevice(device.imei)}
-              className="px-3.5 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+              onClick={() => onToggleConnection(device.imei)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border ${
+                device.connected
+                  ? 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                  : 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+              }`}
             >
-              <Gauge className="w-3.5 h-3.5" />
-              <span>CAN Bus Live Dashboard</span>
+              {device.connected ? 'Simulate Disconnect' : 'Simulate Connect'}
+            </button>
+            <button
+              onClick={() => onSimulateForDevice(device.imei)}
+              className="px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+            >
+              <Cpu className="w-3.5 h-3.5" />
+              <span>Send Packet</span>
             </button>
           </div>
         </div>
@@ -148,57 +145,6 @@ export const DeviceDetail: React.FC<DeviceDetailProps> = ({
 
         {record ? (
           <div className="space-y-5">
-            {/* Vehicle State Alert Banner */}
-            <div
-              className={`p-3.5 rounded-lg border text-xs flex flex-wrap items-center justify-between gap-2 ${
-                isIgnitionOn === false
-                  ? 'bg-slate-100/80 border-slate-200 text-slate-700'
-                  : isMoving
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
-                  : 'bg-amber-50 border-amber-200 text-amber-800'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-base">
-                  {isIgnitionOn === false ? '🅿️' : isMoving ? '🚗' : '⏸️'}
-                </span>
-                <div>
-                  <span className="font-bold block">
-                    {isIgnitionOn === false
-                      ? 'Vehicle Parked • Ignition OFF'
-                      : isMoving
-                      ? 'Vehicle In Transit • Engine ON'
-                      : 'Vehicle Idling • Engine ON'}
-                  </span>
-                  <span className="text-[11px] opacity-80">
-                    {isIgnitionOn === false
-                      ? 'Engine is turned off. GPS drift and phantom movement are filtered.'
-                      : isMoving
-                      ? `Moving at ${record.speed} km/h with active ignition.`
-                      : 'Engine is running while stationary (0 km/h).'}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold ${
-                    isIgnitionOn === false
-                      ? 'bg-slate-200 text-slate-700'
-                      : 'bg-emerald-100 text-emerald-800'
-                  }`}
-                >
-                  Ignition: {isIgnitionOn === null ? 'N/A' : isIgnitionOn ? 'ON (1)' : 'OFF (0)'}
-                </span>
-                <span
-                  className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold ${
-                    isMoving ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
-                  }`}
-                >
-                  Motion: {isMoving ? 'Moving' : 'Stationary'}
-                </span>
-              </div>
-            </div>
-
             {/* KPI Cards Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               {/* Coordinates */}
@@ -219,11 +165,8 @@ export const DeviceDetail: React.FC<DeviceDetailProps> = ({
                 <div className="font-mono font-bold text-base text-slate-900">
                   {record.latitude.toFixed(6)}°, {record.longitude.toFixed(6)}°
                 </div>
-                <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-                  <span>Altitude: {record.altitude}m</span>
-                  {isIgnitionOn === false && (
-                    <span className="text-slate-400 text-[10px]">Stationary Anchor Active</span>
-                  )}
+                <div className="text-[11px] text-slate-500 mt-1">
+                  Altitude: {record.altitude} meters
                 </div>
               </div>
 
@@ -232,18 +175,11 @@ export const DeviceDetail: React.FC<DeviceDetailProps> = ({
                 <div className="flex items-center gap-1 text-xs text-slate-500 mb-1 font-medium">
                   <Gauge className="w-3.5 h-3.5 text-emerald-600" /> Speed
                 </div>
-                <div className="font-mono font-bold text-lg text-slate-900 flex items-baseline gap-1">
-                  <span>{effectiveSpeed}</span>
-                  <span className="text-xs font-normal text-slate-500">km/h</span>
+                <div className="font-mono font-bold text-lg text-slate-900">
+                  {record.speed} <span className="text-xs font-normal text-slate-500">km/h</span>
                 </div>
                 <div className="text-[11px] text-slate-500 mt-1">
-                  {isGpsDrift ? (
-                    <span className="text-amber-600 text-[10px] font-semibold block leading-tight">
-                      Drift filtered (Raw {record.speed} km/h)
-                    </span>
-                  ) : (
-                    `Angle: ${record.angle}°`
-                  )}
+                  Angle: {record.angle}°
                 </div>
               </div>
 
@@ -256,11 +192,7 @@ export const DeviceDetail: React.FC<DeviceDetailProps> = ({
                   {record.satellites}
                 </div>
                 <div className="text-[11px] text-slate-500 mt-1">
-                  {record.satellites < 4 ? (
-                    <span className="text-rose-600 text-[10px] font-semibold">Low GPS Fix (Indoor)</span>
-                  ) : (
-                    <span>Quality: Good Fix</span>
-                  )}
+                  Priority: {record.priority}
                 </div>
               </div>
             </div>
@@ -334,10 +266,11 @@ export const DeviceDetail: React.FC<DeviceDetailProps> = ({
           </div>
         ) : (
           <div className="p-8 text-center text-slate-400 border border-dashed border-slate-200 rounded-lg">
-            <Gauge className="w-8 h-8 mx-auto mb-2 opacity-50 text-blue-600" />
-            <p className="text-sm font-medium text-slate-600">Awaiting live telemetry packets</p>
+            <Cpu className="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p className="text-sm font-medium text-slate-600">No telemetry recorded yet</p>
             <p className="text-xs text-slate-400 mt-1">
-              Waiting for incoming Teltonika AVL packets from tracker over TCP socket.
+              Click &quot;Send Packet&quot; above to ingest a sample Teltonika Codec 8 or Codec 8
+              Extended record.
             </p>
           </div>
         )}
