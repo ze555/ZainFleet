@@ -75,7 +75,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           <div className="flex items-center gap-4">
             <div
               className={`w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-sm transition-colors ${
-                metrics.ignition
+                metrics.ignition.isOn
                   ? 'bg-emerald-600'
                   : device.connected
                   ? 'bg-blue-600'
@@ -116,7 +116,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
                 <h1 className="text-2xl font-bold font-mono text-slate-900 tracking-tight">
                   {device.imei}
                 </h1>
-                {metrics.ignition ? (
+                {metrics.ignition.isOn ? (
                   <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
                     {isAr ? 'المحرك شغال (Ignition ON)' : 'Engine Running'}
                   </span>
@@ -158,10 +158,10 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             <span className="font-semibold text-slate-800 flex items-center gap-1.5 mt-0.5">
               <span
                 className={`w-2 h-2 rounded-full ${
-                  metrics.isMoving ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
+                  metrics.isMoving.state ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'
                 }`}
               />
-              {metrics.isMoving
+              {metrics.isMoving.state
                 ? isAr
                   ? 'المركبة تسير'
                   : 'In Motion'
@@ -175,8 +175,8 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             <span className="text-slate-400 block">{isAr ? 'شبكة الجوال' : 'Cellular Signal'}</span>
             <span className="font-semibold text-slate-800 flex items-center gap-1 mt-0.5">
               <Signal className="w-3.5 h-3.5 text-blue-600" />
-              {metrics.gsmSignalBars !== null ? `${metrics.gsmSignalBars}/5 bars` : 'Connected'}
-              {metrics.operatorCode ? ` (${metrics.operatorCode})` : ''}
+              {metrics.cellular.signalBars !== null ? `${metrics.cellular.signalBars}/5 bars` : 'Connected'}
+              {metrics.cellular.operatorCode ? ` (${metrics.cellular.operatorCode})` : ''}
             </span>
           </div>
 
@@ -184,7 +184,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             <span className="text-slate-400 block">{isAr ? 'أقمار الـ GPS' : 'GNSS Satellites'}</span>
             <span className="font-semibold text-slate-800 flex items-center gap-1 mt-0.5">
               <Radio className="w-3.5 h-3.5 text-amber-600" />
-              {`${metrics.satellites} Satellites`}
+              {`${metrics.gnss.satellites} Satellites`}
             </span>
           </div>
 
@@ -242,11 +242,11 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
 
           <div className="flex items-baseline gap-1">
             <span className="text-3xl font-extrabold font-mono text-slate-900">
-              {metrics.fuelLevelPercent !== null ? `${metrics.fuelLevelPercent}%` : '---'}
+              {metrics.fuel.levelPercent !== null ? `${metrics.fuel.levelPercent}%` : '---'}
             </span>
-            {metrics.fuelLevelLiters !== null && (
+            {metrics.fuel.levelLiters !== null && (
               <span className="text-xs text-slate-500 font-medium">
-                ({metrics.fuelLevelLiters} L)
+                ({metrics.fuel.levelLiters} L)
               </span>
             )}
           </div>
@@ -255,20 +255,20 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           <div className="w-full bg-slate-100 rounded-full h-2.5 mt-3 overflow-hidden">
             <div
               className={`h-full rounded-full transition-all duration-500 ${
-                (metrics.fuelLevelPercent ?? 50) <= 15
+                (metrics.fuel.levelPercent ?? 50) <= 15
                   ? 'bg-rose-500'
-                  : (metrics.fuelLevelPercent ?? 50) <= 30
+                  : (metrics.fuel.levelPercent ?? 50) <= 30
                   ? 'bg-amber-500'
                   : 'bg-emerald-500'
               }`}
-              style={{ width: `${Math.min(100, metrics.fuelLevelPercent ?? 0)}%` }}
+              style={{ width: `${Math.min(100, metrics.fuel.levelPercent ?? 0)}%` }}
             />
           </div>
 
           <div className="flex items-center justify-between text-[11px] text-slate-500 mt-3 pt-2 border-t border-slate-100">
             <span>{isAr ? 'الوقود المستهلك الكلي:' : 'Total Fuel Used:'}</span>
             <span className="font-semibold font-mono text-slate-700">
-              {metrics.totalFuelUsedLiters ? `${metrics.totalFuelUsedLiters} L` : 'CAN M-Bus'}
+              {metrics.fuel.totalConsumedLiters ? `${metrics.fuel.totalConsumedLiters} L` : 'CAN M-Bus'}
             </span>
           </div>
         </div>
@@ -286,7 +286,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
 
           <div className="flex items-baseline gap-1.5">
             <span className="text-3xl font-extrabold font-mono text-slate-900">
-              {metrics.odometerKm !== null ? metrics.odometerKm.toLocaleString() : '---'}
+              {metrics.odometer.totalKm !== null ? metrics.odometer.totalKm.toLocaleString() : '---'}
             </span>
             <span className="text-xs font-semibold text-slate-500">km</span>
           </div>
@@ -294,7 +294,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           <div className="flex items-center justify-between text-[11px] text-slate-500 mt-5 pt-2 border-t border-slate-100">
             <span>{isAr ? 'مسافة الرحلة الحالية:' : 'Current Trip Dist:'}</span>
             <span className="font-semibold font-mono text-slate-700">
-              {metrics.tripOdometerKm !== null ? `${metrics.tripOdometerKm} km` : '---'}
+              {metrics.odometer.tripKm !== null ? `${metrics.odometer.tripKm} km` : '---'}
             </span>
           </div>
         </div>
@@ -307,7 +307,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             </span>
             <div
               className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                (metrics.coolantTempC ?? 0) >= 105
+                (metrics.engine.coolantTempC ?? 0) >= 105
                   ? 'bg-rose-50 text-rose-600'
                   : 'bg-amber-50 text-amber-600'
               }`}
@@ -319,23 +319,23 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           <div className="flex items-baseline gap-1.5">
             <span
               className={`text-3xl font-extrabold font-mono ${
-                (metrics.coolantTempC ?? 0) >= 105 ? 'text-rose-600' : 'text-slate-900'
+                (metrics.engine.coolantTempC ?? 0) >= 105 ? 'text-rose-600' : 'text-slate-900'
               }`}
             >
-              {metrics.coolantTempC !== null ? `${metrics.coolantTempC}°` : '---'}
+              {metrics.engine.coolantTempC !== null ? `${metrics.engine.coolantTempC}°` : '---'}
             </span>
             <span className="text-xs font-semibold text-slate-500">C</span>
-            {metrics.coolantTempC !== null && (
+            {metrics.engine.coolantTempC !== null && (
               <span
                 className={`text-[11px] font-bold px-1.5 py-0.5 rounded-sm ml-auto ${
-                  metrics.coolantTempC >= 105
+                  metrics.engine.coolantTempC >= 105
                     ? 'bg-rose-100 text-rose-800'
-                    : metrics.coolantTempC >= 95
+                    : metrics.engine.coolantTempC >= 95
                     ? 'bg-amber-100 text-amber-800'
                     : 'bg-emerald-100 text-emerald-800'
                 }`}
               >
-                {metrics.coolantTempC >= 105
+                {metrics.engine.coolantTempC >= 105
                   ? isAr
                     ? 'مرتفعة!'
                     : 'Hot'
@@ -349,7 +349,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           <div className="flex items-center justify-between text-[11px] text-slate-500 mt-5 pt-2 border-t border-slate-100">
             <span>{isAr ? 'حرارة زيت المحرك:' : 'Engine Oil Temp:'}</span>
             <span className="font-semibold font-mono text-slate-700">
-              {metrics.oilTempC !== null ? `${metrics.oilTempC}°C` : 'N/A'}
+              {metrics.engine.oilTempC !== null ? `${metrics.engine.oilTempC}°C` : 'N/A'}
             </span>
           </div>
         </div>
@@ -367,20 +367,20 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
 
           <div className="flex items-baseline gap-1.5">
             <span className="text-3xl font-extrabold font-mono text-slate-900">
-              {metrics.vehicleVoltage !== null ? `${metrics.vehicleVoltage}` : '---'}
+              {metrics.electrical.vehicleVoltageV !== null ? `${metrics.electrical.vehicleVoltageV}` : '---'}
             </span>
             <span className="text-xs font-semibold text-slate-500">V</span>
-            {metrics.vehicleVoltage !== null && (
+            {metrics.electrical.vehicleVoltageV !== null && (
               <span
                 className={`text-[11px] font-bold px-1.5 py-0.5 rounded-sm ml-auto ${
-                  metrics.isAlternatorCharging
+                  metrics.electrical.alternatorStatus === 'charging'
                     ? 'bg-emerald-100 text-emerald-800'
-                    : metrics.vehicleVoltage >= 12.0
+                    : metrics.electrical.vehicleVoltageV >= 12.0
                     ? 'bg-blue-100 text-blue-800'
                     : 'bg-rose-100 text-rose-800'
                 }`}
               >
-                {metrics.isAlternatorCharging
+                {metrics.electrical.alternatorStatus === 'charging'
                   ? isAr
                     ? 'الدينامو يشحن'
                     : 'Charging'
@@ -394,7 +394,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           <div className="flex items-center justify-between text-[11px] text-slate-500 mt-5 pt-2 border-t border-slate-100">
             <span>{isAr ? 'بطارية الجهاز الداخلية:' : 'Internal Tracker Bat:'}</span>
             <span className="font-semibold font-mono text-slate-700">
-              {metrics.trackerBatteryVoltage ? `${metrics.trackerBatteryVoltage}V` : '---'}
+              {metrics.electrical.trackerBatteryV ? `${metrics.electrical.trackerBatteryV}V` : '---'}
             </span>
           </div>
         </div>
@@ -417,14 +417,14 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
               </span>
               <div className="flex items-baseline gap-1">
                 <span className="text-4xl font-extrabold font-mono text-slate-900">
-                  {metrics.speedKmH}
+                  {metrics.speed.displaySpeedKmH}
                 </span>
                 <span className="text-xs text-slate-500 font-medium">km/h</span>
               </div>
               <div className="text-[11px] text-slate-500 mt-2">
                 {isAr ? 'سرعة الـ CAN:' : 'CAN Wheel Speed:'}{' '}
                 <span className="font-semibold text-slate-700">
-                  {metrics.canSpeedKmH !== null ? `${metrics.canSpeedKmH} km/h` : 'Synced with GPS'}
+                  {metrics.speed.canKmH !== null ? `${metrics.speed.canKmH} km/h` : 'Synced with GPS'}
                 </span>
               </div>
             </div>
@@ -436,14 +436,14 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
               </span>
               <div className="flex items-baseline gap-1">
                 <span className="text-4xl font-extrabold font-mono text-blue-600">
-                  {metrics.engineRpm !== null ? metrics.engineRpm : '---'}
+                  {metrics.engine.rpm !== null ? metrics.engine.rpm : '---'}
                 </span>
                 <span className="text-xs text-slate-500 font-medium">rpm</span>
               </div>
               <div className="text-[11px] text-slate-500 mt-2">
                 {isAr ? 'حالة التشغيل:' : 'Running State:'}{' '}
                 <span className="font-semibold text-slate-700">
-                  {(metrics.engineRpm ?? 0) > 0 ? (isAr ? 'دوران نشط' : 'Active') : (isAr ? 'المحرك ساكن' : 'Idle / Off')}
+                  {(metrics.engine.rpm ?? 0) > 0 ? (isAr ? 'دوران نشط' : 'Active') : (isAr ? 'المحرك ساكن' : 'Idle / Off')}
                 </span>
               </div>
             </div>
@@ -456,7 +456,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
               </span>
               <span className="font-bold text-slate-800 flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
-                {metrics.engineWorkHours !== null ? `${metrics.engineWorkHours} Hours` : 'CAN M-Bus'}
+                {metrics.engine.workHours !== null ? `${metrics.engine.workHours} Hours` : 'CAN M-Bus'}
               </span>
             </div>
 
@@ -466,7 +466,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
               </span>
               <span className="font-bold text-slate-800 flex items-center gap-1">
                 <Fuel className="w-3.5 h-3.5 text-slate-400" />
-                {metrics.fuelRateLitersPerHour !== null ? `${metrics.fuelRateLitersPerHour} L/h` : 'Direct CAN'}
+                {metrics.fuel.instantRateLitersPerHour !== null ? `${metrics.fuel.instantRateLitersPerHour} L/h` : 'Direct CAN'}
               </span>
             </div>
           </div>
@@ -483,7 +483,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80 mb-4">
             <div className="flex items-center justify-between mb-3 text-xs">
               <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                {metrics.doors?.anyOpen ? (
+                {metrics.comfort.doors?.anyOpen ? (
                   <DoorOpen className="w-4 h-4 text-rose-600" />
                 ) : (
                   <DoorClosed className="w-4 h-4 text-emerald-600" />
@@ -492,12 +492,12 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
               </span>
               <span
                 className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${
-                  metrics.doors?.anyOpen
+                  metrics.comfort.doors?.anyOpen
                     ? 'bg-rose-100 text-rose-800'
                     : 'bg-emerald-100 text-emerald-800'
                 }`}
               >
-                {metrics.doors?.anyOpen
+                {metrics.comfort.doors?.anyOpen
                   ? isAr
                     ? 'تنبيه: باب مفتوح!'
                     : 'Door Open!'
@@ -510,7 +510,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             <div className="grid grid-cols-3 gap-2 text-center text-xs">
               <div
                 className={`p-2 rounded-lg border transition-colors ${
-                  metrics.doors?.driverOpen
+                  metrics.comfort.doors?.driverOpen
                     ? 'bg-rose-50 border-rose-300 text-rose-800 font-bold'
                     : 'bg-white border-slate-200 text-slate-700'
                 }`}
@@ -518,12 +518,12 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
                 <span className="block text-[10px] text-slate-400">
                   {isAr ? 'باب السائق' : 'Driver Door'}
                 </span>
-                <span>{metrics.doors?.driverOpen ? (isAr ? 'مفتوح' : 'Open') : (isAr ? 'مغلق' : 'Closed')}</span>
+                <span>{metrics.comfort.doors?.driverOpen ? (isAr ? 'مفتوح' : 'Open') : (isAr ? 'مغلق' : 'Closed')}</span>
               </div>
 
               <div
                 className={`p-2 rounded-lg border transition-colors ${
-                  metrics.doors?.passengerOpen
+                  metrics.comfort.doors?.passengerOpen
                     ? 'bg-rose-50 border-rose-300 text-rose-800 font-bold'
                     : 'bg-white border-slate-200 text-slate-700'
                 }`}
@@ -531,12 +531,12 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
                 <span className="block text-[10px] text-slate-400">
                   {isAr ? 'باب الراكب' : 'Passenger'}
                 </span>
-                <span>{metrics.doors?.passengerOpen ? (isAr ? 'مفتوح' : 'Open') : (isAr ? 'مغلق' : 'Closed')}</span>
+                <span>{metrics.comfort.doors?.passengerOpen ? (isAr ? 'مفتوح' : 'Open') : (isAr ? 'مغلق' : 'Closed')}</span>
               </div>
 
               <div
                 className={`p-2 rounded-lg border transition-colors ${
-                  metrics.doors?.hoodOpen
+                  metrics.comfort.doors?.hoodOpen
                     ? 'bg-rose-50 border-rose-300 text-rose-800 font-bold'
                     : 'bg-white border-slate-200 text-slate-700'
                 }`}
@@ -544,12 +544,12 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
                 <span className="block text-[10px] text-slate-400">
                   {isAr ? 'الكبوت' : 'Hood'}
                 </span>
-                <span>{metrics.doors?.hoodOpen ? (isAr ? 'مفتوح' : 'Open') : (isAr ? 'مغلق' : 'Closed')}</span>
+                <span>{metrics.comfort.doors?.hoodOpen ? (isAr ? 'مفتوح' : 'Open') : (isAr ? 'مغلق' : 'Closed')}</span>
               </div>
 
               <div
                 className={`p-2 rounded-lg border transition-colors ${
-                  metrics.doors?.rearLeftOpen
+                  metrics.comfort.doors?.rearLeftOpen
                     ? 'bg-rose-50 border-rose-300 text-rose-800 font-bold'
                     : 'bg-white border-slate-200 text-slate-700'
                 }`}
@@ -557,12 +557,12 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
                 <span className="block text-[10px] text-slate-400">
                   {isAr ? 'خلفي يسار' : 'Rear Left'}
                 </span>
-                <span>{metrics.doors?.rearLeftOpen ? (isAr ? 'مفتوح' : 'Open') : (isAr ? 'مغلق' : 'Closed')}</span>
+                <span>{metrics.comfort.doors?.rearLeftOpen ? (isAr ? 'مفتوح' : 'Open') : (isAr ? 'مغلق' : 'Closed')}</span>
               </div>
 
               <div
                 className={`p-2 rounded-lg border transition-colors ${
-                  metrics.doors?.rearRightOpen
+                  metrics.comfort.doors?.rearRightOpen
                     ? 'bg-rose-50 border-rose-300 text-rose-800 font-bold'
                     : 'bg-white border-slate-200 text-slate-700'
                 }`}
@@ -570,12 +570,12 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
                 <span className="block text-[10px] text-slate-400">
                   {isAr ? 'خلفي يمين' : 'Rear Right'}
                 </span>
-                <span>{metrics.doors?.rearRightOpen ? (isAr ? 'مفتوح' : 'Open') : (isAr ? 'مغلق' : 'Closed')}</span>
+                <span>{metrics.comfort.doors?.rearRightOpen ? (isAr ? 'مفتوح' : 'Open') : (isAr ? 'مغلق' : 'Closed')}</span>
               </div>
 
               <div
                 className={`p-2 rounded-lg border transition-colors ${
-                  metrics.doors?.trunkOpen
+                  metrics.comfort.doors?.trunkOpen
                     ? 'bg-rose-50 border-rose-300 text-rose-800 font-bold'
                     : 'bg-white border-slate-200 text-slate-700'
                 }`}
@@ -583,7 +583,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
                 <span className="block text-[10px] text-slate-400">
                   {isAr ? 'الشنطة' : 'Trunk'}
                 </span>
-                <span>{metrics.doors?.trunkOpen ? (isAr ? 'مفتوح' : 'Open') : (isAr ? 'مغلق' : 'Closed')}</span>
+                <span>{metrics.comfort.doors?.trunkOpen ? (isAr ? 'مفتوح' : 'Open') : (isAr ? 'مغلق' : 'Closed')}</span>
               </div>
             </div>
           </div>
@@ -593,8 +593,8 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
               <span className="text-slate-400 block mb-0.5">{isAr ? 'حزام الأمان' : 'Seatbelt'}</span>
               <span className="font-bold text-slate-800">
-                {metrics.seatbeltFastened !== null
-                  ? metrics.seatbeltFastened
+                {metrics.comfort.seatbeltFastened !== null
+                  ? metrics.comfort.seatbeltFastened
                     ? isAr
                       ? 'مربوط ✓'
                       : 'Fastened'
@@ -608,8 +608,8 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
               <span className="text-slate-400 block mb-0.5">{isAr ? 'فرامل اليد (الجلنط)' : 'Handbrake'}</span>
               <span className="font-bold text-slate-800">
-                {metrics.handbrakeEngaged !== null
-                  ? metrics.handbrakeEngaged
+                {metrics.comfort.handbrakeEngaged !== null
+                  ? metrics.comfort.handbrakeEngaged
                     ? isAr
                       ? 'مشدود (مفعل)'
                       : 'Engaged'
@@ -624,10 +624,10 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
               <span className="text-slate-400 block mb-0.5">{isAr ? 'لمبة المحرك' : 'Check Engine'}</span>
               <span
                 className={`font-bold ${
-                  metrics.checkEngineLight ? 'text-rose-600' : 'text-emerald-700'
+                  metrics.comfort.checkEngineLight ? 'text-rose-600' : 'text-emerald-700'
                 }`}
               >
-                {metrics.checkEngineLight ? (isAr ? 'تنبيه عطل!' : 'Active MIL') : (isAr ? 'سليم ✓' : 'Clear')}
+                {metrics.comfort.checkEngineLight ? (isAr ? 'تنبيه عطل!' : 'Active MIL') : (isAr ? 'سليم ✓' : 'Clear')}
               </span>
             </div>
           </div>

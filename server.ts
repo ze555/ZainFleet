@@ -51,13 +51,20 @@ class PersistentDeviceRepository {
     }
   }
 
-  upsert(imei: string, seenAt: string, connected: boolean): DeviceInfo {
+  upsert(imei: string, seenAt: string, connected: boolean, lastGpsAt?: string): DeviceInfo {
     const existing = this.devices.get(imei);
+    const tcpConnected = connected;
+    const connectionStatus: 'online' | 'standby' | 'offline' = connected ? 'online' : 'offline';
     const updated: DeviceInfo = {
       imei,
+      name: existing?.name,
       firstSeen: existing ? existing.firstSeen : seenAt,
       lastSeen: seenAt,
+      lastPacketAt: seenAt,
+      lastGpsAt: lastGpsAt || existing?.lastGpsAt,
+      tcpConnected,
       connected,
+      connectionStatus,
       totalRecords: existing?.totalRecords || 0,
       totalDistanceKm: existing?.totalDistanceKm || 0,
     };
@@ -272,10 +279,15 @@ const tcpServer = net.createServer((socket) => {
 
         const seenIso = new Date().toISOString();
         if (imei) {
+          let latestGpsTime = '';
           for (const rec of decoded.records) {
             telemetryRepo.store(imei, rec, seenIso);
+            if (rec.timestamp) {
+              latestGpsTime = rec.timestamp;
+            }
           }
-          deviceRepo.upsert(imei, seenIso, true);
+          deviceRepo.incrementRecords(imei, decoded.records.length);
+          deviceRepo.upsert(imei, seenIso, true, latestGpsTime || undefined);
         }
 
         // Send 4-byte big-endian ACK
