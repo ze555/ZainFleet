@@ -210,6 +210,7 @@ const KNOWN_CAN_PARAMS: Record<number, KnownCanParam> = {
 export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang }) => {
   const isAr = lang === 'ar';
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'engine' | 'fuel' | 'electrical' | 'other'>('all');
   const [copied, setCopied] = useState(false);
 
   const record = telemetry?.record;
@@ -223,9 +224,25 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
   };
 
   const filteredElements = elements.filter((el) => {
+    const info = KNOWN_CAN_PARAMS[el.id];
+
+    // Category filter
+    if (categoryFilter === 'engine') {
+      const isEngine = [1, 24, 32, 33, 81, 85, 86, 115, 239].includes(el.id);
+      if (!isEngine) return false;
+    } else if (categoryFilter === 'fuel') {
+      const isFuel = [82, 83, 84, 89, 90, 114].includes(el.id);
+      if (!isFuel) return false;
+    } else if (categoryFilter === 'electrical') {
+      const isElectrical = [66, 67, 68, 113].includes(el.id);
+      if (!isElectrical) return false;
+    } else if (categoryFilter === 'other') {
+      const isKnown = [1, 24, 32, 33, 81, 85, 86, 115, 239, 82, 83, 84, 89, 90, 114, 66, 67, 68, 113].includes(el.id);
+      if (isKnown) return false;
+    }
+
     if (!searchTerm) return true;
     const term = searchTerm.toLowerCase();
-    const info = KNOWN_CAN_PARAMS[el.id];
     const idMatch = String(el.id).includes(term);
     const valMatch = el.value.toLowerCase().includes(term);
     const nameMatch = info ? (info.nameAr.toLowerCase().includes(term) || info.nameEn.toLowerCase().includes(term)) : false;
@@ -233,17 +250,17 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
   });
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4 max-w-5xl mx-auto pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
         <div>
           <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
             <Layers className="w-5 h-5 text-blue-600" />
-            <span>{isAr ? 'سجل تشخيصات وحساسات الكان (CAN Bus Log)' : 'CAN Bus Sensor Diagnostic Log'}</span>
+            <span>{isAr ? 'جميع الحساسات وقراءات الكان (تفصيلي)' : 'All CAN & Hardware Sensors'}</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             {isAr
-              ? `قراءة حية لجميع معلمات ناقل بيانات السيارة CAN Bus المستقبلة من جهاز FMB140 (${elements.length} بارامتر)`
+              ? `قراءة حية لجميع معلمات ناقل بيانات السيارة CAN Bus المستقبلة (${elements.length} بارامتر)`
               : `Live decoded parameters received directly from vehicle CAN bus (${elements.length} parameters)`}
           </p>
         </div>
@@ -269,6 +286,60 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
             <span>{copied ? (isAr ? 'تم النسخ' : 'Copied') : (isAr ? 'نسخ JSON' : 'Copy JSON')}</span>
           </button>
         </div>
+      </div>
+
+      {/* Category Filter Pills matching Mockup Screen 6 */}
+      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold text-slate-600">
+        <button
+          onClick={() => setCategoryFilter('all')}
+          className={`px-3 py-1.5 rounded-xl transition-colors ${
+            categoryFilter === 'all'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+          }`}
+        >
+          {isAr ? 'الكل' : 'All'}
+        </button>
+        <button
+          onClick={() => setCategoryFilter('engine')}
+          className={`px-3 py-1.5 rounded-xl transition-colors ${
+            categoryFilter === 'engine'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+          }`}
+        >
+          {isAr ? 'المحرك' : 'Engine'}
+        </button>
+        <button
+          onClick={() => setCategoryFilter('fuel')}
+          className={`px-3 py-1.5 rounded-xl transition-colors ${
+            categoryFilter === 'fuel'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+          }`}
+        >
+          {isAr ? 'الوقود' : 'Fuel'}
+        </button>
+        <button
+          onClick={() => setCategoryFilter('electrical')}
+          className={`px-3 py-1.5 rounded-xl transition-colors ${
+            categoryFilter === 'electrical'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+          }`}
+        >
+          {isAr ? 'الكهرباء' : 'Electrical'}
+        </button>
+        <button
+          onClick={() => setCategoryFilter('other')}
+          className={`px-3 py-1.5 rounded-xl transition-colors ${
+            categoryFilter === 'other'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+          }`}
+        >
+          {isAr ? 'أخرى' : 'Other'}
+        </button>
       </div>
 
       {/* Table */}
