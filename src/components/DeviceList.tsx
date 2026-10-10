@@ -1,6 +1,6 @@
 import React from 'react';
 import { DeviceInfo } from '../types/fleet.js';
-import { Smartphone, RefreshCw, Signal, Clock, Search, PlusCircle } from 'lucide-react';
+import { Smartphone, RefreshCw, Signal, Clock, Search, Gauge } from 'lucide-react';
 
 interface DeviceListProps {
   devices: DeviceInfo[];
@@ -143,6 +143,15 @@ export const DeviceList: React.FC<DeviceListProps> = ({
                         <Signal className="w-2.5 h-2.5" />
                         {device.connected ? 'Online' : 'Offline'}
                       </span>
+                      {device.imei !== '123456789012345' && device.imei !== '860293048172941' ? (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-blue-100 text-blue-800 font-bold uppercase tracking-wider">
+                          Live Hardware
+                        </span>
+                      ) : (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] bg-slate-100 text-slate-500 font-medium">
+                          Demo
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500">
@@ -164,9 +173,9 @@ export const DeviceList: React.FC<DeviceListProps> = ({
                     onOpenSimulatorForImei(device.imei);
                   }}
                   className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-blue-600 hover:bg-white rounded transition-all"
-                  title="Simulate AVL Packet for this IMEI"
+                  title="Open CAN Bus Live Dashboard"
                 >
-                  <PlusCircle className="w-4 h-4" />
+                  <Gauge className="w-4 h-4" />
                 </button>
               </div>
             );
