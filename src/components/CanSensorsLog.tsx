@@ -48,9 +48,22 @@ const KNOWN_CAN_PARAMS: Record<number, KnownCanParam> = {
     category: 'M-CAN (المحرك والحركة)',
     unit: 'km/h',
   },
+  30: {
+    nameAr: 'عدد أكواد الأعطال / سرعة الكان',
+    nameEn: 'Number of DTCs / CAN Speed',
+    category: 'M-CAN (المحرك والحركة)',
+    unit: 'Codes / km/h',
+  },
+  31: {
+    nameAr: 'حمل المحرك / موقع دواسة التسارع',
+    nameEn: 'Engine Load / Throttle %',
+    category: 'M-CAN (المحرك والحركة)',
+    unit: '%',
+    format: (v) => `${v}%`,
+  },
   32: {
-    nameAr: 'حرارة سائل تبريد المحرك',
-    nameEn: 'Coolant Temperature',
+    nameAr: 'حرارة سائل تبريد المحرك (Coolant)',
+    nameEn: 'Engine Coolant Temperature',
     category: 'M-CAN (المحرك والحركة)',
     unit: '°C',
     format: (v) => `${v}°C`,
@@ -152,9 +165,9 @@ const KNOWN_CAN_PARAMS: Record<number, KnownCanParam> = {
     format: (v) => `${Math.round(Number(v) / 3600)} Hours`,
   },
   115: {
-    nameAr: 'درجة حرارة سائل تبريد المحرك (Coolant)',
-    nameEn: 'Engine Coolant Temperature',
-    category: 'M-CAN (المحرك والحركة)',
+    nameAr: 'حرارة اللوحة الإلكترونية لجهاز التتبع (PCB)',
+    nameEn: 'Tracker PCB Temperature',
+    category: 'GNSS & System',
     unit: '°C',
     format: (v) => `${v}°C`,
   },
@@ -163,6 +176,12 @@ const KNOWN_CAN_PARAMS: Record<number, KnownCanParam> = {
     nameEn: 'Security & Safety Status (MIL, Belt, Brake)',
     category: 'C-CAN (المقصورة والأمان)',
     unit: 'Flags',
+  },
+  160: {
+    nameAr: 'عدد أكواد الأعطال النشطة (DTC Count)',
+    nameEn: 'Diagnostic Trouble Codes Count',
+    category: 'M-CAN (المحرك والحركة)',
+    unit: 'Codes',
   },
   162: {
     nameAr: 'درجة حرارة زيت المحرك',
@@ -198,12 +217,37 @@ const KNOWN_CAN_PARAMS: Record<number, KnownCanParam> = {
     category: 'GNSS & System',
     unit: 'Code',
   },
+  242: {
+    nameAr: 'حمل المحرك المحسوب (Calculated Load)',
+    nameEn: 'Calculated Engine Load %',
+    category: 'M-CAN (المحرك والحركة)',
+    unit: '%',
+    format: (v) => `${v}%`,
+  },
   250: {
     nameAr: 'عداد مسافة الرحلة الحالية',
     nameEn: 'Trip Distance',
     category: 'M-CAN (المحرك والحركة)',
     unit: 'km',
     format: (v) => `${(Number(v) / 1000).toFixed(1)} km`,
+  },
+  252: {
+    nameAr: 'حساس فصل الجهاز واشتباه السحب',
+    nameEn: 'Unplug / Towing Detection',
+    category: 'GNSS & System',
+    unit: 'State',
+  },
+  256: {
+    nameAr: 'رقم هيكل وشاصي السيارة (VIN)',
+    nameEn: 'Vehicle Identification Number (VIN)',
+    category: 'M-CAN (المحرك والحركة)',
+    unit: 'Text',
+  },
+  282: {
+    nameAr: 'أكواد أعطال كمبيوتر السيارة (DTC Codes)',
+    nameEn: 'Diagnostic Trouble Codes (DTC)',
+    category: 'M-CAN (المحرك والحركة)',
+    unit: 'Codes',
   },
 };
 

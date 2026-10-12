@@ -173,9 +173,30 @@ export interface CanMetrics {
     operatorCode: string | null;
   };
 
+  // Vehicle Computer Diagnostics & DTC Trouble Codes
+  diagnostic: {
+    milActive: boolean; // Check Engine Light (MIL) is ON
+    dtcCount: number; // Total number of active trouble codes
+    dtcCodes: DtcFaultCode[]; // Structured list of detected diagnostic trouble codes
+    rawDtcString: string | null; // Raw string or hex from AVL ID 282
+    vin: string | null; // Vehicle VIN from AVL ID 256
+    statusAr: string;
+    statusEn: string;
+  };
+
   // Raw Diagnostic info
   rawIoCount: number;
   activeCanIds: number[];
+}
+
+export interface DtcFaultCode {
+  code: string; // e.g. "P0100"
+  standard: 'OBD-II' | 'J1939' | 'Manufacturer';
+  subsystemAr: string; // e.g. "نظام إدارة الهواء والوقود"
+  subsystemEn: string; // e.g. "Fuel & Air Metering"
+  descriptionAr: string; // e.g. "عطل في دائرة حساس تدفق الهواء (MAF)"
+  descriptionEn: string; // e.g. "Mass or Volume Air Flow Circuit Malfunction"
+  severity: 'high' | 'medium' | 'low';
 }
 
 export interface TripPoint {

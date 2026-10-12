@@ -6,6 +6,7 @@ import {
   VehicleAlert,
   VehicleTrip,
   TripPoint,
+  DtcFaultCode,
 } from '../types/fleet.js';
 
 /**
@@ -641,7 +642,257 @@ export const CAN_PARAMETER_CATALOG: Record<number, CanParameterDefinition> = {
     verified: true,
     documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
   },
+  160: {
+    id: 160,
+    officialName: 'DTC Faults Count (CAN)',
+    nameAr: 'عدد أكواد الأعطال النشطة (DTC Count)',
+    nameEn: 'Diagnostic Trouble Codes Count',
+    source: 'diagnostic',
+    sourceBusLabelAr: 'فحص كمبيوتر السيارة (DTC)',
+    sourceBusLabelEn: 'ECU Diagnostics (DTC)',
+    byteLength: 1,
+    signed: false,
+    multiplier: 1,
+    unit: 'Codes',
+    valueRange: '0 - 255',
+    descriptionAr: 'العدد الإجمالي لأكواد الأعطال المخزنة في كمبيوتر السيارة (ECU)',
+    descriptionEn: 'Total count of active diagnostic trouble codes stored in vehicle ECU',
+    configDependency: 'CAN adapter enabled & vehicle profile set',
+    verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID#CAN_adapters_elements',
+  },
+  242: {
+    id: 242,
+    officialName: 'Engine Load (OBD PID 04)',
+    nameAr: 'حمل المحرك المحسوب (Engine Load)',
+    nameEn: 'Calculated Engine Load',
+    source: 'obd',
+    sourceBusLabelAr: 'ناقل OBD-II القياسي',
+    sourceBusLabelEn: 'OBD-II Bus',
+    byteLength: 1,
+    signed: false,
+    multiplier: 1,
+    unit: '%',
+    valueRange: '0 - 100 %',
+    descriptionAr: 'نسبة الحمل التشغيلي على المحرك محسوبة من كمبيوتر السيارة',
+    descriptionEn: 'Calculated engine load percentage from engine ECU',
+    configDependency: 'OBD feature active',
+    verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID#OBD_elements',
+  },
+  252: {
+    id: 252,
+    officialName: 'Unplug / Towing Detection',
+    nameAr: 'حساس فصل الجهاز واشتباه السحب',
+    nameEn: 'Unplug / Towing Detection',
+    source: 'device_io',
+    sourceBusLabelAr: 'حساس أمان الجهاز',
+    sourceBusLabelEn: 'Device Security Sensor',
+    byteLength: 1,
+    signed: false,
+    multiplier: 1,
+    unit: 'State',
+    valueRange: '0 - 1',
+    descriptionAr: 'تنبيه فصل الجهاز عن منفذ OBD أو تحرك السيارة بالمقطورة بدون مفتاح',
+    descriptionEn: 'Device unplugged or unauthorized vehicle movement detected',
+    configDependency: 'Permanent IO',
+    verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
+  },
+  256: {
+    id: 256,
+    officialName: 'VIN (Vehicle Identification Number)',
+    nameAr: 'رقم هيكل السيارة والشاصي (VIN)',
+    nameEn: 'Vehicle Identification Number (VIN)',
+    source: 'obd',
+    sourceBusLabelAr: 'ناقل OBD-II / CAN',
+    sourceBusLabelEn: 'OBD / CAN Bus',
+    byteLength: 17,
+    signed: false,
+    multiplier: 1,
+    unit: 'Text',
+    valueRange: '17 characters alphanumeric string',
+    descriptionAr: 'الرقم التسلسلي الدولي الفريد لهيكل وشاصي المركبة المسجل بالكمبيوتر',
+    descriptionEn: '17-character standard vehicle identification number read from ECU',
+    configDependency: 'OBD or CAN adapter enabled',
+    verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID#OBD_elements',
+  },
+  282: {
+    id: 282,
+    officialName: 'DTC Fault Codes',
+    nameAr: 'أكواد أعطال كمبيوتر السيارة (DTC Codes)',
+    nameEn: 'DTC Fault Codes (SAE J2012)',
+    source: 'diagnostic',
+    sourceBusLabelAr: 'فحص كمبيوتر السيارة (DTC)',
+    sourceBusLabelEn: 'ECU Diagnostics (DTC)',
+    byteLength: 0, // Variable length
+    signed: false,
+    multiplier: 1,
+    unit: 'Codes',
+    valueRange: 'Variable bytes / SAE J2012 codes (e.g. P0100, P0300)',
+    descriptionAr: 'أكواد الأعطال التشخيصية المقروءة من كمبيوتر السيارة (مثل P0100، P0300)',
+    descriptionEn: 'Diagnostic trouble codes read from engine/body ECUs via CAN/OBD',
+    configDependency: 'CAN adapter enabled & vehicle profile set',
+    verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID#CAN_adapters_elements',
+  },
 };
+
+/**
+ * Standard SAE J2012 OBD-II Diagnostic Trouble Codes Database
+ */
+export const OBD2_DTC_DATABASE: Record<
+  string,
+  {
+    subsystemAr: string;
+    subsystemEn: string;
+    descAr: string;
+    descEn: string;
+    severity: 'high' | 'medium' | 'low';
+  }
+> = {
+  // Fuel and Air Metering
+  P0100: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'عطل في دائرة حساس تدفق الهواء (MAF)', descEn: 'Mass or Volume Air Flow Circuit Malfunction', severity: 'medium' },
+  P0101: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'حساس تدفق الهواء خارج النطاق الطبيعي', descEn: 'Mass Air Flow Circuit Range/Performance', severity: 'medium' },
+  P0102: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'إشارة حساس تدفق الهواء منخفضة جداً', descEn: 'Mass Air Flow Circuit Low Input', severity: 'medium' },
+  P0103: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'إشارة حساس تدفق الهواء مرتفعة جداً', descEn: 'Mass Air Flow Circuit High Input', severity: 'medium' },
+  P0105: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'عطل في حساس الضغط المطلق لمجمع السحب (MAP)', descEn: 'Manifold Absolute Pressure/Barometric Pressure Circuit', severity: 'medium' },
+  P0106: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'حساس ضغط مجمع السحب (MAP) خارج النطاق', descEn: 'MAP Circuit Range/Performance', severity: 'medium' },
+  P0110: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'عطل في دائرة حساس حرارة هواء السحب (IAT)', descEn: 'Intake Air Temperature Circuit Malfunction', severity: 'low' },
+  P0115: { subsystemAr: 'نظام التبريد والمحرك', subsystemEn: 'Engine Cooling', descAr: 'عطل في دائرة حساس حرارة سائل التبريد (ECT)', descEn: 'Engine Coolant Temperature Circuit Malfunction', severity: 'high' },
+  P0116: { subsystemAr: 'نظام التبريد والمحرك', subsystemEn: 'Engine Cooling', descAr: 'قراءة حساس حرارة سائل التبريد غير متناسقة', descEn: 'Engine Coolant Temp Circuit Range/Performance', severity: 'high' },
+  P0117: { subsystemAr: 'نظام التبريد والمحرك', subsystemEn: 'Engine Cooling', descAr: 'إشارة حساس حرارة سائل التبريد منخفضة (حرارة مرتفعة)', descEn: 'Engine Coolant Temp Circuit Low Input', severity: 'high' },
+  P0118: { subsystemAr: 'نظام التبريد والمحرك', subsystemEn: 'Engine Cooling', descAr: 'إشارة حساس حرارة سائل التبريد مرتفعة (دائرة مفتوحة)', descEn: 'Engine Coolant Temp Circuit High Input', severity: 'high' },
+  P0120: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'عطل في حساس موقع صمام الخانق (TPS)', descEn: 'Throttle/Pedal Position Sensor/Switch A Circuit', severity: 'high' },
+  P0121: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'حساس موقع الخانق (TPS) خارج النطاق الطبيعي', descEn: 'Throttle Position Sensor Circuit Range/Performance', severity: 'high' },
+  P0125: { subsystemAr: 'نظام التبريد والمحرك', subsystemEn: 'Engine Cooling', descAr: 'حرارة التبريد غير كافية للتحكم بالوقود المغلق', descEn: 'Insufficient Coolant Temp for Closed Loop Fuel Control', severity: 'medium' },
+  P0128: { subsystemAr: 'نظام التبريد والمحرك', subsystemEn: 'Engine Cooling', descAr: 'بلف حرارة المحرك (الثرموستات) تالف أو معلق مفتوحاً', descEn: 'Coolant Thermostat Malfunction (Below Regulating Temp)', severity: 'medium' },
+  P0130: { subsystemAr: 'نظام العادم والانبعاثات', subsystemEn: 'Exhaust & Emissions', descAr: 'عطل في دائرة حساس الأكسجين (بنك 1 حساس 1)', descEn: 'O2 Sensor Circuit Malfunction (Bank 1 Sensor 1)', severity: 'medium' },
+  P0133: { subsystemAr: 'نظام العادم والانبعاثات', subsystemEn: 'Exhaust & Emissions', descAr: 'استجابة بطيئة لحساس الأكسجين (بنك 1 حساس 1)', descEn: 'O2 Sensor Circuit Slow Response (Bank 1 Sensor 1)', severity: 'medium' },
+  P0135: { subsystemAr: 'نظام العادم والانبعاثات', subsystemEn: 'Exhaust & Emissions', descAr: 'عطل في سخان حساس الأكسجين (بنك 1 حساس 1)', descEn: 'O2 Sensor Heater Circuit (Bank 1 Sensor 1)', severity: 'low' },
+  P0171: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'خليط الوقود فقير جداً (هواء زائد / بنك 1)', descEn: 'System Too Lean (Bank 1)', severity: 'high' },
+  P0172: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'خليط الوقود غني جداً (وقود زائد / بنك 1)', descEn: 'System Too Rich (Bank 1)', severity: 'medium' },
+  P0174: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'خليط الوقود فقير جداً (هواء زائد / بنك 2)', descEn: 'System Too Lean (Bank 2)', severity: 'high' },
+  P0175: { subsystemAr: 'نظام إدارة الهواء والوقود', subsystemEn: 'Fuel & Air Metering', descAr: 'خليط الوقود غني جداً (وقود زائد / بنك 2)', descEn: 'System Too Rich (Bank 2)', severity: 'medium' },
+  // Ignition & Misfire
+  P0300: { subsystemAr: 'نظام الإشعال والاحتراق', subsystemEn: 'Ignition & Misfire', descAr: 'خلل احتراق عشوائي في عدة أسطوانات (ميسفاير)', descEn: 'Random/Multiple Cylinder Misfire Detected', severity: 'high' },
+  P0301: { subsystemAr: 'نظام الإشعال والاحتراق', subsystemEn: 'Ignition & Misfire', descAr: 'خلل احتراق في الأسطوانة رقم 1 (سلندر 1)', descEn: 'Cylinder 1 Misfire Detected', severity: 'high' },
+  P0302: { subsystemAr: 'نظام الإشعال والاحتراق', subsystemEn: 'Ignition & Misfire', descAr: 'خلل احتراق في الأسطوانة رقم 2 (سلندر 2)', descEn: 'Cylinder 2 Misfire Detected', severity: 'high' },
+  P0303: { subsystemAr: 'نظام الإشعال والاحتراق', subsystemEn: 'Ignition & Misfire', descAr: 'خلل احتراق في الأسطوانة رقم 3 (سلندر 3)', descEn: 'Cylinder 3 Misfire Detected', severity: 'high' },
+  P0304: { subsystemAr: 'نظام الإشعال والاحتراق', subsystemEn: 'Ignition & Misfire', descAr: 'خلل احتراق في الأسطوانة رقم 4 (سلندر 4)', descEn: 'Cylinder 4 Misfire Detected', severity: 'high' },
+  P0305: { subsystemAr: 'نظام الإشعال والاحتراق', subsystemEn: 'Ignition & Misfire', descAr: 'خلل احتراق في الأسطوانة رقم 5 (سلندر 5)', descEn: 'Cylinder 5 Misfire Detected', severity: 'high' },
+  P0306: { subsystemAr: 'نظام الإشعال والاحتراق', subsystemEn: 'Ignition & Misfire', descAr: 'خلل احتراق في الأسطوانة رقم 6 (سلندر 6)', descEn: 'Cylinder 6 Misfire Detected', severity: 'high' },
+  P0325: { subsystemAr: 'نظام الإشعال والاحتراق', subsystemEn: 'Ignition & Misfire', descAr: 'عطل في حساس الطرق والصفير (Knock Sensor 1)', descEn: 'Knock Sensor 1 Circuit Malfunction', severity: 'medium' },
+  P0335: { subsystemAr: 'نظام الإشعال والاحتراق', subsystemEn: 'Ignition & Misfire', descAr: 'عطل في حساس موقع عمود الكرنك (CKP)', descEn: 'Crankshaft Position Sensor A Circuit Malfunction', severity: 'high' },
+  P0340: { subsystemAr: 'نظام الإشعال والاحتراق', subsystemEn: 'Ignition & Misfire', descAr: 'عطل في حساس موقع عمود الكامات (CMP)', descEn: 'Camshaft Position Sensor Circuit Malfunction', severity: 'high' },
+  // Auxiliary Emissions
+  P0400: { subsystemAr: 'نظام تدوير غازات العادم EGR', subsystemEn: 'EGR System', descAr: 'عطل في تدفق صمام إعادة تدوير غاز العادم (EGR)', descEn: 'Exhaust Gas Recirculation Flow Malfunction', severity: 'medium' },
+  P0420: { subsystemAr: 'نظام العادم والانبعاثات', subsystemEn: 'Exhaust & Emissions', descAr: 'كفاءة دبة التلوث (الكتالايزر) أقل من الحد الطبيعي (بنك 1)', descEn: 'Catalyst System Efficiency Below Threshold (Bank 1)', severity: 'medium' },
+  P0430: { subsystemAr: 'نظام العادم والانبعاثات', subsystemEn: 'Exhaust & Emissions', descAr: 'كفاءة دبة التلوث (الكتالايزر) أقل من الحد الطبيعي (بنك 2)', descEn: 'Catalyst System Efficiency Below Threshold (Bank 2)', severity: 'medium' },
+  P0440: { subsystemAr: 'نظام تبخير الوقود EVAP', subsystemEn: 'Evaporative Emission', descAr: 'عطل في نظام التحكم بتبخير أبخرة الوقود (EVAP)', descEn: 'Evaporative Emission Control System Malfunction', severity: 'low' },
+  P0442: { subsystemAr: 'نظام تبخير الوقود EVAP', subsystemEn: 'Evaporative Emission', descAr: 'رصد تسريب طفيف في نظام تبخير خزان الوقود (EVAP)', descEn: 'EVAP Control System Leak Detected (Small Leak)', severity: 'low' },
+  P0455: { subsystemAr: 'نظام تبخير الوقود EVAP', subsystemEn: 'Evaporative Emission', descAr: 'رصد تسريب كبير في نظام تبخير الوقود (تأكد من إغلاق غطاء الخزان)', descEn: 'EVAP Control System Leak Detected (Gross Leak / Loose Cap)', severity: 'low' },
+  // Vehicle Speed, Idle Control, Auxiliary Inputs
+  P0500: { subsystemAr: 'حساسات السرعة والحركة', subsystemEn: 'Speed & Idle Control', descAr: 'عطل في حساس سرعة السيارة (VSS)', descEn: 'Vehicle Speed Sensor Malfunction', severity: 'high' },
+  P0505: { subsystemAr: 'حساسات السرعة والحركة', subsystemEn: 'Speed & Idle Control', descAr: 'عطل في منظم سرعة التباطؤ (السلانسيه IAC)', descEn: 'Idle Air Control System Malfunction', severity: 'medium' },
+  P0562: { subsystemAr: 'المنظومة الكهربائية والجهد', subsystemEn: 'Electrical System', descAr: 'انخفاض جهد النظام الكهربائي للسيارة (< 11.5V)', descEn: 'System Voltage Low', severity: 'high' },
+  P0563: { subsystemAr: 'المنظومة الكهربائية والجهد', subsystemEn: 'Electrical System', descAr: 'ارتفاع مفرط في جهد النظام الكهربائي (> 16V)', descEn: 'System Voltage High', severity: 'high' },
+  // Transmission
+  P0700: { subsystemAr: 'ناقل الحركة الأوتوماتيكي (القير)', subsystemEn: 'Automatic Transmission', descAr: 'طلب تنبيه من كمبيوتر القير (وجود عطل بالقير)', descEn: 'Transmission Control System (MIL Request)', severity: 'high' },
+  P0705: { subsystemAr: 'ناقل الحركة الأوتوماتيكي (القير)', subsystemEn: 'Automatic Transmission', descAr: 'عطل في حساس وضعية عصا القير (PRNDL)', descEn: 'Transmission Range Sensor Circuit Malfunction (PRNDL)', severity: 'high' },
+  P0720: { subsystemAr: 'ناقل الحركة الأوتوماتيكي (القير)', subsystemEn: 'Automatic Transmission', descAr: 'عطل في حساس سرعة عمود خرج القير (Output Speed)', descEn: 'Output Speed Sensor Circuit Malfunction', severity: 'high' },
+  P0740: { subsystemAr: 'ناقل الحركة الأوتوماتيكي (القير)', subsystemEn: 'Automatic Transmission', descAr: 'عطل في دائرة كلتش محول العزم (طنجرة القير TCC)', descEn: 'Torque Converter Clutch Circuit Malfunction', severity: 'high' },
+  // Network / CAN Bus Communication
+  U0100: { subsystemAr: 'شبكة اتصال الكان CAN Bus', subsystemEn: 'Network & Communication', descAr: 'فقد الاتصال بكمبيوتر المحرك الرئيسي (ECM/PCM)', descEn: 'Lost Communication with ECM/PCM', severity: 'high' },
+  U0101: { subsystemAr: 'شبكة اتصال الكان CAN Bus', subsystemEn: 'Network & Communication', descAr: 'فقد الاتصال بكمبيوتر القير (TCM)', descEn: 'Lost Communication with Transmission Control Module', severity: 'high' },
+  U0121: { subsystemAr: 'شبكة اتصال الكان CAN Bus', subsystemEn: 'Network & Communication', descAr: 'فقد الاتصال بنظام الفرامل المانعة للانغلاق (ABS)', descEn: 'Lost Communication with Anti-Lock Brake System (ABS)', severity: 'high' },
+  U0140: { subsystemAr: 'شبكة اتصال الكان CAN Bus', subsystemEn: 'Network & Communication', descAr: 'فقد الاتصال بكمبيوتر راحة المقصورة (BCM)', descEn: 'Lost Communication with Body Control Module (BCM)', severity: 'medium' },
+};
+
+/**
+ * Decodes raw DTC parameter values (AVL ID 282) according to SAE J2012 standards
+ */
+export function decodeDtcCodes(rawStr: string | undefined): DtcFaultCode[] {
+  if (!rawStr || rawStr.trim() === '' || rawStr === '0' || rawStr === '0000') {
+    return [];
+  }
+
+  const clean = rawStr.trim();
+  const codes: string[] = [];
+
+  // 1. Check if string already contains standard alphanumeric codes (e.g. "P0100, P0300" or "P0100")
+  const matches = clean.match(/[PCBU]\d{4}/gi);
+  if (matches && matches.length > 0) {
+    for (const m of matches) {
+      codes.push(m.toUpperCase());
+    }
+  } else if (/^[0-9A-Fa-f]+$/.test(clean) && clean.length >= 4) {
+    // 2. Decode standard 2-byte hex words according to SAE J2012 OBD-II format
+    for (let i = 0; i + 4 <= clean.length; i += 4) {
+      const hexWord = clean.substring(i, i + 4);
+      const val = parseInt(hexWord, 16);
+      if (val === 0) continue; // Skip padding null bytes
+
+      // First 2 bits (15-14) determine prefix
+      const prefixBits = (val >> 14) & 0x03;
+      const prefixes = ['P', 'C', 'B', 'U'];
+      const prefix = prefixes[prefixBits];
+
+      // Next 2 bits (13-12) determine first digit (0-3)
+      const digit1 = (val >> 12) & 0x03;
+      // Remaining 12 bits are 3 hex digits
+      const rest = (val & 0x0fff).toString(16).padStart(3, '0').toUpperCase();
+
+      codes.push(`${prefix}${digit1}${rest}`);
+    }
+  }
+
+  const uniqueCodes = Array.from(new Set(codes));
+
+  return uniqueCodes.map((code): DtcFaultCode => {
+    const entry = OBD2_DTC_DATABASE[code];
+    if (entry) {
+      return {
+        code,
+        standard: 'OBD-II',
+        subsystemAr: entry.subsystemAr,
+        subsystemEn: entry.subsystemEn,
+        descriptionAr: entry.descAr,
+        descriptionEn: entry.descEn,
+        severity: entry.severity,
+      };
+    }
+
+    const prefix = code[0].toUpperCase();
+    const subAr =
+      prefix === 'P'
+        ? 'منظومة المحرك وناقل الحركة'
+        : prefix === 'C'
+        ? 'منظومة الشاسيه والفرامل'
+        : prefix === 'B'
+        ? 'منظومة جسم السيارة والمقصورة'
+        : 'شبكة الاتصال وناقل الكان';
+    const subEn =
+      prefix === 'P'
+        ? 'Powertrain System'
+        : prefix === 'C'
+        ? 'Chassis & Brakes'
+        : prefix === 'B'
+        ? 'Body & Electronics'
+        : 'Network & Communication';
+
+    return {
+      code,
+      standard: 'Manufacturer',
+      subsystemAr: subAr,
+      subsystemEn: subEn,
+      descriptionAr: `كود عطل مسجل بكمبيوتر السيارة (${code})`,
+      descriptionEn: `Diagnostic Trouble Code reported by ECU (${code})`,
+      severity: 'medium',
+    };
+  });
+}
 
 /**
  * Parses raw string from AVL packet into properly signed/scaled number
@@ -894,6 +1145,25 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
   const gsmBars = getParsed(21);
   const operatorCode = getRaw(241) || null;
 
+  // --- 10. Vehicle Computer Diagnostics & DTC Trouble Codes ---
+  const rawDtcString = getRaw(282) || null;
+  const rawDtcCount = getParsed(160) ?? getParsed(30) ?? 0;
+  const parsedDtcCodes = decodeDtcCodes(rawDtcString || undefined);
+  const effectiveDtcCount = Math.max(rawDtcCount, parsedDtcCodes.length);
+  const milActive = checkEngineLight ?? false;
+  const vinRaw = getRaw(256) || null;
+
+  let diagnosticStatusAr = 'المنظومة سليمة (لا توجد أكواد أعطال مسجلة)';
+  let diagnosticStatusEn = 'System Normal (No DTC Detected)';
+
+  if (effectiveDtcCount > 0) {
+    diagnosticStatusAr = `تم رصد ${effectiveDtcCount} كود عطل مسجل بكمبيوتر السيارة`;
+    diagnosticStatusEn = `${effectiveDtcCount} DTC Fault Code(s) Detected`;
+  } else if (milActive) {
+    diagnosticStatusAr = 'لمبة فحص المحرك مضاءة (تنبيه فحص منظومة المحرك)';
+    diagnosticStatusEn = 'Check Engine MIL Warning Active';
+  }
+
   const activeCanIds = Array.from(ioMap.keys());
 
   return {
@@ -957,6 +1227,15 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
     cellular: {
       signalBars: gsmBars,
       operatorCode,
+    },
+    diagnostic: {
+      milActive,
+      dtcCount: effectiveDtcCount,
+      dtcCodes: parsedDtcCodes,
+      rawDtcString,
+      vin: vinRaw,
+      statusAr: diagnosticStatusAr,
+      statusEn: diagnosticStatusEn,
     },
     rawIoCount: record.ioElements?.length || 0,
     activeCanIds,
@@ -1122,17 +1401,48 @@ export function generateVehicleAlerts(metrics: CanMetrics): VehicleAlert[] {
     });
   }
 
-  // 6. Check Engine MIL Indicator Active
-  if (metrics.comfort.checkEngineLight) {
+  // 6. Check Engine MIL Indicator Active & DTC Faults
+  if (metrics.diagnostic.dtcCodes.length > 0) {
+    const codesList = metrics.diagnostic.dtcCodes.map((c) => c.code).join(', ');
+    const descList = metrics.diagnostic.dtcCodes
+      .map((c) => `${c.code}: ${c.descriptionAr}`)
+      .join(' · ');
+    alerts.push({
+      id: 'alert-dtc-codes',
+      type: 'danger',
+      titleAr: `تحذير: تم رصد كود عطل في كمبيوتر السيارة (${codesList})`,
+      titleEn: `Critical: Diagnostic Trouble Codes Detected (${codesList})`,
+      messageAr: `يسجل كمبيوتر السيارة كود العطل: ${descList}`,
+      messageEn: `Active vehicle ECU trouble codes: ${metrics.diagnostic.dtcCodes
+        .map((c) => `${c.code}: ${c.descriptionEn}`)
+        .join('; ')}`,
+      timestamp: now,
+      parameterId: 282,
+    });
+  } else if (metrics.diagnostic.milActive || metrics.comfort.checkEngineLight) {
     alerts.push({
       id: 'alert-mil',
       type: 'warning',
       titleAr: 'لمبة فحص المحرك مضاءة (Check Engine MIL)',
       titleEn: 'Check Engine Warning Light Active',
-      messageAr: 'يسجل كمبيوتر السيارة وجود كود عطل في منظومة المحرك (DTC).',
-      messageEn: 'Vehicle ECU is signaling active diagnostic trouble codes.',
+      messageAr: 'يسجل كمبيوتر السيارة وجود كود عطل نشط في منظومة المحرك والانبعاثات (DTC).',
+      messageEn: 'Vehicle ECU is signaling active diagnostic trouble codes via MIL lamp.',
       timestamp: now,
       parameterId: 132,
+    });
+  }
+
+  // 7. Unauthorized Movement / Towing Alert (Movement while ignition is OFF)
+  if (!metrics.ignition.isOn && metrics.isMoving.state && metrics.speed.gpsKmH > 8) {
+    alerts.push({
+      id: 'alert-towing',
+      type: 'danger',
+      titleAr: 'تحذير أمني: رصد حركة للمركبة أثناء إيقاف السويتش (اشتباه سحب/ونش)!',
+      titleEn: 'Security Alert: Movement Detected While Ignition OFF (Towing Suspected)!',
+      messageAr: `السيارة تتحرك بسرعة ${metrics.speed.gpsKmH} كم/س بينما مفتاح السويتش مطفأ تماماً. تحقق من موقع المركبة فوراً.`,
+      messageEn: `Vehicle is moving at ${metrics.speed.gpsKmH} km/h with ignition turned off. Verify vehicle location immediately.`,
+      timestamp: now,
+      parameterId: 240,
     });
   }
 

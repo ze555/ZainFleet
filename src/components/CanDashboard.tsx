@@ -15,6 +15,9 @@ import {
   Check,
   X,
   Clock,
+  ShieldAlert,
+  CheckCircle2,
+  Activity,
 } from 'lucide-react';
 import { formatCoordinates, getApproximateAddress } from '../utils/geoUtils.js';
 
@@ -195,26 +198,58 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
                 </span>
               </div>
 
-              <p className="text-xs font-medium text-slate-500 mt-0.5 truncate">
-                FMB140 CAN &bull; IMEI: {device.imei}
-              </p>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-1 font-mono">
+                <span>FMB140 CAN &bull; IMEI: {device.imei}</span>
+                {metrics && (
+                  <span
+                    className={`inline-flex items-center gap-1 px-2 py-0.2 rounded-md text-[10px] font-sans font-bold ${
+                      metrics.isMoving.state
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'bg-slate-100 text-slate-600 border border-slate-200'
+                    }`}
+                  >
+                    <Activity className="w-3 h-3" />
+                    <span>{isAr ? metrics.isMoving.labelAr : metrics.isMoving.labelEn}</span>
+                  </span>
+                )}
+              </div>
 
-              <div className="flex items-center gap-2 text-xs text-slate-400 mt-2 font-mono">
-                <Clock className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  {isAr ? 'آخر تحديث:' : 'Last update:'}{' '}
-                  {measurementDate
-                    ? `${measurementDate.toLocaleDateString(
-                        isAr ? 'ar-EG' : 'en-US'
-                      )} ${measurementDate.toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}`
-                    : '---'}
-                </span>
+              {/* Dual Timestamps: Device Measurement Time & Server Reception Time */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-400 mt-2 font-mono">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 shrink-0 text-blue-500" />
+                  <span>
+                    {isAr ? 'وقت قياس الجهاز:' : 'Device measured:'}{' '}
+                    <strong className="text-slate-700">
+                      {measurementDate
+                        ? `${measurementDate.toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit',
+                          })}`
+                        : '---'}
+                    </strong>
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-300">&bull;</span>
+                  <span>
+                    {isAr ? 'استلام الخادم:' : 'Server sync:'}{' '}
+                    <span className="text-slate-600">
+                      {telemetry?.receivedAt || device.lastPacketAt
+                        ? new Date(telemetry?.receivedAt || device.lastPacketAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : '---'}
+                    </span>
+                  </span>
+                </div>
+
                 {isStale && (
-                  <span className="text-[10px] text-amber-600 font-sans font-bold bg-amber-50 px-1.5 py-0.2 rounded-sm border border-amber-200">
-                    {isAr ? 'قراءة متوقفة' : 'Stale'}
+                  <span className="text-[10px] text-amber-700 font-sans font-bold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                    {isAr ? 'بيانات قديمة (> 5 د)' : 'Stale Data (> 5m)'}
                   </span>
                 )}
               </div>
@@ -414,8 +449,8 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {/* RPM */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {/* 1. RPM */}
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
             <span className="text-[11px] text-slate-400 block mb-0.5">
               {isAr ? 'دورات المحرك (RPM)' : 'Engine RPM'}
@@ -428,7 +463,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             </div>
           </div>
 
-          {/* Coolant Temp */}
+          {/* 2. Coolant Temp */}
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
             <span className="text-[11px] text-slate-400 block mb-0.5">
               {isAr ? 'حرارة المحرك' : 'Coolant Temp'}
@@ -445,10 +480,10 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             </div>
           </div>
 
-          {/* Battery Voltage */}
+          {/* 3. Battery Voltage & Alternator */}
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
             <span className="text-[11px] text-slate-400 block mb-0.5">
-              {isAr ? 'جهد بطارية السيارة' : 'Vehicle Voltage'}
+              {isAr ? 'جهد البطارية' : 'Vehicle Voltage'}
             </span>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold font-mono text-slate-900">
@@ -456,9 +491,12 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
               </span>
               <span className="text-[10px] text-slate-400">V</span>
             </div>
+            <span className="text-[9px] text-slate-400 block mt-0.5 font-medium truncate">
+              {metrics ? (isAr ? metrics.electrical.alternatorStatusAr : metrics.electrical.alternatorStatusEn) : '---'}
+            </span>
           </div>
 
-          {/* Total Odometer */}
+          {/* 4. Total Odometer */}
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
             <span className="text-[11px] text-slate-400 block mb-0.5">
               {isAr ? 'عداد المسافات الكلي' : 'Total Odometer'}
@@ -469,6 +507,64 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
               </span>
               <span className="text-[10px] text-slate-400">km</span>
             </div>
+          </div>
+
+          {/* 5. Fuel Tank */}
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+            <span className="text-[11px] text-slate-400 block mb-0.5">
+              {isAr ? 'مستوى الوقود' : 'Fuel Tank'}
+            </span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-lg font-bold font-mono text-slate-900">
+                {metrics && metrics.fuel.levelPercent !== null ? `${metrics.fuel.levelPercent}%` : '---'}
+              </span>
+            </div>
+            <span className="text-[9px] text-slate-400 block mt-0.5 font-medium">
+              {metrics && metrics.fuel.levelLiters !== null ? `${metrics.fuel.levelLiters} L` : 'CAN M-Bus'}
+            </span>
+          </div>
+
+          {/* 6. Diagnostics & DTCs */}
+          <div
+            onClick={() => onNavigate('vehicle')}
+            className={`p-3 rounded-xl border cursor-pointer transition-all hover:shadow-xs ${
+              (metrics?.diagnostic.dtcCount ?? 0) > 0 || (metrics?.diagnostic.milActive ?? false)
+                ? 'bg-amber-50/80 border-amber-300 text-amber-950'
+                : 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
+            }`}
+            title={isAr ? 'فتح تفاصيل فحص كمبيوتر السيارة والأعطال' : 'Open Vehicle Diagnostics'}
+          >
+            <span className="text-[11px] opacity-70 block mb-0.5">
+              {isAr ? 'كمبيوتر السيارة (DTC)' : 'Diagnostics (DTC)'}
+            </span>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {(metrics?.diagnostic.dtcCount ?? 0) > 0 || (metrics?.diagnostic.milActive ?? false) ? (
+                <>
+                  <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span className="font-bold text-xs truncate">
+                    {(metrics?.diagnostic.dtcCount ?? 0) > 0
+                      ? `${metrics?.diagnostic.dtcCount} ${isAr ? 'كود عطل!' : 'Faults'}`
+                      : isAr
+                      ? 'لمبة عطل!'
+                      : 'MIL Active!'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span className="font-bold text-xs text-emerald-800">
+                    {isAr ? 'سليم (No DTC)' : 'Normal'}
+                  </span>
+                </>
+              )}
+            </div>
+            <span className="text-[9px] opacity-60 block mt-0.5 truncate">
+              {metrics?.diagnostic.dtcCodes.length
+                ? metrics.diagnostic.dtcCodes.map((c) => c.code).join(', ')
+                : isAr
+                ? 'لا توجد أعطال'
+                : 'No codes'}
+            </span>
           </div>
         </div>
       </div>
