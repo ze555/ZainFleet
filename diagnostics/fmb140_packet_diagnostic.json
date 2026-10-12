@@ -1,0 +1,104 @@
+[
+  {
+    "connection": {
+      "imei": "864500000000001",
+      "receivedAtUtc": "2026-10-12T14:15:50.444Z",
+      "clientIp": "127.0.0.1",
+      "clientPort": 5000,
+      "packetSizeBytes": 48,
+      "connectionStatus": "connected"
+    },
+    "rawPacket": {
+      "fullHex": "000000000000002408010000018BCFE5680002FFED29790052E3240078005A08002A070101010C00000000010000AD12",
+      "packetLengthBytes": 48,
+      "codecId": "0x08 (Codec 8)",
+      "recordCount": 1,
+      "bytesConsumed": 48,
+      "preambleValid": true,
+      "crc16": {
+        "transmitted": "0xAD12",
+        "calculated": "0xAD12",
+        "valid": true
+      },
+      "structureValidation": {
+        "status": "OK",
+        "details": "Packet preamble (0x00000000) and CRC-16 polynomial 0xA001 matched successfully."
+      }
+    },
+    "avlRecords": [
+      {
+        "recordIndex": 1,
+        "deviceTimestampUtc": "2023-11-14T22:13:20.000Z",
+        "deviceTimestampMs": 1700000000000,
+        "priority": 2,
+        "priorityLabel": "Panic",
+        "eventIoId": 7,
+        "gps": {
+          "latitude": 0.54321,
+          "longitude": -0.1234567,
+          "altitudeMeters": 120,
+          "angleDegrees": 90,
+          "satellites": 8,
+          "speedKmh": 42,
+          "validFix": true
+        },
+        "allIoElementsReceived": [
+          {
+            "id": 1,
+            "rawHexOrValue": "12",
+            "byteLength": 1,
+            "catalogNameEn": "Digital Input 1 (DIN1 / Ignition wire)",
+            "catalogNameAr": "المدخل الرقمي 1 (سلك السويتش/Ignition)",
+            "unit": "State",
+            "decodedValue": 12,
+            "isCatalogKnown": true
+          }
+        ]
+      }
+    ],
+    "canObdAudit": {
+      "vehicleBatteryVoltageId66": {
+        "isSentByDevice": false,
+        "rawMillivolts": null,
+        "scaledVolts": null,
+        "status": "MISSING_NOT_CONFIGURED",
+        "diagnosisAr": "تحذير: العنصر AVL ID 66 (External Voltage) غائب تماماً من حزمة البيانات! السبب الأكيد: لم يتم تفعيل ID 66 في قائمة I/O في برنامج Teltonika Configurator، أو أن سلك التغذية الخارجي (Red wire +12V) غير متصل وموصول فقط عبر USB.",
+        "diagnosisEn": "CRITICAL WARNING: AVL ID 66 (External Voltage) is missing from this packet! Root cause: ID 66 is disabled or not set to Low/High priority in Teltonika Configurator I/O settings, or device is powered exclusively via USB without 12V vehicle battery power connected."
+      },
+      "trackerBackupBatteryId67": {
+        "isSentByDevice": false,
+        "rawMillivolts": null,
+        "scaledVolts": null,
+        "noteAr": "جهد بطارية جهاز التتبع الاحتياطية الداخلية (Li-Ion 3.7V - 4.2V) — ليست بطارية السيارة!",
+        "noteEn": "Internal tracker Li-Ion backup battery voltage (3.7V - 4.2V) — NOT the car battery!"
+      },
+      "canBusStatus": {
+        "totalCanParametersDetected": 0,
+        "detectedCanIoIds": [],
+        "isVehicleCanCommunicating": false,
+        "diagnosisAr": "تحذير: لا توجد أي قراءات CANbus أو OBD في هذه الحزمة. الأسباب: 1) لم يتم تفعيل قراءات الـ CAN في تبويب CAN Adapter أو OBD في الـ Configurator. 2) سويتش السيارة مطفأ (Ignition OFF). 3) أسلاك CAN High و CAN Low غير متصلة في فيشة الـ OBD بالمركبة.",
+        "diagnosisEn": "WARNING: No CANbus or OBD readings found in this packet. Root causes: 1) CAN Adapter / OBD I/O elements are disabled in Configurator. 2) Vehicle ignition is OFF. 3) CAN High and CAN Low wires are not tapped into the vehicle OBD-II pins."
+      },
+      "diagnosticTroubleCodes": {
+        "milLampActive": false,
+        "dtcCountReported": 0,
+        "rawDtcData": null,
+        "activeTroubleCodes": [],
+        "statusAr": "المنظومة سليمة (لا توجد أكواد أعطال مسجلة)",
+        "statusEn": "System Normal (No DTC Detected)"
+      },
+      "decodedParametersTable": [
+        {
+          "avlId": 1,
+          "nameEn": "Digital Input 1 (DIN1 / Ignition wire)",
+          "nameAr": "المدخل الرقمي 1 (سلك السويتش/Ignition)",
+          "rawBeforeMultiplier": "12",
+          "multiplierApplied": "1",
+          "scaledEngineeringValue": 12,
+          "unit": "State",
+          "source": "Device Hardware IO"
+        }
+      ]
+    }
+  }
+]

@@ -18,6 +18,8 @@ import {
   ShieldAlert,
   CheckCircle2,
   Activity,
+  Terminal,
+  Download,
 } from 'lucide-react';
 import { formatCoordinates, getApproximateAddress } from '../utils/geoUtils.js';
 
@@ -433,6 +435,49 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
         </div>
       </div>
 
+      {/* 2.5 Diagnostic & FMB140 Packet Log Banner */}
+      <div className="bg-gradient-to-r from-slate-900 to-blue-950 text-white rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 border border-blue-400/30">
+            <Terminal className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-xs text-white">
+                {isAr ? 'فحص حزم البيانات والتشخيص (FMB140 Diagnostic)' : 'FMB140 Packet & CAN Diagnostics'}
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/30 text-blue-200">
+                Log Ready
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-300 mt-0.5">
+              {isAr
+                ? 'تشخيص أسباب غياب جهد بطارية السيارة الرئيسي (ID 66) وبيانات CAN مع رابط تنزيل ملف الـ Log لـ ChatGPT.'
+                : 'Audit vehicle battery voltage (ID 66) & CAN sensors. Download diagnostic packet log for ChatGPT.'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <a
+            href="/api/diagnostics/download"
+            download="fmb140_packet_diagnostic.json"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-xs"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>{isAr ? 'تحميل الـ Log' : 'Download Log'}</span>
+          </a>
+
+          <button
+            onClick={() => onNavigate('diagnostics')}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
+          >
+            <span>{isAr ? 'عرض التفاصيل' : 'Inspect'}</span>
+            <ExternalLink className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+
       {/* 3. Key Vehicle Vitals Quick Cards (RPM, Coolant, Battery, Odometer) */}
       <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
         <div className="flex items-center justify-between mb-4">
@@ -483,7 +528,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           {/* 3. Battery Voltage & Alternator */}
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
             <span className="text-[11px] text-slate-400 block mb-0.5">
-              {isAr ? 'جهد البطارية' : 'Vehicle Voltage'}
+              {isAr ? 'جهد بطارية السيارة' : 'Vehicle Voltage'}
             </span>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold font-mono text-slate-900">
@@ -492,7 +537,13 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
               <span className="text-[10px] text-slate-400">V</span>
             </div>
             <span className="text-[9px] text-slate-400 block mt-0.5 font-medium truncate">
-              {metrics ? (isAr ? metrics.electrical.alternatorStatusAr : metrics.electrical.alternatorStatusEn) : '---'}
+              {metrics && metrics.electrical.vehicleVoltageV !== null
+                ? isAr
+                  ? metrics.electrical.alternatorStatusAr
+                  : metrics.electrical.alternatorStatusEn
+                : isAr
+                ? 'ID 66 غير مفعل'
+                : 'ID 66 disabled'}
             </span>
           </div>
 

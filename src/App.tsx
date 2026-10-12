@@ -6,6 +6,7 @@ import { TripsList } from './components/TripsList.tsx';
 import { VehicleDataView } from './components/VehicleDataView.tsx';
 import { AlertsView } from './components/AlertsView.tsx';
 import { CanSensorsLog } from './components/CanSensorsLog.tsx';
+import { DiagnosticView } from './components/DiagnosticView.tsx';
 import { PrivacyPolicy } from './components/PrivacyPolicy.tsx';
 import { BottomNav } from './components/BottomNav.tsx';
 import { MobileDrawer } from './components/MobileDrawer.tsx';
@@ -318,7 +319,12 @@ export const App: React.FC = () => {
           <CanSensorsLog telemetry={telemetry} lang={lang} />
         )}
 
-        {/* View 7: Privacy Policy */}
+        {/* View 7: FMB140 Packet & CAN/OBD Diagnostics & Log Downloader */}
+        {currentTab === 'diagnostics' && (
+          <DiagnosticView device={selectedDevice} lang={lang} />
+        )}
+
+        {/* View 8: Privacy Policy */}
         {currentTab === 'privacy' && <PrivacyPolicy />}
       </main>
 

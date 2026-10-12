@@ -11,6 +11,7 @@ import {
   Radio,
   Menu,
   Compass,
+  Terminal,
 } from 'lucide-react';
 import { DeviceInfo } from '../types/fleet.js';
 
@@ -155,6 +156,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Layers className="w-4 h-4 text-violet-600" />
               <span>{isAr ? 'الحساسات' : 'Sensors'}</span>
+            </button>
+
+            <button
+              onClick={() => setCurrentTab('diagnostics')}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-colors ${
+                currentTab === 'diagnostics'
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Terminal className="w-4 h-4 text-blue-600" />
+              <span>{isAr ? 'التشخيص والـ Log' : 'Diagnostics & Log'}</span>
             </button>
 
             <button

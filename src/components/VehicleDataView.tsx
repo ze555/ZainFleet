@@ -16,6 +16,8 @@ import {
   CheckCircle2,
   FileText,
   Info,
+  Download,
+  AlertTriangle,
 } from 'lucide-react';
 import { formatCoordinates } from '../utils/geoUtils.js';
 
@@ -339,6 +341,36 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                 </span>
               </div>
             </div>
+
+            {/* Diagnostic Alert if ID 66 is Missing */}
+            {metrics.electrical.vehicleVoltageV === null && (
+              <div className="mt-4 p-4 rounded-xl bg-amber-50/80 border border-amber-200 text-xs text-amber-950 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      {isAr
+                        ? 'تنبيه تشخيصي: قراءة جهد بطارية السيارة الرئيسي (ID 66) غير مرسلة من جهاز FMB140!'
+                        : 'Diagnostic Alert: Main Vehicle Battery Voltage (ID 66) is missing from packet stream!'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-amber-800 leading-relaxed">
+                    {isAr
+                      ? 'الجهاز يرسل فقط بطارية الليثيوم الداخلية (ID 67). لتفعيل قراءة بطارية السيارة 12V: في Teltonika Configurator، ادخل تبويب I/O وفعّل ID 66 (External Voltage) واضبط أولويته على Low أو High.'
+                      : 'The device is transmitting internal Li-Ion battery (ID 67). To enable vehicle 12V voltage: In Teltonika Configurator I/O tab, enable ID 66 (External Voltage) with Priority Low/High.'}
+                  </p>
+                </div>
+
+                <a
+                  href="/api/diagnostics/download"
+                  download="fmb140_packet_diagnostic.json"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shrink-0 shadow-xs transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>{isAr ? 'تحميل الـ Log' : 'Download Log'}</span>
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Section 4: عداد المسافات والراحة (Odometer & Comfort / C-CAN) */}
@@ -504,8 +536,17 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                 </div>
               </div>
 
-              {/* MIL Lamp Status Badge */}
-              <div className="flex items-center gap-2">
+              {/* Actions & MIL Lamp Status Badge */}
+              <div className="flex flex-wrap items-center gap-2">
+                <a
+                  href="/api/diagnostics/download"
+                  download="fmb140_packet_diagnostic.json"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>{isAr ? 'تحميل سجل التشخيص' : 'Download Diagnostic Log'}</span>
+                </a>
+
                 <span
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold ${
                     metrics.diagnostic.milActive

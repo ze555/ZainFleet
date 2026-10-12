@@ -12,6 +12,7 @@ import { tryParseImei } from './src/protocol/imeiParser.js';
 import { hexStringToBytes } from './src/protocol/fixtures.js';
 import { DeviceInfo, TelemetrySnapshot, AvlRecord } from './src/types/fleet.js';
 import { segmentRecordsIntoTrips } from './src/utils/canBusDecoder.js';
+import { diagnosticLogger } from './src/utils/diagnosticLogger.js';
 
 // --- Persistent File Storage for Real Vehicle Telemetry ---
 const DATA_DIR = path.resolve(process.cwd(), 'data');
@@ -277,6 +278,19 @@ const tcpServer = net.createServer((socket) => {
           `[TCP] PACKET RECEIVED ${imei}: ${decoded.records.length} records (Codec 0x${decoded.codecId.toString(16).toUpperCase()})`
         );
 
+        // Record to comprehensive FMB140 diagnostic packet log
+        try {
+          diagnosticLogger.recordPacket(
+            imei || 'pending_handshake',
+            socket.remoteAddress || 'unknown',
+            socket.remotePort || 0,
+            new Uint8Array(packetBytes),
+            decoded
+          );
+        } catch (diagErr) {
+          console.warn('[TCP] Diagnostic logging error:', diagErr);
+        }
+
         const seenIso = new Date().toISOString();
         if (imei) {
           let latestGpsTime = '';
@@ -387,13 +401,25 @@ app.get('/api/devices/:imei/latest', (req: Request, res: Response) => {
 // Advanced API endpoint: Parse and inspect any Teltonika raw hex frame
 app.post('/api/packets/decode', (req: Request, res: Response) => {
   try {
-    const { hex } = req.body;
+    const { hex, imei } = req.body;
     if (!hex || typeof hex !== 'string') {
       res.status(400).json({ error: 'Missing or invalid "hex" field in request body' });
       return;
     }
     const bytes = hexStringToBytes(hex);
     const decoded = decodeTeltonikaFrame(bytes);
+
+    // Also record into diagnostic log for inspection and troubleshooting
+    try {
+      diagnosticLogger.recordPacket(
+        imei || 'simulated_decoder',
+        req.ip || '127.0.0.1',
+        0,
+        bytes,
+        decoded
+      );
+    } catch {}
+
     res.json({
       success: true,
       ...decoded,
@@ -404,6 +430,43 @@ app.post('/api/packets/decode', (req: Request, res: Response) => {
       error: err.message || 'Failed to decode packet',
     });
   }
+});
+
+// Diagnostic Endpoints for FMB140 Battery Voltage & CAN Bus Investigation
+app.get('/api/diagnostics/summary', (_req: Request, res: Response) => {
+  res.json(diagnosticLogger.getSummary());
+});
+
+app.get('/api/diagnostics/download', (_req: Request, res: Response) => {
+  const filePath = diagnosticLogger.getJsonPath();
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({ error: 'Diagnostic log file not found' });
+    return;
+  }
+  res.download(filePath, 'fmb140_packet_diagnostic.json');
+});
+
+app.get('/api/diagnostics/download-log', (_req: Request, res: Response) => {
+  const filePath = diagnosticLogger.getLogPath();
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({ error: 'Diagnostic text log file not found' });
+    return;
+  }
+  res.download(filePath, 'fmb140_packet_diagnostic.log');
+});
+
+app.get('/api/devices/:imei/diagnostics/download', (req: Request, res: Response) => {
+  const filePath = diagnosticLogger.getJsonPath();
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({ error: 'Diagnostic log file not found' });
+    return;
+  }
+  res.download(filePath, `fmb140_packet_diagnostic_${req.params.imei}.json`);
+});
+
+app.post('/api/diagnostics/clear', (_req: Request, res: Response) => {
+  diagnosticLogger.clear();
+  res.json({ success: true, message: 'Diagnostic logs cleared' });
 });
 
 // Telemetry History endpoint

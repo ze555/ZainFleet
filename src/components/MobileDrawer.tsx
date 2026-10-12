@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   Globe,
   Radio,
+  Terminal,
 } from 'lucide-react';
 import { DeviceInfo } from '../types/fleet.js';
 
@@ -195,7 +196,21 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
           >
             <div className="flex items-center gap-3">
               <Layers className="w-4 h-4" />
-              <span>{isAr ? 'جميع الحساسات (تشخيصي)' : 'Diagnostics & Sensors'}</span>
+              <span>{isAr ? 'جميع الحساسات (Sensors)' : 'Sensors Catalog'}</span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('diagnostics')}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-colors ${
+              currentTab === 'diagnostics'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <Terminal className="w-4 h-4 text-blue-400" />
+              <span>{isAr ? 'التشخيص وتحميل الـ Log' : 'Diagnostics & Download Log'}</span>
             </div>
           </button>
 
