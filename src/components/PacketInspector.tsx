@@ -98,7 +98,7 @@ export const PacketInspector: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
-      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs">
+      <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm p-6 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
           <div>
             <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -160,7 +160,7 @@ export const PacketInspector: React.FC = () => {
             <button
               onClick={handleDecode}
               disabled={isDecoding || !hexInput.trim()}
-              className="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs transition-colors flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors flex items-center gap-2 disabled:opacity-50"
             >
               <Play className="w-3.5 h-3.5" />
               <span>{isDecoding ? 'Decoding...' : 'Decode Frame'}</span>
@@ -171,7 +171,7 @@ export const PacketInspector: React.FC = () => {
 
       {/* Result Section */}
       {result && (
-        <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-6">
+        <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm p-6 shadow-sm space-y-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div className="flex items-center gap-3">
               {result.success ? (
