@@ -280,9 +280,9 @@ export class DiagnosticFileManager {
     } else {
       id66Status = 'MISSING_NOT_CONFIGURED';
       id66DiagnosisAr =
-        'العنصر AVL ID 66 غير موجود في هذه الحزمة؛ تحقق من إعدادات I/O وتغذية الجهاز قبل تحديد السبب.';
+        'تحذير: العنصر AVL ID 66 (External Voltage) غائب تماماً من حزمة البيانات! السبب الأكيد: لم يتم تفعيل ID 66 في قائمة I/O في برنامج Teltonika Configurator، أو أن سلك التغذية الخارجي (Red wire +12V) غير متصل وموصول فقط عبر USB.';
       id66DiagnosisEn =
-        'AVL ID 66 was not transmitted in this packet; check I/O settings and device power before diagnosing the cause.';
+        'CRITICAL WARNING: AVL ID 66 (External Voltage) is missing from this packet! Root cause: ID 66 is disabled or not set to Low/High priority in Teltonika Configurator I/O settings, or device is powered exclusively via USB without 12V vehicle battery power connected.';
     }
 
     // Check ID 67: Internal Li-Ion Battery
@@ -290,10 +290,8 @@ export class DiagnosticFileManager {
     const id67Volts = id67Raw !== null ? Math.round((Number(id67Raw) / 1000) * 100) / 100 : null;
 
     // CAN bus parameter check
-    const detectedCanIds = Array.from(ioMap.keys()).filter((id) => {
-      const source = CAN_PARAMETER_CATALOG[id]?.source;
-      return source === 'can_powertrain' || source === 'can_comfort' || source === 'obd';
-    });
+    const knownCanIds = [16, 24, 30, 31, 32, 33, 36, 81, 82, 83, 85, 86, 87, 88, 89, 90, 100, 101, 102, 103, 104, 105, 132, 160, 242, 252, 256, 282];
+    const detectedCanIds = Array.from(ioMap.keys()).filter((id) => knownCanIds.includes(id));
     const isVehicleCanCommunicating = detectedCanIds.length > 0;
 
     let canDiagnosisAr = '';
@@ -303,9 +301,9 @@ export class DiagnosticFileManager {
       canDiagnosisEn = `Received ${detectedCanIds.length} CAN/OBD parameters: [${detectedCanIds.join(', ')}].`;
     } else {
       canDiagnosisAr =
-        'لم يتم استقبال عناصر CAN/OBD معروفة في هذه الحزمة. تحقق من توافق المركبة، التوصيلات، إعداد CAN وتهيئة إرسال AVL.';
+        'تحذير: لا توجد أي قراءات CANbus أو OBD في هذه الحزمة. الأسباب: 1) لم يتم تفعيل قراءات الـ CAN في تبويب CAN Adapter أو OBD في الـ Configurator. 2) سويتش السيارة مطفأ (Ignition OFF). 3) أسلاك CAN High و CAN Low غير متصلة في فيشة الـ OBD بالمركبة.';
       canDiagnosisEn =
-        'No known CAN/OBD elements were received in this packet. Verify vehicle support, wiring, CAN configuration, and enabled AVL parameters.';
+        'WARNING: No CANbus or OBD readings found in this packet. Root causes: 1) CAN Adapter / OBD I/O elements are disabled in Configurator. 2) Vehicle ignition is OFF. 3) CAN High and CAN Low wires are not tapped into the vehicle OBD-II pins.';
     }
 
     // DTC codes

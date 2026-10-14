@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { TelemetrySnapshot } from '../types/fleet.js';
-import { CAN_PARAMETER_CATALOG, parseParameterValue } from '../utils/canBusDecoder.js';
 import { Layers, Search, Copy, Check, Info } from 'lucide-react';
 
 interface CanSensorsLogProps {
@@ -273,7 +272,7 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
 
     // Category filter
     if (categoryFilter === 'engine') {
-      const isEngine = CAN_PARAMETER_CATALOG[el.id]?.source === 'can_powertrain' || CAN_PARAMETER_CATALOG[el.id]?.source === 'obd';
+      const isEngine = [1, 24, 32, 33, 81, 85, 86, 115, 239].includes(el.id);
       if (!isEngine) return false;
     } else if (categoryFilter === 'fuel') {
       const isFuel = [82, 83, 84, 89, 90, 114].includes(el.id);
@@ -282,7 +281,7 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
       const isElectrical = [66, 67, 68, 113].includes(el.id);
       if (!isElectrical) return false;
     } else if (categoryFilter === 'other') {
-      const isKnown = CAN_PARAMETER_CATALOG[el.id]?.source === 'can_powertrain' || CAN_PARAMETER_CATALOG[el.id]?.source === 'obd' || [66,67,68].includes(el.id);
+      const isKnown = [1, 24, 32, 33, 81, 85, 86, 115, 239, 82, 83, 84, 89, 90, 114, 66, 67, 68, 113].includes(el.id);
       if (isKnown) return false;
     }
 
@@ -305,8 +304,8 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             {isAr
-              ? `جميع عناصر AVL المستقبلة من الجهاز (${elements.length} بارامتر)`
-              : `All received AVL parameters, including tracker and CAN data (${elements.length} parameters)`}
+              ? `قراءة حية لجميع معلمات ناقل بيانات السيارة CAN Bus المستقبلة (${elements.length} بارامتر)`
+              : `Live decoded parameters received directly from vehicle CAN bus (${elements.length} parameters)`}
           </p>
         </div>
 
@@ -393,8 +392,8 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
           <table className="w-full text-xs text-left">
             <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
               <tr>
-                <th className="py-2.5 px-4">{isAr ? 'معرّف العنصر AVL ID' : 'Parameter ID'}</th>
-                <th className="py-2.5 px-4">{isAr ? 'اسم البارامتر والوظيفة' : 'AVL Parameter & Meaning'}</th>
+                <th className="py-2.5 px-4">{isAr ? 'معرف الحساس (CAN ID)' : 'Parameter ID'}</th>
+                <th className="py-2.5 px-4">{isAr ? 'اسم البارامتر والوظيفة' : 'CAN Parameter & Meaning'}</th>
                 <th className="py-2.5 px-4">{isAr ? 'الناقل (Bus)' : 'Bus'}</th>
                 <th className="py-2.5 px-4">{isAr ? 'القيمة الحالية' : 'Decoded Value'}</th>
                 <th className="py-2.5 px-4">{isAr ? 'القيمة الخام' : 'Raw Value'}</th>
@@ -402,8 +401,8 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
             </thead>
             <tbody className="divide-y divide-slate-100 font-sans">
               {filteredElements.map((el) => {
-                const info = CAN_PARAMETER_CATALOG[el.id];
-                const decodedText = info ? parseParameterValue(info, el.value).formatted : el.value;
+                const info = KNOWN_CAN_PARAMS[el.id];
+                const decodedText = info?.format ? info.format(el.value) : el.value;
 
                 return (
                   <tr key={el.id} className="hover:bg-slate-50/80 transition-colors">
@@ -412,7 +411,7 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
                     </td>
                     <td className="py-3 px-4">
                       <div className="font-semibold text-slate-900">
-                        {isAr ? info?.nameAr || `عنصر AVL غير معرّف ${el.id}` : info?.nameEn || `Unknown AVL element #${el.id}`}
+                        {isAr ? info?.nameAr || `حساس CAN برقم ${el.id}` : info?.nameEn || `CAN Parameter #${el.id}`}
                       </div>
                       <div className="text-[11px] text-slate-400">
                         {info?.unit ? `Unit: ${info.unit}` : `${el.byteLength} byte(s)`}
@@ -420,11 +419,11 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
                     </td>
                     <td className="py-3 px-4">
                       <span className="text-[11px] font-medium text-slate-600">
-                        {info?.sourceBusLabelEn || 'Unknown source'}
+                        {info?.category || 'M-CAN / C-CAN'}
                       </span>
                     </td>
                     <td className="py-3 px-4 font-mono font-bold text-slate-900">
-                      {decodedText}
+                      {decodedText} {info?.unit && !info?.format ? info.unit : ''}
                     </td>
                     <td className="py-3 px-4 font-mono text-slate-400 text-[11px]">
                       {el.value}
