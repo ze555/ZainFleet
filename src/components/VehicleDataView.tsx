@@ -613,8 +613,20 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
             </div>
           ) : (
             <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center shadow-xs space-y-3">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center">
-                <CheckCircle2 className="w-8 h-8" />
+              <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center ${
+                dtcCount > 0 || metrics.diagnostic.milActive
+                  ? 'bg-amber-50 text-amber-600'
+                  : hasDtcData
+                  ? 'bg-emerald-50 text-emerald-600'
+                  : 'bg-slate-100 text-slate-500'
+              }`}>
+                {dtcCount > 0 || metrics.diagnostic.milActive ? (
+                  <ShieldAlert className="w-8 h-8" />
+                ) : hasDtcData ? (
+                  <CheckCircle2 className="w-8 h-8" />
+                ) : (
+                  <Info className="w-8 h-8" />
+                )}
               </div>
               <h4 className="text-base sm:text-lg font-bold text-slate-900">
                 {dtcCount > 0
