@@ -15,6 +15,42 @@ import {
  * https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID
  */
 export const CAN_PARAMETER_CATALOG: Record<number, CanParameterDefinition> = {
+  69: {
+    id: 69, officialName: 'GNSS Status', nameAr: 'حالة استقبال الأقمار الصناعية', nameEn: 'GNSS Status',
+    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع', sourceBusLabelEn: 'Tracker GNSS / System',
+    byteLength: 1, signed: false, multiplier: 1, unit: 'State',
+    valueRange: '0 - 3',
+    descriptionAr: 'حالة تحديد الموقع عبر الأقمار الصناعية', descriptionEn: 'GNSS Status (not a vehicle CAN sensor)',
+    configDependency: 'Device AVL I/O configuration', verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
+  },
+  181: {
+    id: 181, officialName: 'GNSS PDOP', nameAr: 'مؤشر دقة تحديد الموقع PDOP', nameEn: 'GNSS PDOP',
+    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع', sourceBusLabelEn: 'Tracker GNSS / System',
+    byteLength: 2, signed: false, multiplier: 0.1, unit: 'DOP',
+    valueRange: '0 - 500 (raw)',
+    descriptionAr: 'مؤشر دقة الموقع بعد تطبيق معامل 0.1', descriptionEn: 'GNSS PDOP (not a vehicle CAN sensor)',
+    configDependency: 'Device AVL I/O configuration', verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
+  },
+  182: {
+    id: 182, officialName: 'GNSS HDOP', nameAr: 'مؤشر الدقة الأفقية HDOP', nameEn: 'GNSS HDOP',
+    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع', sourceBusLabelEn: 'Tracker GNSS / System',
+    byteLength: 2, signed: false, multiplier: 0.1, unit: 'DOP',
+    valueRange: '0 - 500 (raw)',
+    descriptionAr: 'الدقة الأفقية بعد تطبيق معامل 0.1', descriptionEn: 'GNSS HDOP (not a vehicle CAN sensor)',
+    configDependency: 'Device AVL I/O configuration', verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
+  },
+  200: {
+    id: 200, officialName: 'Sleep Mode', nameAr: 'وضع سكون جهاز التتبع', nameEn: 'Sleep Mode',
+    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع', sourceBusLabelEn: 'Tracker GNSS / System',
+    byteLength: 1, signed: false, multiplier: 1, unit: 'State',
+    valueRange: '0 - 4',
+    descriptionAr: 'وضع النوم الخاص بالجهاز وليس السيارة', descriptionEn: 'Sleep Mode (not a vehicle CAN sensor)',
+    configDependency: 'Device AVL I/O configuration', verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
+  },
   1: {
     id: 1,
     officialName: 'Digital Input 1 (DIN1)',
