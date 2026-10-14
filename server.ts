@@ -176,14 +176,17 @@ const deviceRepo = new PersistentDeviceRepository();
 const telemetryRepo = new PersistentTelemetryRepository();
 
 // --- Teltonika TCP Server (raw TCP socket) ---
-const TCP_PORT = parseInt(process.env.TCP_PORT || '5000', 10);
-let HTTP_PORT = parseInt(process.env.PORT || '3000', 10);
-if (HTTP_PORT === TCP_PORT) {
-  // If user set PORT=5000 in Railway variables, avoid port collision with TCP listener
-  const fallback = process.env.NODE_ENV === 'production' ? 8080 : 3000;
-  console.warn(`[Port Config] PORT and TCP_PORT both configured to ${TCP_PORT}. Directing HTTP server to ${fallback}.`);
-  HTTP_PORT = fallback;
+// HTTP and raw Teltonika TCP are two independent services.
+// Railway's generic PORT can be set to 5000 for its TCP proxy; it does not
+// determine which port the web dashboard uses. Configure the HTTP domain's
+// target port as 8080 and the TCP proxy's target port as 5000.
+const TCP_PORT = Number(process.env.TCP_PORT ?? '5000');
+const HTTP_PORT = Number(process.env.HTTP_PORT ?? '8080');
+const validPort = (port: number) => Number.isInteger(port) && port > 0 && port <= 65535;
+if (!validPort(TCP_PORT) || !validPort(HTTP_PORT) || TCP_PORT === HTTP_PORT) {
+  throw new Error(`Invalid port configuration: TCP_PORT=${TCP_PORT}, HTTP_PORT=${HTTP_PORT}. Both must be distinct valid ports.`);
 }
+console.log(`[Port Config] Teltonika TCP=${TCP_PORT}; dashboard HTTP=${HTTP_PORT}`);
 const TCP_IDLE_TIMEOUT_MS = parseInt(process.env.TCP_IDLE_TIMEOUT_SECONDS || '300', 10) * 1000;
 const TCP_MAX_PACKET_BYTES = parseInt(process.env.TCP_MAX_PACKET_BYTES || '1048576', 10);
 

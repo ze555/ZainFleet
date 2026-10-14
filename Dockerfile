@@ -9,7 +9,7 @@ RUN npm run build
 FROM node:22-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=8080
+ENV HTTP_PORT=8080
 ENV TCP_PORT=5000
 COPY package*.json ./
 RUN npm install --omit=dev
