@@ -617,7 +617,11 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <h4 className="text-base sm:text-lg font-bold text-slate-900">
-                {hasDtcData
+                {dtcCount > 0
+                  ? isAr
+                    ? `تم الإبلاغ عن ${dtcCount} أعطال، لكن تفاصيل الأكواد غير متاحة`
+                    : `${dtcCount} DTC(s) reported; code details are unavailable`
+                  : hasDtcData
                   ? isAr
                     ? 'لم يتم الإبلاغ عن أكواد أعطال'
                     : 'No DTC codes reported'
@@ -626,7 +630,11 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                   : 'DTC data has not been reported'}
               </h4>
               <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-                {hasDtcData
+                {dtcCount > 0
+                  ? isAr
+                    ? 'تحقق من إعداد إرسال تفاصيل الأكواد في الجهاز لعرض رموز الأعطال.'
+                    : 'Enable fault-code I/O reporting on the tracker to view the individual codes.'
+                  : hasDtcData
                   ? isAr
                     ? 'أبلغ كمبيوتر السيارة عن عدم وجود أكواد أعطال نشطة.'
                     : 'The vehicle ECU reported no active fault codes.'
