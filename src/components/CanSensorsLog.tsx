@@ -294,7 +294,7 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
   });
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4 max-w-5xl mx-auto pb-12">
+    <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-5 shadow-sm space-y-4 max-w-5xl mx-auto pb-12">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
         <div>
@@ -338,7 +338,7 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
           onClick={() => setCategoryFilter('all')}
           className={`px-3 py-1.5 rounded-xl transition-colors ${
             categoryFilter === 'all'
-              ? 'bg-blue-600 text-white shadow-xs'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
           }`}
         >
@@ -348,7 +348,7 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
           onClick={() => setCategoryFilter('engine')}
           className={`px-3 py-1.5 rounded-xl transition-colors ${
             categoryFilter === 'engine'
-              ? 'bg-blue-600 text-white shadow-xs'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
           }`}
         >
@@ -358,7 +358,7 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
           onClick={() => setCategoryFilter('fuel')}
           className={`px-3 py-1.5 rounded-xl transition-colors ${
             categoryFilter === 'fuel'
-              ? 'bg-blue-600 text-white shadow-xs'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
           }`}
         >
@@ -368,7 +368,7 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
           onClick={() => setCategoryFilter('electrical')}
           className={`px-3 py-1.5 rounded-xl transition-colors ${
             categoryFilter === 'electrical'
-              ? 'bg-blue-600 text-white shadow-xs'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
           }`}
         >
@@ -378,7 +378,7 @@ export const CanSensorsLog: React.FC<CanSensorsLogProps> = ({ telemetry, lang })
           onClick={() => setCategoryFilter('other')}
           className={`px-3 py-1.5 rounded-xl transition-colors ${
             categoryFilter === 'other'
-              ? 'bg-blue-600 text-white shadow-xs'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
           }`}
         >
