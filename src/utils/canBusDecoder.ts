@@ -1147,9 +1147,14 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
 
   // --- 10. Vehicle Computer Diagnostics & DTC Trouble Codes ---
   const rawDtcString = getRaw(282) ?? getRaw(281) ?? null;
+  const dtc281Raw = getRaw(281);
+  const dtc281Ascii =
+    dtc281Raw && /^(?:[0-9A-Fa-f]{2})+$/.test(dtc281Raw)
+      ? (dtc281Raw.match(/.{2}/g) || []).map((byte) => String.fromCharCode(parseInt(byte, 16))).join('')
+      : dtc281Raw;
   const rawDtcCount = getParsed(30) ?? getParsed(160) ?? 0;
   const dtcDataReported = [30, 160, 281, 282].some((id) => getRaw(id) !== undefined);
-  const parsedDtcCodes = decodeDtcCodes(rawDtcString || undefined);
+  const parsedDtcCodes = decodeDtcCodes(getRaw(282) ?? dtc281Ascii ?? undefined);
   const effectiveDtcCount = Math.max(rawDtcCount, parsedDtcCodes.length);
   const milActive = checkEngineLight ?? false;
   const vinRaw = getRaw(256) || null;
