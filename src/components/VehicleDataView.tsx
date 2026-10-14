@@ -45,7 +45,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
 
   if (!record || !metrics) {
     return (
-      <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center shadow-xs space-y-3 max-w-4xl mx-auto">
+      <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center shadow-sm space-y-3 max-w-4xl mx-auto">
         <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 mx-auto flex items-center justify-center">
           <Car className="w-8 h-8" />
         </div>
@@ -67,7 +67,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
   return (
     <div className="space-y-4 max-w-4xl mx-auto pb-12">
       {/* Title & Sub-tabs Header */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
             <Car className="w-5 h-5" />
@@ -91,7 +91,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
               onClick={() => setSubTab('can')}
               className={`px-3 py-1.5 rounded-lg transition-colors shrink-0 ${
                 subTab === 'can'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'hover:text-slate-900'
               }`}
             >
@@ -101,7 +101,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
               onClick={() => setSubTab('dtc')}
               className={`relative px-3 py-1.5 rounded-lg transition-colors shrink-0 flex items-center gap-1.5 ${
                 subTab === 'dtc'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'hover:text-slate-900'
               }`}
             >
@@ -114,7 +114,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
               onClick={() => setSubTab('gps')}
               className={`px-3 py-1.5 rounded-lg transition-colors shrink-0 ${
                 subTab === 'gps'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'hover:text-slate-900'
               }`}
             >
@@ -124,7 +124,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
               onClick={() => setSubTab('device')}
               className={`px-3 py-1.5 rounded-lg transition-colors shrink-0 ${
                 subTab === 'device'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'hover:text-slate-900'
               }`}
             >
@@ -147,7 +147,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
       {subTab === 'can' && (
         <div className="space-y-4">
           {/* Section 1: المحرك ونظام الحركة (Engine & Transmission) */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+          <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-5 shadow-sm">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-4">
               <Gauge className="w-4 h-4 text-blue-600" />
               <span>{isAr ? '1. المحرك ونظام الحركة (M-CAN / Powertrain)' : '1. Engine & Powertrain (M-CAN)'}</span>
@@ -218,7 +218,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
           </div>
 
           {/* Section 2: خزان الوقود وكفاءة الاستهلاك (Fuel & Efficiency) */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+          <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-5 shadow-sm">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-4">
               <Fuel className="w-4 h-4 text-emerald-600" />
               <span>{isAr ? '2. الوقود واستهلاك الطاقة (Fuel & Efficiency)' : '2. Fuel & Consumption (CAN)'}</span>
@@ -277,7 +277,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
           </div>
 
           {/* Section 3: البطارية والمنظومة الكهربائية (Battery & Electrical) */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+          <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-5 shadow-sm">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-4">
               <Zap className="w-4 h-4 text-amber-500" />
               <span>{isAr ? '3. البطارية والمنظومة الكهربائية (Battery & Electrical)' : '3. Battery & Electrical System'}</span>
@@ -364,7 +364,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                 <a
                   href="/api/diagnostics/download"
                   download="fmb140_packet_diagnostic.json"
-                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shrink-0 shadow-xs transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white shrink-0 shadow-sm transition-colors"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>{isAr ? 'تحميل الـ Log' : 'Download Log'}</span>
@@ -374,7 +374,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
           </div>
 
           {/* Section 4: عداد المسافات والراحة (Odometer & Comfort / C-CAN) */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+          <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-5 shadow-sm">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 mb-4">
               <Layers className="w-4 h-4 text-violet-600" />
               <span>{isAr ? '4. عداد المسافات والمقصورة (Odometer & Comfort C-CAN)' : '4. Odometer & Body Controls'}</span>
@@ -509,7 +509,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
       {subTab === 'dtc' && (
         <div className="space-y-4">
           {/* Header Card with Check Engine Lamp & Active DTC Count */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+          <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-5 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div
@@ -541,7 +541,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                 <a
                   href="/api/diagnostics/download"
                   download="fmb140_packet_diagnostic.json"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>{isAr ? 'تحميل سجل التشخيص' : 'Download Diagnostic Log'}</span>
@@ -596,7 +596,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
               {metrics.diagnostic.dtcCodes.map((dtc) => (
                 <div
                   key={dtc.code}
-                  className="bg-white rounded-2xl border border-rose-200 p-4 shadow-xs space-y-2"
+                  className="bg-white rounded-2xl border border-rose-200 p-4 shadow-sm space-y-2"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
@@ -626,7 +626,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center shadow-xs space-y-3">
+            <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center shadow-sm space-y-3">
               <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center">
                 <CheckCircle2 className="w-8 h-8" />
               </div>
@@ -680,7 +680,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
 
       {/* SUBTAB 3: GPS & Navigation */}
       {subTab === 'gps' && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+        <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-5 shadow-sm space-y-4">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Compass className="w-4 h-4 text-blue-600" />
             <span>{isAr ? 'قراءات الملاحة والأقمار الصناعية (GNSS)' : 'GNSS Positioning'}</span>
@@ -734,7 +734,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
 
       {/* SUBTAB 4: Device Diagnostics */}
       {subTab === 'device' && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+        <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-5 shadow-sm space-y-4">
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Cpu className="w-4 h-4 text-violet-600" />
             <span>{isAr ? 'معلومات جهاز التتبع (Teltonika FMB140)' : 'Hardware Tracker Info'}</span>
