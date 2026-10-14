@@ -347,22 +347,19 @@ const tcpServer = net.createServer((socket) => {
   });
 });
 
-// Try to listen on TCP_PORT, gracefully handle port restrictions or existing instances
-tcpServer.on('error', (err: any) => {
-  if (err.code === 'EADDRINUSE') {
-    console.warn(`[TCP Server Notice] Port ${TCP_PORT} is already in use (EADDRINUSE). Another instance or process is currently holding the TCP socket.`);
-  } else {
-    console.warn(`[TCP Server Notice] Could not bind TCP port ${TCP_PORT}: ${err.message}. HTTP simulation endpoints remain fully operational.`);
-  }
+// The TCP listener is essential: do not report a healthy deployment when it fails.
+let tcpListenerReady = false;
+tcpServer.on('error', (err: Error) => {
+  tcpListenerReady = false;
+  console.error(`[TCP FATAL] Failed to listen on port ${TCP_PORT}: ${err.message}`);
+  process.exitCode = 1;
+  // End process so Railway restarts the service and surfaces the failure.
+  setImmediate(() => process.exit(1));
 });
-
-try {
-  tcpServer.listen(TCP_PORT, '0.0.0.0', () => {
-    console.log(`Teltonika TCP listener started on 0.0.0.0:${TCP_PORT}`);
-  });
-} catch (err: any) {
-  console.warn(`[TCP Server] listen error:`, err.message);
-}
+tcpServer.listen(TCP_PORT, '0.0.0.0', () => {
+  tcpListenerReady = true;
+  console.log(`Teltonika TCP listener started on 0.0.0.0:${TCP_PORT}`);
+});
 
 // --- HTTP Management & API Server ---
 const app = express();
@@ -382,8 +379,10 @@ app.use(express.json());
 // API Endpoints matching ZainFleet original C# WebApplication
 app.get('/health', (_req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
+  if (!tcpListenerReady) res.status(503);
   res.json({
-    status: 'healthy',
+    status: tcpListenerReady ? 'healthy' : 'tcp_listener_unavailable',
+    tcpListenerReady,
     uptimeSeconds: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
     tcpPort: TCP_PORT,
