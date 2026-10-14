@@ -268,7 +268,7 @@ export const DiagnosticView: React.FC<DiagnosticViewProps> = ({ device, lang }) 
       </div>
 
       {/* 2. Deep Root Cause Analysis Card: Vehicle Battery Voltage (ID 66) vs Backup Battery (ID 67) */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-6">
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200/80">
             <Zap className="w-5 h-5" />
@@ -373,7 +373,7 @@ export const DiagnosticView: React.FC<DiagnosticViewProps> = ({ device, lang }) 
               </span>
             </div>
 
-            <div className="mt-3 p-3 bg-white rounded-xl border border-slate-200/80 text-xs text-slate-600 space-y-1.5">
+            <div className="mt-3 p-3 bg-white rounded-[22px] border border-slate-200/80 shadow-sm/80 text-xs text-slate-600 space-y-1.5">
               <div className="flex items-center gap-1.5 font-bold text-slate-800">
                 <Info className="w-4 h-4 text-blue-600 shrink-0" />
                 <span>{isAr ? 'تنبيه هندسي بالغ الأهمية:' : 'Critical Engineering Distinction:'}</span>
@@ -431,7 +431,7 @@ export const DiagnosticView: React.FC<DiagnosticViewProps> = ({ device, lang }) 
       {/* 3. Deep CAN Bus & DTC Fault Codes Card */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* CAN Bus Status */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-200/80">
@@ -486,7 +486,7 @@ export const DiagnosticView: React.FC<DiagnosticViewProps> = ({ device, lang }) 
         </div>
 
         {/* DTC Trouble Codes Status */}
-        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
@@ -567,7 +567,7 @@ export const DiagnosticView: React.FC<DiagnosticViewProps> = ({ device, lang }) 
       </div>
 
       {/* 4. Live Received IO Elements Table (All IO Elements Received) */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">
@@ -646,7 +646,7 @@ export const DiagnosticView: React.FC<DiagnosticViewProps> = ({ device, lang }) 
       </div>
 
       {/* 5. Live Raw Packet Hex Viewer & Quick Test Tool */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-4">
+      <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center">
