@@ -177,12 +177,10 @@ const telemetryRepo = new PersistentTelemetryRepository();
 
 // --- Teltonika TCP Server (raw TCP socket) ---
 const TCP_PORT = parseInt(process.env.TCP_PORT || '5000', 10);
-let HTTP_PORT = parseInt(process.env.PORT || '3000', 10);
-if (HTTP_PORT === TCP_PORT) {
-  // If user set PORT=5000 in Railway variables, avoid port collision with TCP listener
-  const fallback = process.env.NODE_ENV === 'production' ? 8080 : 3000;
-  console.warn(`[Port Config] PORT and TCP_PORT both configured to ${TCP_PORT}. Directing HTTP server to ${fallback}.`);
-  HTTP_PORT = fallback;
+const HTTP_PORT = parseInt(process.env.PORT || '8080', 10);
+const SHARED_PORT = HTTP_PORT === TCP_PORT;
+if (SHARED_PORT) {
+  console.log(`[Port Config] Shared port ${HTTP_PORT}: multiplexing Teltonika binary TCP and HTTP requests.`);
 }
 const TCP_IDLE_TIMEOUT_MS = parseInt(process.env.TCP_IDLE_TIMEOUT_SECONDS || '300', 10) * 1000;
 const TCP_MAX_PACKET_BYTES = parseInt(process.env.TCP_MAX_PACKET_BYTES || '1048576', 10);
@@ -340,12 +338,10 @@ tcpServer.on('error', (err: any) => {
   }
 });
 
-try {
+if (!SHARED_PORT) {
   tcpServer.listen(TCP_PORT, '0.0.0.0', () => {
     console.log(`Teltonika TCP listener started on 0.0.0.0:${TCP_PORT}`);
   });
-} catch (err: any) {
-  console.warn(`[TCP Server] listen error:`, err.message);
 }
 
 // --- HTTP Management & API Server ---
@@ -518,6 +514,33 @@ async function startServer() {
     app.get('*', (_req: Request, res: Response) => {
       res.sendFile('index.html', { root: 'dist' });
     });
+  }
+
+  if (SHARED_PORT) {
+    // Railway can route HTTP and the Teltonika TCP proxy to the same internal port.
+    // Peek at the first byte, then hand the untouched stream to the correct server.
+    // Teltonika IMEI handshake starts with 0x00; HTTP methods start with ASCII.
+    const http = await import('node:http');
+    const httpServer = http.createServer(app);
+    const sharedServer = net.createServer((socket) => {
+      socket.pause();
+      socket.once('data', (firstChunk) => {
+        socket.pause();
+        socket.unshift(firstChunk);
+        if (firstChunk.length > 0 && firstChunk[0] === 0x00) {
+          tcpServer.emit('connection', socket);
+        } else {
+          httpServer.emit('connection', socket);
+        }
+        socket.resume();
+      });
+      socket.resume();
+    });
+    sharedServer.on('error', (err) => console.error('[Shared Port Error]', err));
+    sharedServer.listen(HTTP_PORT, '0.0.0.0', () => {
+      console.log(`ZainFleet HTTP + Teltonika TCP listening on 0.0.0.0:${HTTP_PORT}`);
+    });
+    return;
   }
 
   const serverInstance = app.listen(HTTP_PORT, '0.0.0.0', () => {
