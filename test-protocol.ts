@@ -147,4 +147,16 @@ console.assert(decoded8.records[1].speed === 45, 'Record 2 speed should be 45');
 console.assert(decoded8.records[1].satellites === 12, 'Record 2 satellites should be 12');
 console.log('✓ Successfully decoded multi-record Codec 8 packet with standard Teltonika byte layout');
 
+
+// Regression: an actual FMB140 Codec 8 Extended frame captured from the device.
+// This has a single-byte AVL record count and must not shift the IO parsing offset.
+const realCodec8eHex = '00000000000000588E01000001A13B7975100007DFB0361394EFD90008010A0E000000F0000C000500EF0100F00000150500C800004501000500B5000A00B600060042381000430FCF00440000000200F10000ECB900100005DCE2000000000100006CE6';
+const realCodec8eDecoded = decodeTeltonikaFrame(Buffer.from(realCodec8eHex, 'hex'));
+if (realCodec8eDecoded.records.length !== 1 || realCodec8eDecoded.codecId !== 0x8E) throw new Error('Real FMB140 Codec8E regression: invalid record count/codec');
+const actualIds = realCodec8eDecoded.records[0].ioElements.map(el => el.id);
+for (const id of [239, 240, 21, 200, 69, 181, 182, 66, 67, 68, 241, 16]) {
+  if (!actualIds.includes(id)) throw new Error(`Real FMB140 Codec8E regression: missing AVL ID ${id}`);
+}
+console.log('✓ Real FMB140 Codec 8 Extended frame decoded with all twelve AVL IO elements');
+
 console.log('--- ALL UNIT TESTS PASSED ---');
