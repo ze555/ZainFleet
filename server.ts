@@ -392,6 +392,10 @@ app.get('/health', (_req: Request, res: Response) => {
     lastAvlPacketAt,
     knownDevices: deviceRepo.getAll().length,
     activeDeviceSockets: Array.from(activeDeviceSockets.values()).reduce((sum, group) => sum + group.size, 0),
+    // Railway's public TCP proxy is NOT the internal TCP listener port.
+    // Configure these from Settings > Networking > TCP Proxy; do not guess them.
+    tcpPublicHost: process.env.TCP_PUBLIC_HOST || null,
+    tcpPublicPort: process.env.TCP_PUBLIC_PORT ? Number(process.env.TCP_PUBLIC_PORT) : null,
   });
 });
 
