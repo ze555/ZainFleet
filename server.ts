@@ -61,7 +61,8 @@ class PersistentDeviceRepository {
       name: existing?.name,
       firstSeen: existing ? existing.firstSeen : seenAt,
       lastSeen: seenAt,
-      lastPacketAt: seenAt,
+      // Handshakes/disconnects are not AVL transmissions. Update only after decoded records arrive.
+      lastPacketAt: lastGpsAt ? seenAt : (existing?.lastPacketAt || ''),
       lastGpsAt: lastGpsAt || existing?.lastGpsAt,
       tcpConnected,
       connected,
