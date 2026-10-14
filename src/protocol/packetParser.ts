@@ -114,22 +114,7 @@ function readCodec8Io(reader: AvlDataReader): IoData {
     readGroup(4) +
     readGroup(8);
 
-  // In official Teltonika Codec 8 standard, Total = N1 + N2 + N4 + N8 (no variable group).
-  // Only check for variable group if actual < total and reader has bytes remaining:
-  if (actual < total && reader.remaining > 0) {
-    const count = reader.readByte();
-    for (let i = 0; i < count; i++) {
-      const id = reader.readByte();
-      const length = reader.readByte();
-      if (length < 0 || length > reader.remaining) {
-        throw new Error(`Invalid variable-length IO element. Id=${id}, Length=${length}`);
-      }
-      const rawHex = length > 0 ? bufferToHex(reader.readBytes(length)) : '';
-      values.push({ id, value: rawHex, byteLength: length });
-    }
-    actual += count;
-  }
-
+  // Codec 8 has no variable-length NX group; that group is Codec 8 Extended only.
   if (actual !== total) {
     throw new Error(`Codec 8 IO element count does not match total. Expected=${total}, Actual=${actual}`);
   }
@@ -218,30 +203,14 @@ export function parseTeltonikaDataField(dataField: Uint8Array): ParsedAvlPacket 
     throw new Error(`Unsupported Teltonika codec: 0x${codecId.toString(16).toUpperCase().padStart(2, '0')}`);
   }
 
-  const recordCount = codecId === 0x8E ? reader.readUInt16() : reader.readByte();
+  const recordCount = reader.readByte(); // Codec 8 and Codec 8 Extended both use uint8 record counts
   const records: AvlRecord[] = [];
 
   for (let i = 0; i < recordCount; i++) {
     records.push(readRecord(codecId, reader));
   }
 
-  let secondCount: number;
-  if (codecId === 0x8E) {
-    secondCount = reader.readUInt16();
-  } else {
-    // Support legacy single-record fixtures that had an artificial 0 byte before the second count
-    if (reader.remaining === 2) {
-      const peek = reader.readByte();
-      if (peek === 0) {
-        secondCount = reader.readByte();
-      } else {
-        secondCount = peek;
-      }
-    } else {
-      secondCount = reader.readByte();
-    }
-  }
-
+  const secondCount = reader.readByte();
   if (secondCount !== recordCount) {
     throw new Error(`AVL record count mismatch. First=${recordCount}, Second=${secondCount}`);
   }
