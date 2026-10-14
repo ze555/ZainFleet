@@ -28,3 +28,17 @@
   .zf-kpi { @apply rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-sm; }
   @media (prefers-reduced-motion: reduce) { *,*::before,*::after {scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;} }
 }
+
+/* ZainFleet v2: high-contrast fleet operations cockpit */
+@layer components {
+  .zf-v2-hero { position:relative; background:linear-gradient(119deg,#06101f 0%,#0b2041 55%,#133f58 100%);box-shadow:0 28px 64px -35px #071e40a8; }
+  .zf-v2-hero::before {content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 82% 5%,#3be4ed35,transparent 37%),radial-gradient(circle at 0% 100%,#4355e52a,transparent 38%);}
+  .zf-v2-hero::after {content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;background-image:linear-gradient(#ffffff12 1px,transparent 1px),linear-gradient(90deg,#ffffff12 1px,transparent 1px);background-size:38px 38px;mask-image:linear-gradient(to left,#000,transparent);}
+  .zf-v2-stat {border:1px solid #ffffff21;background:linear-gradient(150deg,#ffffff17,#ffffff0a);border-radius:20px;padding:19px;backdrop-filter:blur(14px);min-width:0;}
+  .zf-v2-chip {display:inline-flex;align-items:center;gap:8px;border:1px solid #ffffff28;background:#ffffff13;color:#e2e8f0;border-radius:99px;padding:9px 13px;font-size:11px;font-weight:700;}
+  .zf-v2-chip-ok {color:#b4f7dc;border-color:#34d39952;} .zf-v2-chip-error {color:#fecaca;border-color:#fb718557;}
+  .zf-v2-pulse {display:inline-block;width:8px;height:8px;border-radius:50%;background:#34d399;box-shadow:0 0 0 4px #34d39928;}
+  .zf-v2-hero .zf-v2-stats {align-self:stretch;}
+  .zf-premium-card {border-radius:23px;box-shadow:0 16px 55px -38px #091c45b3,0 1px 5px #1e293b12;transition:transform .2s,box-shadow .2s;}
+  .zf-premium-card:hover {transform:translateY(-2px);box-shadow:0 20px 50px -34px #091c457a;}
+}
