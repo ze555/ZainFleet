@@ -15,6 +15,38 @@ import {
  * https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID
  */
 export const CAN_PARAMETER_CATALOG: Record<number, CanParameterDefinition> = {
+  200: {
+    id: 200, officialName: 'Sleep Mode', nameAr: 'وضع السكون', nameEn: 'Tracker Sleep Mode',
+    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع GNSS', sourceBusLabelEn: 'Tracker GNSS / System',
+    byteLength: 1, signed: false, multiplier: 1, unit: 'State',
+    valueRange: '0-4', descriptionAr: 'وضع السكون', descriptionEn: '0=No Sleep; 1=GPS Sleep; 2=Deep Sleep; 3=Online Sleep; 4=Ultra Sleep',
+    configDependency: 'Teltonika I/O configuration', verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
+  },
+  69: {
+    id: 69, officialName: 'GNSS Status', nameAr: 'حالة استقبال الأقمار الصناعية', nameEn: 'GNSS Fix Status',
+    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع GNSS', sourceBusLabelEn: 'Tracker GNSS / System',
+    byteLength: 1, signed: false, multiplier: 1, unit: 'State',
+    valueRange: '0-3', descriptionAr: 'حالة استقبال الأقمار الصناعية', descriptionEn: '0=Off; 1=On with fix; 2=On without fix; 3=GNSS Sleep',
+    configDependency: 'Teltonika I/O configuration', verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
+  },
+  181: {
+    id: 181, officialName: 'GNSS PDOP', nameAr: 'معامل دقة تحديد الموقع PDOP', nameEn: 'GNSS Position Dilution of Precision',
+    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع GNSS', sourceBusLabelEn: 'Tracker GNSS / System',
+    byteLength: 2, signed: false, multiplier: 0.1, unit: 'PDOP',
+    valueRange: '0-500', descriptionAr: 'معامل دقة تحديد الموقع PDOP', descriptionEn: 'PDOP precision dilution indicator (raw value x 0.1)',
+    configDependency: 'Teltonika I/O configuration', verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
+  },
+  182: {
+    id: 182, officialName: 'GNSS HDOP', nameAr: 'معامل دقة الموقع الأفقي HDOP', nameEn: 'GNSS Horizontal Dilution of Precision',
+    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع GNSS', sourceBusLabelEn: 'Tracker GNSS / System',
+    byteLength: 2, signed: false, multiplier: 0.1, unit: 'HDOP',
+    valueRange: '0-500', descriptionAr: 'معامل دقة الموقع الأفقي HDOP', descriptionEn: 'HDOP horizontal precision dilution indicator (raw value x 0.1)',
+    configDependency: 'Teltonika I/O configuration', verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
+  },
   1: {
     id: 1,
     officialName: 'Digital Input 1 (DIN1)',
