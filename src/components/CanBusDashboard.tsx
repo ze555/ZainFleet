@@ -86,16 +86,16 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
   const isIgnitionOn = rawIgnition !== undefined ? rawIgnition === '1' || parseInt(rawIgnition, 10) > 0 : null;
 
   // Fuel: ID 89 (CAN Fuel Level % or L) or ID 9 (Analog Fuel) or ID 87
-  const rawFuelLevel = ioMap.get(89) ?? ioMap.get(9);
+  const rawFuelLevel = ioMap.get(89);
   const fuelPercent = rawFuelLevel ? parseInt(rawFuelLevel, 10) : null;
   const totalFuelUsed = ioMap.get(87);
 
   // Engine RPM: ID 33 or ID 2
-  const rawRpm = ioMap.get(33) ?? ioMap.get(2);
-  const engineRpm = rawRpm ? parseInt(rawRpm, 10) : (isIgnitionOn ? 780 : 0);
+  const rawRpm = ioMap.get(33) ?? ioMap.get(35);
+  const engineRpm = rawRpm !== undefined ? parseInt(rawRpm, 10) : null;
 
   // Engine / Coolant Temperature: ID 32 or ID 115
-  const rawTemp = ioMap.get(32) ?? ioMap.get(115);
+  const rawTemp = ioMap.get(32);
   const coolantTemp = rawTemp ? parseInt(rawTemp, 10) : null;
 
   // External Vehicle Battery Voltage: ID 66 (mV)
@@ -116,11 +116,11 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
   // Wheel Speed (CAN): ID 24 vs GPS Speed
   const rawWheelSpeed = ioMap.get(24);
   const wheelSpeed = rawWheelSpeed ? parseInt(rawWheelSpeed, 10) : null;
-  const effectiveSpeed = isIgnitionOn === false ? 0 : record.speed;
+  const effectiveSpeed = record.speed;
 
   // DTC Fault Codes: ID 30, 160
-  const rawDtc = ioMap.get(30) ?? ioMap.get(160);
-  const dtcCount = rawDtc ? parseInt(rawDtc, 10) : 0;
+  const rawDtc = ioMap.get(160);
+  const dtcCount = rawDtc !== undefined ? parseInt(rawDtc, 10) : null;
 
   // Movement: ID 240
   const rawMovement = ioMap.get(240);
