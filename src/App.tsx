@@ -506,6 +506,19 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device
     const timer = window.setInterval(load, 4000);
     return () => { active = false; window.clearInterval(timer); };
   }, []);
+  const [connectionDiagnosis, setConnectionDiagnosis] = useState<{reasonCode:string;reasonAr:string;lastTcpFailure:{code:string;message:string;at:string}|null}|null>(null);
+  useEffect(() => {
+    let active = true;
+    const check = async () => {
+      try {
+        const response = await fetch('/api/connection/diagnostics', { cache: 'no-store' });
+        if (response.ok && active) setConnectionDiagnosis(await response.json());
+      } catch { /* Network errors are shown by the existing /health state. */ }
+    };
+    check();
+    const timer = window.setInterval(check, 4000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, []);
   const latestReceivedAt = lastDataAt || device?.lastPacketAt || null;
   const latestMs = latestReceivedAt ? Date.parse(latestReceivedAt) : NaN;
   const ageSeconds = Number.isFinite(latestMs) ? Math.max(0, Math.floor((nowMs - latestMs) / 1000)) : null;
@@ -554,6 +567,23 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device
       <p className="mt-4 text-xs leading-6 text-slate-500">
         {isAr ? 'يتم فحص الاتصال تلقائياً كل 4 ثوانٍ. العداد يقيس الانتظار، ولا يحدد موعد تشغيل الجهاز؛ يتوقف الإرسال على إعدادات الجهاز والشبكة.' : 'Connection is checked every 4 seconds. This timer shows elapsed waiting, not an exact time until the tracker reconnects.'}
       </p>
+      <div className={`mt-5 rounded-2xl border p-4 text-start ${connectionDiagnosis?.reasonCode === 'DATA_RECEIVED' ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
+        <div className="mb-2 flex items-center gap-2 font-extrabold text-slate-900">
+          <span>{isAr ? 'نتيجة تشخيص الاتصال' : 'Connection diagnosis'}</span>
+          <span className="rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-mono" dir="ltr">{connectionDiagnosis?.reasonCode || 'CHECKING'}</span>
+        </div>
+        <p className="text-sm leading-7 text-slate-800">{connectionDiagnosis
+          ? (isAr ? connectionDiagnosis.reasonAr : connectionDiagnosis.reasonCode.replaceAll('_', ' '))
+          : (isAr ? 'جاري فحص السيرفر...' : 'Checking connection...')}</p>
+        {connectionDiagnosis?.lastTcpFailure && (
+          <p className="mt-2 text-xs text-slate-600">
+            {isAr ? 'آخر خطأ مسجل:' : 'Last observed error:'} {connectionDiagnosis.lastTcpFailure.code} — {connectionDiagnosis.lastTcpFailure.message}
+          </p>
+        )}
+        <p className="mt-2 text-xs text-slate-500">{isAr
+          ? 'التشخيص يعتمد على ما رآه السيرفر فقط. لا يستطيع كشف أعطال الشريحة أو الشبكة قبل وصول اتصال TCP.'
+          : 'Diagnosis is limited to events observed by the server; a device-side cause cannot be proven without incoming traffic.'}</p>
+      </div>
       <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-start text-xs leading-7">
         <div className="mb-2 font-bold text-slate-800">{isAr ? 'تشخيص الاتصال من السيرفر' : 'Server-side connection diagnostics'}</div>
         <div>{isAr ? 'اتصالات TCP منذ تشغيل السيرفر:' : 'Inbound TCP connections since startup:'} <strong>{networkStatus?.tcpConnectionsSinceStart ?? '—'}</strong></div>
