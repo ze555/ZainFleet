@@ -30,7 +30,6 @@ export const App: React.FC = () => {
   const [telemetry, setTelemetry] = useState<TelemetrySnapshot | null>(null);
   const [serverHealthy, setServerHealthy] = useState<boolean>(true);
   const [isLoadingTelemetry, setIsLoadingTelemetry] = useState<boolean>(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [showManageModal, setShowManageModal] = useState<boolean>(false);
 
   const isAr = lang === 'ar';
@@ -177,7 +176,6 @@ export const App: React.FC = () => {
         activeDevice={selectedDevice}
         vehicleName={vehicleName}
         unreadAlertsCount={unreadAlertsCount}
-        onOpenDrawer={() => setIsDrawerOpen(true)}
         lang={lang}
         setLang={setLang}
       />
