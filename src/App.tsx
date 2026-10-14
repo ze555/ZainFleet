@@ -272,7 +272,6 @@ export const App: React.FC = () => {
           <>
             {selectedDevice ? (
               <VehicleDataView
-                device={selectedDevice}
                 telemetry={telemetry}
                 isLoading={isLoadingTelemetry}
                 onRefresh={() => selectedImei && fetchTelemetry(selectedImei)}
