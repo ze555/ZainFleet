@@ -114,7 +114,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
   const tripKm = rawTripOdometer ? (parseInt(rawTripOdometer, 10) / 1000).toFixed(1) : null;
 
   // Wheel Speed (CAN): ID 24 vs GPS Speed
-  const rawWheelSpeed = ioMap.get(24);
+  const rawWheelSpeed = ioMap.get(81) ?? ioMap.get(24);
   const wheelSpeed = rawWheelSpeed ? parseInt(rawWheelSpeed, 10) : null;
   const effectiveSpeed = record.speed;
 
@@ -290,20 +290,22 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
             <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-slate-700">
               <Gauge className="w-4 h-4 text-indigo-600" /> Engine RPM
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">ID #33 / #2</span>
+            <span className="text-[10px] text-slate-400 font-mono">ID #33 / #35</span>
           </div>
 
           <div className="flex items-baseline justify-between">
             <span className="text-3xl font-bold font-mono text-slate-900">
-              {engineRpm.toLocaleString()}
+              {engineRpm !== null && Number.isFinite(engineRpm) ? engineRpm.toLocaleString() : 'Not received'}
             </span>
             <span className="text-xs font-semibold text-slate-500">RPM</span>
           </div>
 
           <div className="text-xs text-slate-500 flex items-center justify-between border-t border-slate-100 pt-2">
             <span>
-              {isIgnitionOn === false
-                ? 'Engine Stoped (0 RPM)'
+              {engineRpm === null
+                ? 'No RPM measurement transmitted'
+                : isIgnitionOn === false
+                ? 'Ignition OFF (RPM value from device)'
                 : engineRpm < 1000
                 ? 'Idle Speed'
                 : 'Running'}
@@ -412,7 +414,9 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
             <ShieldCheck className="w-4 h-4 text-emerald-600" /> On-Board Diagnostics (OBD)
           </span>
           <div className="flex items-center gap-2">
-            {dtcCount === 0 ? (
+            {dtcCount === null ? (
+              <span className="text-sm text-slate-500">DTC count not transmitted</span>
+            ) : dtcCount === 0 ? (
               <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-sm">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 <span>0 Diagnostic Faults (DTC Normal)</span>
