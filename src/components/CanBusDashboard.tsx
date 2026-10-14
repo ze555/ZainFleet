@@ -86,16 +86,16 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
   const isIgnitionOn = rawIgnition !== undefined ? rawIgnition === '1' || parseInt(rawIgnition, 10) > 0 : null;
 
   // Fuel: ID 89 (CAN Fuel Level % or L) or ID 9 (Analog Fuel) or ID 87
-  const rawFuelLevel = ioMap.get(89) ?? ioMap.get(9);
+  const rawFuelLevel = ioMap.get(89);
   const fuelPercent = rawFuelLevel ? parseInt(rawFuelLevel, 10) : null;
   const totalFuelUsed = ioMap.get(87);
 
   // Engine RPM: ID 33 or ID 2
-  const rawRpm = ioMap.get(33) ?? ioMap.get(2);
-  const engineRpm = rawRpm ? parseInt(rawRpm, 10) : (isIgnitionOn ? 780 : 0);
+  const rawRpm = ioMap.get(33) ?? ioMap.get(35);
+  const engineRpm = rawRpm !== undefined ? parseInt(rawRpm, 10) : null;
 
   // Engine / Coolant Temperature: ID 32 or ID 115
-  const rawTemp = ioMap.get(32) ?? ioMap.get(115);
+  const rawTemp = ioMap.get(32);
   const coolantTemp = rawTemp ? parseInt(rawTemp, 10) : null;
 
   // External Vehicle Battery Voltage: ID 66 (mV)
@@ -114,13 +114,13 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
   const tripKm = rawTripOdometer ? (parseInt(rawTripOdometer, 10) / 1000).toFixed(1) : null;
 
   // Wheel Speed (CAN): ID 24 vs GPS Speed
-  const rawWheelSpeed = ioMap.get(24);
+  const rawWheelSpeed = ioMap.get(81) ?? ioMap.get(24);
   const wheelSpeed = rawWheelSpeed ? parseInt(rawWheelSpeed, 10) : null;
-  const effectiveSpeed = isIgnitionOn === false ? 0 : record.speed;
+  const effectiveSpeed = record.speed;
 
   // DTC Fault Codes: ID 30, 160
-  const rawDtc = ioMap.get(30) ?? ioMap.get(160);
-  const dtcCount = rawDtc ? parseInt(rawDtc, 10) : 0;
+  const rawDtc = ioMap.get(160);
+  const dtcCount = rawDtc !== undefined ? parseInt(rawDtc, 10) : null;
 
   // Movement: ID 240
   const rawMovement = ioMap.get(240);
@@ -290,20 +290,22 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
             <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-slate-700">
               <Gauge className="w-4 h-4 text-indigo-600" /> Engine RPM
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">ID #33 / #2</span>
+            <span className="text-[10px] text-slate-400 font-mono">ID #33 / #35</span>
           </div>
 
           <div className="flex items-baseline justify-between">
             <span className="text-3xl font-bold font-mono text-slate-900">
-              {engineRpm.toLocaleString()}
+              {engineRpm !== null && Number.isFinite(engineRpm) ? engineRpm.toLocaleString() : 'Not received'}
             </span>
             <span className="text-xs font-semibold text-slate-500">RPM</span>
           </div>
 
           <div className="text-xs text-slate-500 flex items-center justify-between border-t border-slate-100 pt-2">
             <span>
-              {isIgnitionOn === false
-                ? 'Engine Stoped (0 RPM)'
+              {engineRpm === null
+                ? 'No RPM measurement transmitted'
+                : isIgnitionOn === false
+                ? 'Ignition OFF (RPM value from device)'
                 : engineRpm < 1000
                 ? 'Idle Speed'
                 : 'Running'}
@@ -412,7 +414,9 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
             <ShieldCheck className="w-4 h-4 text-emerald-600" /> On-Board Diagnostics (OBD)
           </span>
           <div className="flex items-center gap-2">
-            {dtcCount === 0 ? (
+            {dtcCount === null ? (
+              <span className="text-sm text-slate-500">DTC count not transmitted</span>
+            ) : dtcCount === 0 ? (
               <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-sm">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 <span>0 Diagnostic Faults (DTC Normal)</span>
