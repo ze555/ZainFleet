@@ -55,7 +55,7 @@ export const DeviceDetail: React.FC<DeviceDetailProps> = ({
   const effectiveSpeed = isGpsDrift ? 0 : (record?.speed ?? 0);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col h-full overflow-y-auto">
+    <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm shadow-sm flex flex-col h-full overflow-y-auto">
       {/* Device Header */}
       <div className="p-5 border-b border-slate-200">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -85,7 +85,7 @@ export const DeviceDetail: React.FC<DeviceDetailProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => onSimulateForDevice(device.imei)}
-              className="px-3.5 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-xs transition-colors flex items-center gap-1.5"
+              className="px-3.5 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm transition-colors flex items-center gap-1.5"
             >
               <Gauge className="w-3.5 h-3.5" />
               <span>CAN Bus Live Dashboard</span>
