@@ -62,7 +62,7 @@ export function buildCodec8TestPacket(options?: {
   data.push(...createInt16Bytes(spd));
 
   // IO: eventId, total=1, group1(1, id=1, val), group2=0, group4=0, group8=0, varGroup=0
-  data.push(eventId, 1, 1, 0x01, val & 0xff, 0, 0, 0, 0);
+  data.push(eventId, 1, 1, 0x01, val & 0xff, 0, 0, 0);
   data.push(1); // Second record count
 
   const dataField = new Uint8Array(data);
@@ -109,7 +109,7 @@ export function buildCodec8ExtendedTestPacket(options?: {
   const sats = options?.satellites ?? 8;
   const prio = options?.priority ?? 2;
 
-  const data: number[] = [0x8e, 0, 1]; // Codec 8 Extended, 1 record
+  const data: number[] = [0x8e, 1]; // Codec 8 Extended, 1 record
   data.push(...createUInt64Bytes(ts));
   data.push(prio);
   data.push(...createInt32Bytes(lon));
@@ -136,7 +136,7 @@ export function buildCodec8ExtendedTestPacket(options?: {
     0, 2,    // length=2
     0xab, 0xcd // val ABCD
   );
-  data.push(0, 1); // Second record count: 1 (uint16)
+  data.push(1); // Second record count: 1 (uint8)
 
   const dataField = new Uint8Array(data);
   const crc = computeTeltonikaCrc16(dataField);
