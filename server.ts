@@ -191,6 +191,7 @@ const TCP_MAX_PACKET_BYTES = parseInt(process.env.TCP_MAX_PACKET_BYTES || '10485
 let tcpConnectionsSinceStart = 0;
 let lastTcpConnectionAt: string | null = null;
 let lastAvlPacketAt: string | null = null;
+const activeDeviceSockets = new Map<string, Set<net.Socket>>();
 const tcpServer = net.createServer((socket) => {
   tcpConnectionsSinceStart += 1;
   lastTcpConnectionAt = new Date().toISOString();
@@ -244,6 +245,9 @@ const tcpServer = net.createServer((socket) => {
         handshakeDone = true;
         buffer = buffer.subarray(17);
 
+        const active = activeDeviceSockets.get(imei) ?? new Set<net.Socket>();
+        active.add(socket);
+        activeDeviceSockets.set(imei, active);
         deviceRepo.upsert(imei, new Date().toISOString(), true);
         console.log(`[TCP] DEVICE IMEI ${imei} connected from ${remote}`);
         const acceptResp = Buffer.from(createImeiResponse(true));
@@ -326,7 +330,12 @@ const tcpServer = net.createServer((socket) => {
 
   socket.on('close', (hadError) => {
     if (imei) {
-      deviceRepo.upsert(imei, new Date().toISOString(), false);
+      const active = activeDeviceSockets.get(imei);
+      active?.delete(socket);
+      if (!active || active.size === 0) {
+        activeDeviceSockets.delete(imei);
+        deviceRepo.upsert(imei, new Date().toISOString(), false);
+      }
       console.log(`[TCP] DEVICE DISCONNECTED ${imei} (hadError=${hadError}, bufferRemaining=${buffer.length})`);
     } else {
       console.log(`[TCP] DEVICE DISCONNECTED ${remote} (hadError=${hadError}, bufferRemaining=${buffer.length})`);
@@ -382,6 +391,7 @@ app.get('/health', (_req: Request, res: Response) => {
     lastTcpConnectionAt,
     lastAvlPacketAt,
     knownDevices: deviceRepo.getAll().length,
+    activeDeviceSockets: Array.from(activeDeviceSockets.values()).reduce((sum, group) => sum + group.size, 0),
   });
 });
 
