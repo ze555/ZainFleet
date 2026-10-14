@@ -198,6 +198,29 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+        {/* Compact connection overview, shared across dashboard views */}
+        <div className="zf-panel zf-soft-glow mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl bg-blue-50 p-2.5 text-blue-700"><Radio className="h-5 w-5" /></div>
+            <div>
+              <div className="text-sm font-bold text-slate-900">{isAr ? 'مراقبة الأسطول المباشرة' : 'Fleet Live Monitor'}</div>
+              <div className="text-xs text-slate-500">{isAr ? 'تحديث تلقائي كل 4 ثوانٍ' : 'Automatically refreshed every 4 seconds'}</div>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+            <span className={`rounded-full px-3 py-1.5 ${serverHealthy ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+              {serverHealthy ? (isAr ? 'الخادم متصل' : 'Server online') : (isAr ? 'الخادم غير متصل' : 'Server offline')}
+            </span>
+            <span className={`rounded-full px-3 py-1.5 ${selectedDevice?.connected ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
+              {selectedDevice?.connected ? (isAr ? 'الجهاز متصل' : 'Device connected') : (isAr ? 'بانتظار الجهاز' : 'Awaiting device')}
+            </span>
+            <button onClick={() => { checkHealth(); fetchDevices(); if (selectedImei) fetchTelemetry(selectedImei); }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700 hover:bg-slate-50"
+              title={isAr ? 'تحديث الآن' : 'Refresh now'}>
+              <RotateCw className="h-3.5 w-3.5" /> {isAr ? 'تحديث' : 'Refresh'}
+            </button>
+          </div>
+        </div>
         {/* Multi-vehicle Switcher Bar (only when > 1 vehicle exists) */}
         {devices.length > 1 && selectedDevice && (
           <div className="bg-white rounded-2xl border border-slate-200 p-3 mb-4 shadow-xs flex items-center justify-between gap-3">
