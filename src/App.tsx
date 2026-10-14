@@ -8,8 +8,8 @@ import { AlertsView } from './components/AlertsView.tsx';
 import { CanSensorsLog } from './components/CanSensorsLog.tsx';
 import { DiagnosticView } from './components/DiagnosticView.tsx';
 import { PrivacyPolicy } from './components/PrivacyPolicy.tsx';
-import { BottomNav } from './components/BottomNav.tsx';
-import { MobileDrawer } from './components/MobileDrawer.tsx';
+
+
 import { DeviceInfo, TelemetrySnapshot } from './types/fleet.ts';
 import { decodeCanMetrics, generateVehicleAlerts } from './utils/canBusDecoder.ts';
 import {
@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<string>('dashboard');
+  const [currentTab, setCurrentTab] = useState<string>('vehicle');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [selectedImei, setSelectedImei] = useState<string | null>(null);
@@ -182,20 +182,6 @@ export const App: React.FC = () => {
         setLang={setLang}
       />
 
-      {/* Mobile Slide-Out Drawer matching Screen 8 in Mockup */}
-      <MobileDrawer
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-        device={selectedDevice}
-        vehicleName={vehicleName}
-        unreadAlertsCount={unreadAlertsCount}
-        serverHealthy={serverHealthy}
-        lang={lang}
-        setLang={setLang}
-      />
-
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
         {/* Multi-vehicle Switcher Bar (only when > 1 vehicle exists) */}
@@ -241,7 +227,6 @@ export const App: React.FC = () => {
           <>
             {selectedDevice ? (
               <CanDashboard
-                device={selectedDevice}
                 telemetry={telemetry}
                 isLoading={isLoadingTelemetry}
                 onRefresh={() => selectedImei && fetchTelemetry(selectedImei)}
@@ -328,15 +313,6 @@ export const App: React.FC = () => {
         {currentTab === 'privacy' && <PrivacyPolicy />}
       </main>
 
-      {/* Fixed Bottom Navigation for Mobile matching all Mockup screens */}
-      <BottomNav
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-        unreadAlertsCount={unreadAlertsCount}
-        onOpenDrawer={() => setIsDrawerOpen(true)}
-        lang={lang}
-      />
-
       {/* Safe Device Management Modal */}
       {showManageModal && selectedDevice && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -397,12 +373,7 @@ export const App: React.FC = () => {
               <span>TCP Port: 5000</span>
             </span>
             <span>&bull;</span>
-            <button
-              onClick={() => setCurrentTab('privacy')}
-              className="text-blue-600 hover:underline"
-            >
-              {isAr ? 'سياسة الخصوصية' : 'Privacy Policy'}
-            </button>
+
           </div>
         </div>
       </footer>
