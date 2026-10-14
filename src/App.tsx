@@ -484,7 +484,7 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device
     return () => window.clearInterval(timer);
   }, []);
 
-  const [networkStatus, setNetworkStatus] = useState<{tcpConnectionsSinceStart:number;lastTcpConnectionAt:string|null;lastAvlPacketAt:string|null}|null>(null);
+  const [networkStatus, setNetworkStatus] = useState<{tcpConnectionsSinceStart:number;lastTcpConnectionAt:string|null;lastAvlPacketAt:string|null;tcpPublicHost:string|null;tcpPublicPort:number|null}|null>(null);
   useEffect(() => {
     let active = true;
     const load = async () => {
@@ -495,7 +495,9 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device
           setNetworkStatus({
             tcpConnectionsSinceStart: Number(json.tcpConnectionsSinceStart ?? 0),
             lastTcpConnectionAt: json.lastTcpConnectionAt ?? null,
-            lastAvlPacketAt: json.lastAvlPacketAt ?? null
+            lastAvlPacketAt: json.lastAvlPacketAt ?? null,
+            tcpPublicHost: json.tcpPublicHost ?? null,
+            tcpPublicPort: json.tcpPublicPort ?? null
           });
         }
       } catch { /* retain the last known status */ }
@@ -527,7 +529,7 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device
 
       <p className="text-sm text-slate-600 mt-2 max-w-xl mx-auto leading-relaxed">
         {isAr
-          ? 'السيرفر جاهز ومفتوح الآن لاستقبال حزم التتبع المباشرة وقراءات كمبيوتر السيارة (M-CAN و C-CAN). بمجرد تشغيل سويتش السيارة أو التقاط إشارة الشريحة، ستظهر جميع القراءات والرحلات هنا فورياً.'
+          ? 'السيرفر يستمع لاتصالات TCP. لا تظهر البيانات إلا بعد وصول الجهاز فعلياً وإرسال حزم AVL؛ وتظهر قراءات CAN فقط إذا كان الجهاز موصولاً ومضبوطاً لإرسالها.'
           : 'The server is listening for real-time TCP connections and CAN bus packets (M-CAN & C-CAN). Turn on the vehicle ignition to begin streaming telemetry.'}
       </p>
 
@@ -570,14 +572,15 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device
           <span>{isAr ? 'بيانات اتصال جهاز الـ FMB140 في برنامج Configurator:' : 'Teltonika Configurator Settings:'}</span>
         </h3>
 
+        <p className="mb-3 text-amber-700">{isAr ? "لا تستخدم القيم القديمة؛ يجب مطابقة العنوان والمنفذ الخارجيين من إعدادات Railway TCP Proxy." : "Always match the external endpoint shown in Railway TCP Proxy settings. The internal port 5000 is not the public port."}</p>
         <div className="space-y-1.5 font-mono text-[11px]">
           <div className="flex justify-between py-1 border-b border-slate-200/60">
             <span className="text-slate-500">Server Domain / IP:</span>
-            <span className="font-bold text-slate-900">hayabusa.proxy.rlwy.net</span>
+            <span className="font-bold text-slate-900">{networkStatus?.tcpPublicHost || (isAr ? "غير مضبوط — راجع Railway" : "Not configured — check Railway")}</span>
           </div>
           <div className="flex justify-between py-1 border-b border-slate-200/60">
             <span className="text-slate-500">Server Port:</span>
-            <span className="font-bold text-blue-600">39512 (TCP)</span>
+            <span className="font-bold text-blue-600">{networkStatus?.tcpPublicPort ? `${networkStatus.tcpPublicPort} (TCP)` : (isAr ? "غير مضبوط" : "Not configured")}</span>
           </div>
           <div className="flex justify-between py-1 border-b border-slate-200/60">
             <span className="text-slate-500">Data Protocol:</span>
