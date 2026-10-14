@@ -1,8 +1,20 @@
 @import "tailwindcss";
 
 @layer base {
+  :root { color-scheme: light; }
   body {
     @apply bg-slate-50 text-slate-900;
+    background-image: radial-gradient(circle at 8% 0%, rgba(37,99,235,.075), transparent 32%), radial-gradient(circle at 100% 12%, rgba(13,148,136,.055), transparent 28%);
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
+  button, select, input { transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease; }
+  button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible {
+    outline: 3px solid rgba(37, 99, 235, .40);
+    outline-offset: 2px;
+  }
+}
+@layer components {
+  .zf-panel { @apply bg-white rounded-2xl border border-slate-200/80 shadow-sm; }
+  .zf-soft-glow { box-shadow: 0 10px 35px -24px rgba(15,23,42,.3); }
 }
