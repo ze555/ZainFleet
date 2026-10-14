@@ -1153,8 +1153,8 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
   const milActive = checkEngineLight ?? false;
   const vinRaw = getRaw(256) || null;
 
-  let diagnosticStatusAr = 'المنظومة سليمة (لا توجد أكواد أعطال مسجلة)';
-  let diagnosticStatusEn = 'System Normal (No DTC Detected)';
+  let diagnosticStatusAr = rawDtcString === null && getRaw(160) === undefined && getRaw(30) === undefined && checkEngineLight === null ? 'لم تصل بيانات تشخيص الأعطال من الجهاز' : 'لم يتم الإبلاغ عن أكواد أعطال';
+  let diagnosticStatusEn = rawDtcString === null && getRaw(160) === undefined && getRaw(30) === undefined && checkEngineLight === null ? 'Diagnostic data not received from device' : 'No trouble codes reported';
 
   if (effectiveDtcCount > 0) {
     diagnosticStatusAr = `تم رصد ${effectiveDtcCount} كود عطل مسجل بكمبيوتر السيارة`;
