@@ -306,7 +306,7 @@ export const App: React.FC = () => {
                 lang={lang}
               />
             ) : (
-              <WaitingForVehicleCard isAr={isAr} onRefresh={fetchDevices} />
+              <WaitingForVehicleCard isAr={isAr} onRefresh={fetchDevices} device={selectedDevice || devices[0] || null} lastDataAt={telemetry?.receivedAt || null} />
             )}
           </>
         )}
@@ -317,7 +317,7 @@ export const App: React.FC = () => {
             {selectedDevice ? (
               <TripsList device={selectedDevice} lang={lang} />
             ) : (
-              <WaitingForVehicleCard isAr={isAr} onRefresh={fetchDevices} />
+              <WaitingForVehicleCard isAr={isAr} onRefresh={fetchDevices} device={selectedDevice || devices[0] || null} lastDataAt={telemetry?.receivedAt || null} />
             )}
           </>
         )}
@@ -332,7 +332,7 @@ export const App: React.FC = () => {
                 lang={lang}
               />
             ) : (
-              <WaitingForVehicleCard isAr={isAr} onRefresh={fetchDevices} />
+              <WaitingForVehicleCard isAr={isAr} onRefresh={fetchDevices} device={selectedDevice || devices[0] || null} lastDataAt={telemetry?.receivedAt || null} />
             )}
           </>
         )}
@@ -349,7 +349,7 @@ export const App: React.FC = () => {
                 lang={lang}
               />
             ) : (
-              <WaitingForVehicleCard isAr={isAr} onRefresh={fetchDevices} />
+              <WaitingForVehicleCard isAr={isAr} onRefresh={fetchDevices} device={selectedDevice || devices[0] || null} lastDataAt={telemetry?.receivedAt || null} />
             )}
           </>
         )}
@@ -364,7 +364,7 @@ export const App: React.FC = () => {
                 lang={lang}
               />
             ) : (
-              <WaitingForVehicleCard isAr={isAr} onRefresh={fetchDevices} />
+              <WaitingForVehicleCard isAr={isAr} onRefresh={fetchDevices} device={selectedDevice || devices[0] || null} lastDataAt={telemetry?.receivedAt || null} />
             )}
           </>
         )}
@@ -468,9 +468,31 @@ export const App: React.FC = () => {
 interface WaitingProps {
   isAr: boolean;
   onRefresh: () => void;
+  device: DeviceInfo | null;
+  lastDataAt: string | null;
 }
 
-const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh }) => {
+const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device, lastDataAt }) => {
+  const [secondsWaiting, setSecondsWaiting] = useState(0);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setSecondsWaiting(s => s + 1);
+      setNowMs(Date.now());
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const latestReceivedAt = lastDataAt || device?.lastPacketAt || null;
+  const latestMs = latestReceivedAt ? Date.parse(latestReceivedAt) : NaN;
+  const ageSeconds = Number.isFinite(latestMs) ? Math.max(0, Math.floor((nowMs - latestMs) / 1000)) : null;
+  const duration = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return [h, m, sec].map(x => String(x).padStart(2, '0')).join(':');
+  };
   return (
     <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center max-w-3xl mx-auto shadow-xs my-6">
       <div className="w-20 h-20 rounded-3xl bg-blue-50 text-blue-600 mx-auto flex items-center justify-center mb-6 shadow-2xs">
@@ -489,6 +511,27 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh }) => {
           : 'The server is listening for real-time TCP connections and CAN bus packets (M-CAN & C-CAN). Turn on the vehicle ignition to begin streaming telemetry.'}
       </p>
 
+      <div className="mt-6 grid gap-3 sm:grid-cols-3 text-center">
+        <div className="rounded-2xl border border-blue-100 bg-blue-50/70 p-4">
+          <div className="text-xs font-semibold text-slate-500">{isAr ? 'مدة انتظار هذه الشاشة' : 'Waiting on this screen'}</div>
+          <div className="mt-2 font-mono text-2xl font-bold tabular-nums text-blue-700" dir="ltr">{duration(secondsWaiting)}</div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="text-xs font-semibold text-slate-500">{isAr ? 'آخر إرسال مسجّل' : 'Last known transmission'}</div>
+          <div className="mt-2 font-mono text-lg font-bold text-slate-900" dir="ltr">{ageSeconds === null ? '—' : duration(ageSeconds)}</div>
+          <div className="mt-1 text-[11px] text-slate-500">{ageSeconds === null ? (isAr ? 'لا توجد بيانات محفوظة' : 'No saved timestamps') : (isAr ? 'الوقت المنقضي منذ آخر إشارة' : 'Elapsed since last signal')}</div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="text-xs font-semibold text-slate-500">{isAr ? 'حالة الجهاز' : 'Device state'}</div>
+          <div className={`mt-2 text-base font-bold ${device?.connected ? 'text-emerald-700' : 'text-amber-700'}`}>
+            {device?.connected ? (isAr ? 'متصل بالخادم' : 'TCP connected') : device ? (isAr ? 'غير متصل الآن' : 'Currently offline') : (isAr ? 'لم يسجل اتصال بعد' : 'Not detected yet')}
+          </div>
+          <div className="mt-1 text-[11px] text-slate-500">{device?.totalRecords ? `${device.totalRecords} ${isAr ? 'سجل AVL مستلم' : 'AVL records received'}` : (isAr ? 'بانتظار بيانات AVL' : 'Awaiting AVL data')}</div>
+        </div>
+      </div>
+      <p className="mt-4 text-xs leading-6 text-slate-500">
+        {isAr ? 'يتم فحص الاتصال تلقائياً كل 4 ثوانٍ. العداد يقيس الانتظار، ولا يحدد موعد تشغيل الجهاز؛ يتوقف الإرسال على إعدادات الجهاز والشبكة.' : 'Connection is checked every 4 seconds. This timer shows elapsed waiting, not an exact time until the tracker reconnects.'}
+      </p>
       {/* Connection Info Box */}
       <div className="mt-8 p-5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-700 text-left max-w-lg mx-auto">
         <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
