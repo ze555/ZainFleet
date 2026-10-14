@@ -176,16 +176,13 @@ const deviceRepo = new PersistentDeviceRepository();
 const telemetryRepo = new PersistentTelemetryRepository();
 
 // --- Teltonika TCP Server (raw TCP socket) ---
-// FMB140 uses TCP 5000; the Railway web service listens on HTTP 8080.
-// Do not silently move the web server to another port: Railway's HTTP routing
-// must target the same internal port as the application.
 const TCP_PORT = parseInt(process.env.TCP_PORT || '5000', 10);
-const HTTP_PORT = 8080;
-if (process.env.PORT && Number(process.env.PORT) !== HTTP_PORT) {
-  console.warn(`[Port Config] Railway PORT=${process.env.PORT} differs from HTTP 8080. Configure the Railway HTTP domain target port to 8080; Teltonika TCP remains on ${TCP_PORT}.`);
-}
-if (TCP_PORT === HTTP_PORT) {
-  throw new Error('TCP_PORT must differ from HTTP port 8080. Use TCP_PORT=5000.');
+let HTTP_PORT = parseInt(process.env.PORT || '3000', 10);
+if (HTTP_PORT === TCP_PORT) {
+  // If user set PORT=5000 in Railway variables, avoid port collision with TCP listener
+  const fallback = process.env.NODE_ENV === 'production' ? 8080 : 3000;
+  console.warn(`[Port Config] PORT and TCP_PORT both configured to ${TCP_PORT}. Directing HTTP server to ${fallback}.`);
+  HTTP_PORT = fallback;
 }
 const TCP_IDLE_TIMEOUT_MS = parseInt(process.env.TCP_IDLE_TIMEOUT_SECONDS || '300', 10) * 1000;
 const TCP_MAX_PACKET_BYTES = parseInt(process.env.TCP_MAX_PACKET_BYTES || '1048576', 10);
