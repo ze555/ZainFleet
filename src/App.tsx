@@ -484,6 +484,26 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device
     return () => window.clearInterval(timer);
   }, []);
 
+  const [networkStatus, setNetworkStatus] = useState<{tcpConnectionsSinceStart:number;lastTcpConnectionAt:string|null;lastAvlPacketAt:string|null}|null>(null);
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const response = await fetch('/health', { cache: 'no-store' });
+        if (response.ok && active) {
+          const json = await response.json();
+          setNetworkStatus({
+            tcpConnectionsSinceStart: Number(json.tcpConnectionsSinceStart ?? 0),
+            lastTcpConnectionAt: json.lastTcpConnectionAt ?? null,
+            lastAvlPacketAt: json.lastAvlPacketAt ?? null
+          });
+        }
+      } catch { /* retain the last known status */ }
+    };
+    load();
+    const timer = window.setInterval(load, 4000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, []);
   const latestReceivedAt = lastDataAt || device?.lastPacketAt || null;
   const latestMs = latestReceivedAt ? Date.parse(latestReceivedAt) : NaN;
   const ageSeconds = Number.isFinite(latestMs) ? Math.max(0, Math.floor((nowMs - latestMs) / 1000)) : null;
@@ -532,7 +552,18 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device
       <p className="mt-4 text-xs leading-6 text-slate-500">
         {isAr ? 'يتم فحص الاتصال تلقائياً كل 4 ثوانٍ. العداد يقيس الانتظار، ولا يحدد موعد تشغيل الجهاز؛ يتوقف الإرسال على إعدادات الجهاز والشبكة.' : 'Connection is checked every 4 seconds. This timer shows elapsed waiting, not an exact time until the tracker reconnects.'}
       </p>
-      {/* Connection Info Box */}
+      <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 text-start text-xs leading-7">
+        <div className="mb-2 font-bold text-slate-800">{isAr ? 'تشخيص الاتصال من السيرفر' : 'Server-side connection diagnostics'}</div>
+        <div>{isAr ? 'اتصالات TCP منذ تشغيل السيرفر:' : 'Inbound TCP connections since startup:'} <strong>{networkStatus?.tcpConnectionsSinceStart ?? '—'}</strong></div>
+        <div>{isAr ? 'آخر اتصال TCP:' : 'Last inbound TCP:'} <strong dir="ltr">{networkStatus?.lastTcpConnectionAt ? new Date(networkStatus.lastTcpConnectionAt).toLocaleString() : '—'}</strong></div>
+        <div>{isAr ? 'آخر حزمة AVL مفكوكة:' : 'Last decoded AVL packet:'} <strong dir="ltr">{networkStatus?.lastAvlPacketAt ? new Date(networkStatus.lastAvlPacketAt).toLocaleString() : '—'}</strong></div>
+        <p className="mt-2 text-slate-500">{networkStatus && networkStatus.tcpConnectionsSinceStart === 0
+          ? (isAr ? 'لم يصل أي اتصال TCP لهذه النسخة من السيرفر. تأكد من عنوان ومنفذ Railway TCP Proxy الخارجي.' : 'No TCP traffic has reached this server process. Check the external Railway TCP proxy address and port.')
+          : networkStatus?.lastAvlPacketAt
+          ? (isAr ? 'وصلت بيانات AVL إلى السيرفر. إذا لم تظهر في اللوحة فتحقق من الجهاز المحدد وسجل البيانات.' : 'AVL data has reached the server. Check selected device and history if the dashboard remains empty.')
+          : (isAr ? 'وصل اتصال TCP لكن لم تُفك حزمة AVL حتى الآن. راجع سجل المصافحة وفك الحزم.' : 'TCP traffic arrived but no AVL packet has been decoded yet. Inspect handshake and parsing logs.')}</p>
+      </div>
+            {/* Connection Info Box */}
       <div className="mt-8 p-5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-700 text-left max-w-lg mx-auto">
         <h3 className="font-bold text-slate-900 mb-2 flex items-center gap-2">
           <Server className="w-4 h-4 text-blue-600" />
