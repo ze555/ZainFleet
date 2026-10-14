@@ -177,6 +177,7 @@ export interface CanMetrics {
   diagnostic: {
     milActive: boolean; // Check Engine Light (MIL) is ON
     dtcCount: number; // Total number of active trouble codes
+    dtcDataReported: boolean; // Whether the tracker actually reported DTC data
     dtcCodes: DtcFaultCode[]; // Structured list of detected diagnostic trouble codes
     rawDtcString: string | null; // Raw string or hex from AVL ID 282
     vin: string | null; // Vehicle VIN from AVL ID 256

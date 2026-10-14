@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
-import { DeviceInfo, TelemetrySnapshot } from '../types/fleet.js';
+import { TelemetrySnapshot } from '../types/fleet.js';
 import { decodeCanMetrics } from '../utils/canBusDecoder.js';
 import {
   Gauge,
   Zap,
   DoorClosed,
   DoorOpen,
-  Compass,
   RotateCw,
   Car,
   Layers,
-  Cpu,
   Fuel,
   ShieldAlert,
   CheckCircle2,
@@ -19,10 +17,8 @@ import {
   Download,
   AlertTriangle,
 } from 'lucide-react';
-import { formatCoordinates } from '../utils/geoUtils.js';
 
 interface VehicleDataViewProps {
-  device: DeviceInfo;
   telemetry: TelemetrySnapshot | null;
   isLoading: boolean;
   onRefresh: () => void;
@@ -30,14 +26,13 @@ interface VehicleDataViewProps {
 }
 
 export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
-  device,
   telemetry,
   isLoading,
   onRefresh,
   lang,
 }) => {
   const isAr = lang === 'ar';
-  const [subTab, setSubTab] = useState<'can' | 'dtc' | 'gps' | 'device'>('can');
+  const [subTab, setSubTab] = useState<'can' | 'dtc'>('can');
   const [showRawDtcDebug, setShowRawDtcDebug] = useState(false);
 
   const record = telemetry?.record;
@@ -63,6 +58,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
 
   const dtcCount = metrics.diagnostic.dtcCount;
   const hasDtcFaults = dtcCount > 0 || metrics.diagnostic.milActive;
+  const hasDtcData = metrics.diagnostic.dtcDataReported;
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto pb-12">
@@ -109,26 +105,6 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
               {hasDtcFaults && (
                 <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
               )}
-            </button>
-            <button
-              onClick={() => setSubTab('gps')}
-              className={`px-3 py-1.5 rounded-lg transition-colors shrink-0 ${
-                subTab === 'gps'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'hover:text-slate-900'
-              }`}
-            >
-              GPS
-            </button>
-            <button
-              onClick={() => setSubTab('device')}
-              className={`px-3 py-1.5 rounded-lg transition-colors shrink-0 ${
-                subTab === 'device'
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'hover:text-slate-900'
-              }`}
-            >
-              {isAr ? 'الجهاز' : 'Tracker'}
             </button>
           </div>
 
@@ -516,13 +492,17 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                   className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
                     hasDtcFaults
                       ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                      : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                      : hasDtcData
+                      ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                      : 'bg-slate-100 text-slate-500 border border-slate-200'
                   }`}
                 >
                   {hasDtcFaults ? (
                     <ShieldAlert className="w-6 h-6 animate-bounce" />
-                  ) : (
+                  ) : hasDtcData ? (
                     <CheckCircle2 className="w-6 h-6" />
+                  ) : (
+                    <Info className="w-6 h-6" />
                   )}
                 </div>
 
@@ -551,7 +531,9 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold ${
                     metrics.diagnostic.milActive
                       ? 'bg-rose-100 text-rose-800 border border-rose-300'
-                      : 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      : metrics.comfort.checkEngineLight === false
+                      ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                      : 'bg-slate-50 text-slate-600 border border-slate-200'
                   }`}
                 >
                   <Zap className="w-3.5 h-3.5" />
@@ -561,9 +543,13 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                       ? isAr
                         ? 'مضاءة (تنبيه عطل!)'
                         : 'Active / ON'
+                      : metrics.comfort.checkEngineLight === false
+                      ? isAr
+                        ? 'مطفأة'
+                        : 'OFF'
                       : isAr
-                      ? 'مطفأة (سليمة)'
-                      : 'OFF / Normal'}
+                      ? 'لم تصل بيانات'
+                      : 'Not reported'}
                   </span>
                 </span>
               </div>
@@ -627,18 +613,46 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
             </div>
           ) : (
             <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center shadow-xs space-y-3">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center">
-                <CheckCircle2 className="w-8 h-8" />
+              <div className={`w-16 h-16 rounded-2xl mx-auto flex items-center justify-center ${
+                dtcCount > 0 || metrics.diagnostic.milActive
+                  ? 'bg-amber-50 text-amber-600'
+                  : hasDtcData
+                  ? 'bg-emerald-50 text-emerald-600'
+                  : 'bg-slate-100 text-slate-500'
+              }`}>
+                {dtcCount > 0 || metrics.diagnostic.milActive ? (
+                  <ShieldAlert className="w-8 h-8" />
+                ) : hasDtcData ? (
+                  <CheckCircle2 className="w-8 h-8" />
+                ) : (
+                  <Info className="w-8 h-8" />
+                )}
               </div>
               <h4 className="text-base sm:text-lg font-bold text-slate-900">
-                {isAr
-                  ? 'المنظومة سليمة تماماً — لا توجد أي أكواد أعطال مسجلة'
-                  : 'All Systems Normal — No DTC Fault Codes Detected'}
+                {dtcCount > 0
+                  ? isAr
+                    ? `تم الإبلاغ عن ${dtcCount} أعطال، لكن تفاصيل الأكواد غير متاحة`
+                    : `${dtcCount} DTC(s) reported; code details are unavailable`
+                  : hasDtcData
+                  ? isAr
+                    ? 'لم يتم الإبلاغ عن أكواد أعطال'
+                    : 'No DTC codes reported'
+                  : isAr
+                  ? 'بيانات الأعطال غير متاحة بعد'
+                  : 'DTC data has not been reported'}
               </h4>
               <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-                {isAr
-                  ? 'تم فحص ذاكرة الأعطال في كمبيوتر السيارة (ECU) عبر ناقل CAN/OBD. لم يتم رصد أي خلل في منظومة الاحتراق أو التبريد أو الانبعاثات، ولمبة فحص المحرك مطفأة.'
-                  : 'Electronic Control Units (ECUs) report 0 active trouble codes. Engine, transmission, and emission systems are operating nominally.'}
+                {dtcCount > 0
+                  ? isAr
+                    ? 'تحقق من إعداد إرسال تفاصيل الأكواد في الجهاز لعرض رموز الأعطال.'
+                    : 'Enable fault-code I/O reporting on the tracker to view the individual codes.'
+                  : hasDtcData
+                  ? isAr
+                    ? 'أبلغ كمبيوتر السيارة عن عدم وجود أكواد أعطال نشطة.'
+                    : 'The vehicle ECU reported no active fault codes.'
+                  : isAr
+                  ? 'فعّل إرسال عدد الأعطال وأكواد DTC في إعدادات جهاز Teltonika لعرض حالة السيارة هنا.'
+                  : 'Enable DTC count and fault-code I/O reporting in the Teltonika device configuration to see ECU status here.'}
               </p>
             </div>
           )}
@@ -678,117 +692,6 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
         </div>
       )}
 
-      {/* SUBTAB 3: GPS & Navigation */}
-      {subTab === 'gps' && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Compass className="w-4 h-4 text-blue-600" />
-            <span>{isAr ? 'قراءات الملاحة والأقمار الصناعية (GNSS)' : 'GNSS Positioning'}</span>
-          </h3>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-              <span className="text-[11px] text-slate-400 block">{isAr ? 'الإحداثيات' : 'Coordinates'}</span>
-              <span className="font-mono font-bold text-sm text-slate-900 block mt-1">
-                {formatCoordinates(record.latitude, record.longitude)}
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-              <span className="text-[11px] text-slate-400 block">{isAr ? 'السرعة الجغرافية' : 'GPS Speed'}</span>
-              <span className="font-mono font-bold text-lg text-slate-900 block mt-1">
-                {record.speed} km/h
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-              <span className="text-[11px] text-slate-400 block">{isAr ? 'الأقمار النشطة' : 'Satellites'}</span>
-              <span className="font-mono font-bold text-lg text-amber-600 block mt-1">
-                {record.satellites}
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-              <span className="text-[11px] text-slate-400 block">{isAr ? 'الارتفاع عن البحر' : 'Altitude'}</span>
-              <span className="font-mono font-bold text-lg text-slate-900 block mt-1">
-                {record.altitude} m
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-              <span className="text-[11px] text-slate-400 block">{isAr ? 'زاوية الاتجاه' : 'Heading'}</span>
-              <span className="font-mono font-bold text-lg text-slate-900 block mt-1">
-                {record.angle}°
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-              <span className="text-[11px] text-slate-400 block">{isAr ? 'صحة الإشارة' : 'Fix Status'}</span>
-              <span className="font-bold text-sm text-emerald-700 block mt-1">
-                {record.satellites >= 4 ? (isAr ? 'دقة ثلاثية الأبعاد 3D' : '3D High Fix') : (isAr ? 'دقة مقبولة' : '2D Fix')}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SUBTAB 4: Device Diagnostics */}
-      {subTab === 'device' && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <Cpu className="w-4 h-4 text-violet-600" />
-            <span>{isAr ? 'معلومات جهاز التتبع (Teltonika FMB140)' : 'Hardware Tracker Info'}</span>
-          </h3>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-              <span className="text-[11px] text-slate-400 block">{isAr ? 'الرقم التسلسلي (IMEI)' : 'Device IMEI'}</span>
-              <span className="font-mono font-bold text-xs text-slate-900 block mt-1">
-                {device.imei}
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-              <span className="text-[11px] text-slate-400 block">{isAr ? 'بطارية الجهاز الداخلية' : 'Internal Backup Bat'}</span>
-              <span className="font-mono font-bold text-lg text-slate-900 block mt-1">
-                {metrics.electrical.trackerBatteryV ? `${metrics.electrical.trackerBatteryV}V` : '---'}
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-              <span className="text-[11px] text-slate-400 block">{isAr ? 'إشارة شبكة GSM' : 'Cellular Signal'}</span>
-              <span className="font-mono font-bold text-lg text-blue-600 block mt-1">
-                {metrics.cellular.signalBars !== null ? `${metrics.cellular.signalBars}/5` : 'Connected'}
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-              <span className="text-[11px] text-slate-400 block">{isAr ? 'إجمالي السجلات' : 'Total Records'}</span>
-              <span className="font-mono font-bold text-lg text-slate-900 block mt-1">
-                {device.totalRecords || 0}
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-              <span className="text-[11px] text-slate-400 block">{isAr ? 'المسافة التراكمية' : 'Accumulated Dist'}</span>
-              <span className="font-mono font-bold text-lg text-slate-900 block mt-1">
-                {(device.totalDistanceKm || 0).toFixed(1)} km
-              </span>
-            </div>
-
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
-              <span className="text-[11px] text-slate-400 block">{isAr ? 'حالة المقبس' : 'TCP Socket'}</span>
-              <span
-                className={`font-bold text-sm block mt-1 ${
-                  device.tcpConnected ? 'text-emerald-700' : 'text-slate-500'
-                }`}
-              >
-                {device.tcpConnected ? (isAr ? 'متصل بنشاط' : 'Connected') : (isAr ? 'غير متصل' : 'Closed')}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

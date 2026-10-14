@@ -131,22 +131,22 @@ export const CAN_PARAMETER_CATALOG: Record<number, CanParameterDefinition> = {
   },
   30: {
     id: 30,
-    officialName: 'Vehicle Speed (CAN)',
-    nameAr: 'سرعة المركبة من ناقل CAN (M-CAN)',
-    nameEn: 'Vehicle Speed (CAN Bus)',
-    source: 'can_powertrain',
-    sourceBusLabelAr: 'M-CAN (ناقل المحرك CAN1)',
-    sourceBusLabelEn: 'M-CAN (Powertrain CAN1)',
+    officialName: 'Number of DTC',
+    nameAr: 'عدد أكواد الأعطال (DTC)',
+    nameEn: 'DTC Count',
+    source: 'obd',
+    sourceBusLabelAr: 'تشخيص كمبيوتر السيارة',
+    sourceBusLabelEn: 'Vehicle ECU diagnostics',
     byteLength: 1,
     signed: false,
     multiplier: 1,
-    unit: 'km/h',
-    valueRange: '0 - 255 km/h',
-    descriptionAr: 'سرعة السيارة من ناقل حركة السيارة عبر معالج الـ CAN المدمج',
-    descriptionEn: 'Vehicle speed read from CAN1 lines by internal CAN chip',
-    configDependency: 'CAN adapter enabled & vehicle profile set',
+    unit: 'codes',
+    valueRange: '0 - 255',
+    descriptionAr: 'عدد أكواد الأعطال التي أبلغ عنها كمبيوتر السيارة',
+    descriptionEn: 'Number of diagnostic trouble codes reported by the vehicle ECU',
+    configDependency: 'OBD DTC reporting enabled',
     verified: true,
-    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID#CAN_adapters_elements',
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID#OBD_elements',
   },
   31: {
     id: 31,
@@ -1003,7 +1003,7 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
 
   // --- 3. Speed: Distinguish GPS Speed vs CAN Speed ---
   const gpsSpeed = record.speed;
-  const canSpeedRaw = getParsed(30) ?? getParsed(81) ?? getParsed(24);
+  const canSpeedRaw = getParsed(81) ?? getParsed(24);
   const displaySpeed = canSpeedRaw !== null && canSpeedRaw > 0 ? canSpeedRaw : gpsSpeed;
 
   // --- 4. Engine Dynamics ---
@@ -1146,15 +1146,21 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
   const operatorCode = getRaw(241) || null;
 
   // --- 10. Vehicle Computer Diagnostics & DTC Trouble Codes ---
-  const rawDtcString = getRaw(282) || null;
-  const rawDtcCount = getParsed(160) ?? getParsed(30) ?? 0;
-  const parsedDtcCodes = decodeDtcCodes(rawDtcString || undefined);
+  const rawDtcString = getRaw(282) ?? getRaw(281) ?? null;
+  const dtc281Raw = getRaw(281);
+  const dtc281Ascii =
+    dtc281Raw && /^(?:[0-9A-Fa-f]{2})+$/.test(dtc281Raw)
+      ? (dtc281Raw.match(/.{2}/g) || []).map((byte) => String.fromCharCode(parseInt(byte, 16))).join('')
+      : dtc281Raw;
+  const rawDtcCount = getParsed(30) ?? getParsed(160) ?? 0;
+  const dtcDataReported = [30, 160, 281, 282].some((id) => getRaw(id) !== undefined);
+  const parsedDtcCodes = decodeDtcCodes(getRaw(282) ?? dtc281Ascii ?? undefined);
   const effectiveDtcCount = Math.max(rawDtcCount, parsedDtcCodes.length);
   const milActive = checkEngineLight ?? false;
   const vinRaw = getRaw(256) || null;
 
-  let diagnosticStatusAr = 'المنظومة سليمة (لا توجد أكواد أعطال مسجلة)';
-  let diagnosticStatusEn = 'System Normal (No DTC Detected)';
+  let diagnosticStatusAr = dtcDataReported ? 'لا توجد أكواد أعطال مسجلة' : 'لم تصل بيانات الأعطال من كمبيوتر السيارة';
+  let diagnosticStatusEn = dtcDataReported ? 'No DTC codes reported' : 'DTC data has not been reported by the vehicle ECU';
 
   if (effectiveDtcCount > 0) {
     diagnosticStatusAr = `تم رصد ${effectiveDtcCount} كود عطل مسجل بكمبيوتر السيارة`;
@@ -1231,6 +1237,7 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
     diagnostic: {
       milActive,
       dtcCount: effectiveDtcCount,
+      dtcDataReported,
       dtcCodes: parsedDtcCodes,
       rawDtcString,
       vin: vinRaw,

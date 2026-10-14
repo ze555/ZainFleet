@@ -218,7 +218,7 @@ export function parseTeltonikaDataField(dataField: Uint8Array): ParsedAvlPacket 
     throw new Error(`Unsupported Teltonika codec: 0x${codecId.toString(16).toUpperCase().padStart(2, '0')}`);
   }
 
-  const recordCount = codecId === 0x8E ? reader.readUInt16() : reader.readByte();
+  const recordCount = reader.readByte();
   const records: AvlRecord[] = [];
 
   for (let i = 0; i < recordCount; i++) {
@@ -227,7 +227,7 @@ export function parseTeltonikaDataField(dataField: Uint8Array): ParsedAvlPacket 
 
   let secondCount: number;
   if (codecId === 0x8E) {
-    secondCount = reader.readUInt16();
+    secondCount = reader.readByte();
   } else {
     // Support legacy single-record fixtures that had an artificial 0 byte before the second count
     if (reader.remaining === 2) {

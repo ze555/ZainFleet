@@ -8,8 +8,8 @@ import { AlertsView } from './components/AlertsView.tsx';
 import { CanSensorsLog } from './components/CanSensorsLog.tsx';
 import { DiagnosticView } from './components/DiagnosticView.tsx';
 import { PrivacyPolicy } from './components/PrivacyPolicy.tsx';
-import { BottomNav } from './components/BottomNav.tsx';
-import { MobileDrawer } from './components/MobileDrawer.tsx';
+
+
 import { DeviceInfo, TelemetrySnapshot } from './types/fleet.ts';
 import { decodeCanMetrics, generateVehicleAlerts } from './utils/canBusDecoder.ts';
 import {
@@ -23,14 +23,13 @@ import {
 } from 'lucide-react';
 
 export const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<string>('dashboard');
+  const [currentTab, setCurrentTab] = useState<string>('vehicle');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [selectedImei, setSelectedImei] = useState<string | null>(null);
   const [telemetry, setTelemetry] = useState<TelemetrySnapshot | null>(null);
   const [serverHealthy, setServerHealthy] = useState<boolean>(true);
   const [isLoadingTelemetry, setIsLoadingTelemetry] = useState<boolean>(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [showManageModal, setShowManageModal] = useState<boolean>(false);
 
   const isAr = lang === 'ar';
@@ -177,21 +176,6 @@ export const App: React.FC = () => {
         activeDevice={selectedDevice}
         vehicleName={vehicleName}
         unreadAlertsCount={unreadAlertsCount}
-        onOpenDrawer={() => setIsDrawerOpen(true)}
-        lang={lang}
-        setLang={setLang}
-      />
-
-      {/* Mobile Slide-Out Drawer matching Screen 8 in Mockup */}
-      <MobileDrawer
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-        device={selectedDevice}
-        vehicleName={vehicleName}
-        unreadAlertsCount={unreadAlertsCount}
-        serverHealthy={serverHealthy}
         lang={lang}
         setLang={setLang}
       />
@@ -241,7 +225,6 @@ export const App: React.FC = () => {
           <>
             {selectedDevice ? (
               <CanDashboard
-                device={selectedDevice}
                 telemetry={telemetry}
                 isLoading={isLoadingTelemetry}
                 onRefresh={() => selectedImei && fetchTelemetry(selectedImei)}
@@ -287,7 +270,6 @@ export const App: React.FC = () => {
           <>
             {selectedDevice ? (
               <VehicleDataView
-                device={selectedDevice}
                 telemetry={telemetry}
                 isLoading={isLoadingTelemetry}
                 onRefresh={() => selectedImei && fetchTelemetry(selectedImei)}
@@ -327,15 +309,6 @@ export const App: React.FC = () => {
         {/* View 8: Privacy Policy */}
         {currentTab === 'privacy' && <PrivacyPolicy />}
       </main>
-
-      {/* Fixed Bottom Navigation for Mobile matching all Mockup screens */}
-      <BottomNav
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-        unreadAlertsCount={unreadAlertsCount}
-        onOpenDrawer={() => setIsDrawerOpen(true)}
-        lang={lang}
-      />
 
       {/* Safe Device Management Modal */}
       {showManageModal && selectedDevice && (
@@ -397,12 +370,7 @@ export const App: React.FC = () => {
               <span>TCP Port: 5000</span>
             </span>
             <span>&bull;</span>
-            <button
-              onClick={() => setCurrentTab('privacy')}
-              className="text-blue-600 hover:underline"
-            >
-              {isAr ? 'سياسة الخصوصية' : 'Privacy Policy'}
-            </button>
+
           </div>
         </div>
       </footer>
