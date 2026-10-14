@@ -191,6 +191,17 @@ const TCP_MAX_PACKET_BYTES = parseInt(process.env.TCP_MAX_PACKET_BYTES || '10485
 let tcpConnectionsSinceStart = 0;
 let lastTcpConnectionAt: string | null = null;
 let lastAvlPacketAt: string | null = null;
+type TcpFailureCode = 'HANDSHAKE_INVALID' | 'PACKET_INVALID' | 'PACKET_DECODE_FAILED' | 'TIMEOUT' | 'SOCKET_ERROR';
+let lastTcpFailure: { code: TcpFailureCode; message: string; at: string } | null = null;
+const tcpFailureCounts: Record<TcpFailureCode, number> = {
+  HANDSHAKE_INVALID: 0, PACKET_INVALID: 0, PACKET_DECODE_FAILED: 0, TIMEOUT: 0, SOCKET_ERROR: 0
+};
+function recordTcpFailure(code: TcpFailureCode, message: string) {
+  lastTcpFailure = { code, message, at: new Date().toISOString() };
+  tcpFailureCounts[code] += 1;
+  console.warn(`[TCP DIAGNOSTIC] ${code}: ${message}`);
+}
+
 const activeDeviceSockets = new Map<string, Set<net.Socket>>();
 const tcpServer = net.createServer((socket) => {
   tcpConnectionsSinceStart += 1;
@@ -209,7 +220,7 @@ const tcpServer = net.createServer((socket) => {
   socket.setTimeout(TCP_IDLE_TIMEOUT_MS);
 
   socket.on('timeout', () => {
-    console.log(`[TCP] DEVICE TIMEOUT ${remote} (IMEI=${imei})`);
+    recordTcpFailure('TIMEOUT', `TCP session timed out (IMEI=${imei || 'unknown'})`);
     socket.destroy();
   });
 
@@ -225,7 +236,7 @@ const tcpServer = net.createServer((socket) => {
         if (buffer.length < 2) return;
         const imeiLength = buffer.readUInt16BE(0);
         if (imeiLength !== 15) {
-          console.warn(`[TCP] Rejected invalid IMEI length: ${imeiLength}`);
+          recordTcpFailure('HANDSHAKE_INVALID', `Invalid IMEI length: ${imeiLength}`);
           socket.write(Buffer.from(createImeiResponse(false)));
           socket.destroy();
           return;
@@ -235,7 +246,7 @@ const tcpServer = net.createServer((socket) => {
         const imeiBytes = buffer.subarray(2, 17);
         const parsed = tryParseImei(imeiBytes);
         if (!parsed) {
-          console.warn(`[TCP] Rejected invalid IMEI digits`);
+          recordTcpFailure('HANDSHAKE_INVALID', 'Invalid IMEI digits');
           socket.write(Buffer.from(createImeiResponse(false)));
           socket.destroy();
           return;
@@ -262,14 +273,14 @@ const tcpServer = net.createServer((socket) => {
         // Preamble: 4 zero bytes
         const p0 = buffer.readUInt32BE(0);
         if (p0 !== 0) {
-          console.warn(`[TCP] Invalid packet preamble: 0x${p0.toString(16)} (buffer length=${buffer.length})`);
+          recordTcpFailure('PACKET_INVALID', `Invalid AVL packet preamble (length=${buffer.length})`);
           socket.destroy();
           return;
         }
 
         const dataLength = buffer.readUInt32BE(4);
         if (dataLength < 3 || dataLength > TCP_MAX_PACKET_BYTES) {
-          console.warn(`[TCP] Invalid dataLength: ${dataLength}`);
+          recordTcpFailure('PACKET_INVALID', `Invalid AVL data length: ${dataLength}`);
           socket.destroy();
           return;
         }
@@ -323,6 +334,7 @@ const tcpServer = net.createServer((socket) => {
         });
       }
     } catch (err) {
+      recordTcpFailure('PACKET_DECODE_FAILED', err instanceof Error ? err.message : String(err));
       console.error(`[TCP] Error processing data from ${remote}:`, err);
       socket.destroy();
     }
@@ -343,6 +355,7 @@ const tcpServer = net.createServer((socket) => {
   });
 
   socket.on('error', (err) => {
+    recordTcpFailure('SOCKET_ERROR', err.message);
     console.error(`[TCP] Socket error from ${remote}:`, err.message);
   });
 });
@@ -391,12 +404,42 @@ app.get('/health', (_req: Request, res: Response) => {
     lastTcpConnectionAt,
     lastAvlPacketAt,
     knownDevices: deviceRepo.getAll().length,
+    lastTcpFailure,
+    tcpFailureCounts,
+
     activeDeviceSockets: Array.from(activeDeviceSockets.values()).reduce((sum, group) => sum + group.size, 0),
     // Railway's public TCP proxy is NOT the internal TCP listener port.
     // Configure these from Settings > Networking > TCP Proxy; do not guess them.
     tcpPublicHost: process.env.TCP_PUBLIC_HOST || null,
     tcpPublicPort: process.env.TCP_PUBLIC_PORT ? Number(process.env.TCP_PUBLIC_PORT) : null,
   });
+});
+
+// Explain observable connection failures without claiming to know the device's network state.
+app.get('/api/connection/diagnostics', (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const activeSockets = Array.from(activeDeviceSockets.values()).reduce((sum, group) => sum + group.size, 0);
+  const reasonCode = !tcpListenerReady ? 'TCP_LISTENER_DOWN'
+    : tcpConnectionsSinceStart === 0 ? 'NO_INBOUND_CONNECTION'
+    : !lastAvlPacketAt && lastTcpFailure ? lastTcpFailure.code
+    : !lastAvlPacketAt ? 'TCP_RECEIVED_NO_AVL'
+    : activeSockets === 0 ? 'DEVICE_DISCONNECTED'
+    : 'DATA_RECEIVED';
+  const reasonAr: Record<string, string> = {
+    TCP_LISTENER_DOWN: 'فشل تشغيل منفذ TCP على السيرفر',
+    NO_INBOUND_CONNECTION: 'لم يصل أي اتصال TCP إلى السيرفر منذ تشغيله. لا يمكن تحديد السبب من الخادم وحده؛ افحص الشبكة والشريحة وTCP Proxy',
+    HANDSHAKE_INVALID: 'وصل اتصال ولكن فشلت مصافحة IMEI',
+    PACKET_INVALID: 'وصلت بيانات TCP لكن تنسيق حزمة AVL غير صالح',
+    PACKET_DECODE_FAILED: 'وصلت حزمة AVL لكن تعذر فكها',
+    TIMEOUT: 'وصل اتصال TCP ثم انتهت مهلة الانتظار',
+    SOCKET_ERROR: 'حدث خطأ أثناء اتصال TCP',
+    TCP_RECEIVED_NO_AVL: 'وصل اتصال TCP لكن لم تصل حزمة AVL صحيحة بعد',
+    DEVICE_DISCONNECTED: 'استقبل السيرفر بيانات AVL سابقاً، ولا توجد جلسة جهاز مفتوحة الآن',
+    DATA_RECEIVED: 'استقبل السيرفر بيانات AVL وتوجد جلسة جهاز مفتوحة'
+  };
+  res.json({ tcpListenerReady, tcpConnectionsSinceStart, activeSockets,
+    lastTcpConnectionAt, lastAvlPacketAt, lastTcpFailure, tcpFailureCounts,
+    reasonCode, reasonAr: reasonAr[reasonCode], checkedAt: new Date().toISOString() });
 });
 
 app.get('/api/devices', (_req: Request, res: Response) => {
