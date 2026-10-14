@@ -15,36 +15,40 @@ import {
  * https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID
  */
 export const CAN_PARAMETER_CATALOG: Record<number, CanParameterDefinition> = {
-  200: {
-    id: 200, officialName: 'Sleep Mode', nameAr: 'وضع السكون', nameEn: 'Tracker Sleep Mode',
-    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع GNSS', sourceBusLabelEn: 'Tracker GNSS / System',
-    byteLength: 1, signed: false, multiplier: 1, unit: 'State',
-    valueRange: '0-4', descriptionAr: 'وضع السكون', descriptionEn: '0=No Sleep; 1=GPS Sleep; 2=Deep Sleep; 3=Online Sleep; 4=Ultra Sleep',
-    configDependency: 'Teltonika I/O configuration', verified: true,
-    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
-  },
   69: {
-    id: 69, officialName: 'GNSS Status', nameAr: 'حالة استقبال الأقمار الصناعية', nameEn: 'GNSS Fix Status',
-    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع GNSS', sourceBusLabelEn: 'Tracker GNSS / System',
+    id: 69, officialName: 'GNSS Status', nameAr: 'حالة استقبال الأقمار الصناعية', nameEn: 'GNSS Status',
+    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع', sourceBusLabelEn: 'Tracker GNSS / System',
     byteLength: 1, signed: false, multiplier: 1, unit: 'State',
-    valueRange: '0-3', descriptionAr: 'حالة استقبال الأقمار الصناعية', descriptionEn: '0=Off; 1=On with fix; 2=On without fix; 3=GNSS Sleep',
-    configDependency: 'Teltonika I/O configuration', verified: true,
+    valueRange: '0 - 3',
+    descriptionAr: 'حالة تحديد الموقع عبر الأقمار الصناعية', descriptionEn: 'GNSS Status (not a vehicle CAN sensor)',
+    configDependency: 'Device AVL I/O configuration', verified: true,
     documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
   },
   181: {
-    id: 181, officialName: 'GNSS PDOP', nameAr: 'معامل دقة تحديد الموقع PDOP', nameEn: 'GNSS Position Dilution of Precision',
-    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع GNSS', sourceBusLabelEn: 'Tracker GNSS / System',
-    byteLength: 2, signed: false, multiplier: 0.1, unit: 'PDOP',
-    valueRange: '0-500', descriptionAr: 'معامل دقة تحديد الموقع PDOP', descriptionEn: 'PDOP precision dilution indicator (raw value x 0.1)',
-    configDependency: 'Teltonika I/O configuration', verified: true,
+    id: 181, officialName: 'GNSS PDOP', nameAr: 'مؤشر دقة تحديد الموقع PDOP', nameEn: 'GNSS PDOP',
+    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع', sourceBusLabelEn: 'Tracker GNSS / System',
+    byteLength: 2, signed: false, multiplier: 0.1, unit: 'DOP',
+    valueRange: '0 - 500 (raw)',
+    descriptionAr: 'مؤشر دقة الموقع بعد تطبيق معامل 0.1', descriptionEn: 'GNSS PDOP (not a vehicle CAN sensor)',
+    configDependency: 'Device AVL I/O configuration', verified: true,
     documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
   },
   182: {
-    id: 182, officialName: 'GNSS HDOP', nameAr: 'معامل دقة الموقع الأفقي HDOP', nameEn: 'GNSS Horizontal Dilution of Precision',
-    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع GNSS', sourceBusLabelEn: 'Tracker GNSS / System',
-    byteLength: 2, signed: false, multiplier: 0.1, unit: 'HDOP',
-    valueRange: '0-500', descriptionAr: 'معامل دقة الموقع الأفقي HDOP', descriptionEn: 'HDOP horizontal precision dilution indicator (raw value x 0.1)',
-    configDependency: 'Teltonika I/O configuration', verified: true,
+    id: 182, officialName: 'GNSS HDOP', nameAr: 'مؤشر الدقة الأفقية HDOP', nameEn: 'GNSS HDOP',
+    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع', sourceBusLabelEn: 'Tracker GNSS / System',
+    byteLength: 2, signed: false, multiplier: 0.1, unit: 'DOP',
+    valueRange: '0 - 500 (raw)',
+    descriptionAr: 'الدقة الأفقية بعد تطبيق معامل 0.1', descriptionEn: 'GNSS HDOP (not a vehicle CAN sensor)',
+    configDependency: 'Device AVL I/O configuration', verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
+  },
+  200: {
+    id: 200, officialName: 'Sleep Mode', nameAr: 'وضع سكون جهاز التتبع', nameEn: 'Sleep Mode',
+    source: 'device_io', sourceBusLabelAr: 'بيانات جهاز التتبع', sourceBusLabelEn: 'Tracker GNSS / System',
+    byteLength: 1, signed: false, multiplier: 1, unit: 'State',
+    valueRange: '0 - 4',
+    descriptionAr: 'وضع النوم الخاص بالجهاز وليس السيارة', descriptionEn: 'Sleep Mode (not a vehicle CAN sensor)',
+    configDependency: 'Device AVL I/O configuration', verified: true,
     documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
   },
   1: {
@@ -144,17 +148,17 @@ export const CAN_PARAMETER_CATALOG: Record<number, CanParameterDefinition> = {
   },
   24: {
     id: 24,
-    officialName: 'Speed (OBD)',
-    nameAr: 'سرعة المركبة من منفذ OBD',
-    nameEn: 'Vehicle Speed (OBD-II)',
-    source: 'obd',
-    sourceBusLabelAr: 'ناقل OBD-II القياسي',
-    sourceBusLabelEn: 'OBD-II Bus',
-    byteLength: 1,
+    officialName: 'GNSS Speed',
+    nameAr: 'السرعة من الأقمار الصناعية GNSS',
+    nameEn: 'GNSS Speed',
+    source: 'device_io',
+    sourceBusLabelAr: 'جهاز التتبع GNSS',
+    sourceBusLabelEn: 'Tracker GNSS',
+    byteLength: 2,
     signed: false,
     multiplier: 1,
     unit: 'km/h',
-    valueRange: '0 - 255 km/h',
+    valueRange: '0 - 350 km/h',
     descriptionAr: 'سرعة عجلات المركبة الحقيقية مستخرجة من كمبيوتر السيارة',
     descriptionEn: 'Real vehicle speed from vehicle ECU via standard OBD',
     configDependency: 'OBD feature enabled',
@@ -1035,12 +1039,12 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
 
   // --- 3. Speed: Distinguish GPS Speed vs CAN Speed ---
   const gpsSpeed = record.speed;
-  const canSpeedRaw = getParsed(30) ?? getParsed(81) ?? getParsed(24);
+  const canSpeedRaw = getParsed(81); // AVL 24 is GNSS speed, not vehicle CAN
   const displaySpeed = canSpeedRaw !== null && canSpeedRaw > 0 ? canSpeedRaw : gpsSpeed;
 
   // --- 4. Engine Dynamics ---
   // OBD RPM (ID 33) or CAN RPM (ID 35). NOT ID 85 which is LTE Band on FMB140!
-  let engineRpm = getParsed(33) ?? getParsed(35);
+  let engineRpm: number | null = null; // No RPM without a documented, device-specific AVL mapping
   if (engineRpm !== null && (engineRpm < 0 || engineRpm > 12000)) {
     engineRpm = null;
   }
@@ -1087,7 +1091,7 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
 
   if (canOdo87 !== null && canOdo87 > 0) {
     // If sent in meters (> 1,000,000), convert to km
-    odometerKm = canOdo87 > 1000000 ? Math.round(canOdo87 / 1000) : Math.round(canOdo87);
+    odometerKm = Math.round(canOdo87 / 1000);
     odoSource = 'CAN_ODOMETER';
   } else if (canOdo105 !== null && canOdo105 > 0) {
     odometerKm = Math.round(canOdo105 / 1000);
