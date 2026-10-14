@@ -127,11 +127,11 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
   return (
     <div className="space-y-4 max-w-4xl mx-auto pb-12">
       {/* 1. Main Vehicle Card (بطاقة المركبة الرئيسية) matching Screen 1 in Mockup */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs transition-all">
+      <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm transition-all">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             {/* Vehicle Avatar / Illustration */}
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-blue-50 to-slate-100 border border-slate-200/80 flex items-center justify-center text-blue-600 shadow-xs shrink-0 relative overflow-hidden">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-blue-50 to-slate-100 border border-slate-200/80 flex items-center justify-center text-blue-600 shadow-sm shrink-0 relative overflow-hidden">
               <Car className="w-10 h-10" />
             </div>
 
@@ -399,7 +399,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           className="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-3xl p-4 sm:p-5 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group relative active:scale-[0.98]"
         >
           {alerts.length > 0 && (
-            <span className="absolute top-3 left-3 sm:top-4 sm:left-4 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-extrabold shadow-xs">
+            <span className="absolute top-3 left-3 sm:top-4 sm:left-4 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-extrabold shadow-sm">
               {alerts.length}
             </span>
           )}
@@ -462,7 +462,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           <a
             href="/api/diagnostics/download"
             download="fmb140_packet_diagnostic.json"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-xs"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-sm"
           >
             <Download className="w-3.5 h-3.5" />
             <span>{isAr ? 'تحميل الـ Log' : 'Download Log'}</span>
@@ -479,7 +479,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
       </div>
 
       {/* 3. Key Vehicle Vitals Quick Cards (RPM, Coolant, Battery, Odometer) */}
-      <div className="zf-premium-card p-5 shadow-xs">
+      <div className="zf-premium-card p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Gauge className="w-4 h-4 text-blue-600" />
@@ -578,7 +578,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           {/* 6. Diagnostics & DTCs */}
           <div
             onClick={() => onNavigate('vehicle')}
-            className={`p-3 rounded-xl border cursor-pointer transition-all hover:shadow-xs ${
+            className={`p-3 rounded-xl border cursor-pointer transition-all hover:shadow-sm ${
               (metrics?.diagnostic.dtcCount ?? 0) > 0 || (metrics?.diagnostic.milActive ?? false)
                 ? 'bg-amber-50/80 border-amber-300 text-amber-950'
                 : 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
