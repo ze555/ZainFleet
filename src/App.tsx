@@ -221,6 +221,29 @@ export const App: React.FC = () => {
             </button>
           </div>
         </div>
+        {currentTab === 'dashboard' && (
+          <section className="zf-hero mb-6 rounded-[28px] p-5 text-white sm:p-7 lg:p-8" dir={isAr ? 'rtl' : 'ltr'}>
+            <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="max-w-xl">
+                <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-cyan-100">
+                  <span className="zf-status-dot" /> ZAINFLEET COMMAND CENTER
+                </div>
+                <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">
+                  {isAr ? 'أسطولك تحت السيطرة' : 'Your fleet. Fully in control.'}
+                </h1>
+                <p className="mt-3 max-w-lg text-sm leading-7 text-slate-200 sm:text-base">
+                  {isAr ? 'منصة ذكية لمراقبة المركبات، بيانات التتبع، وتشخيص الحساسات في الوقت الفعلي.' : 'Smarter vehicle tracking, diagnostics, and real-time telemetry in one powerful workspace.'}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5 sm:min-w-[310px]">
+                <div className="zf-kpi"><div className="text-[11px] text-sky-200">{isAr ? 'المركبات' : 'Vehicles'}</div><div className="mt-1 text-2xl font-bold">{devices.length}</div></div>
+                <div className="zf-kpi"><div className="text-[11px] text-sky-200">{isAr ? 'المتصلة' : 'Online'}</div><div className="mt-1 text-2xl font-bold">{devices.filter(d => d.connected).length}</div></div>
+                <div className="zf-kpi col-span-2 flex items-center justify-between gap-3"><span className="text-xs text-sky-100">{isAr ? 'حالة الخادم' : 'Server status'}</span><span className={`rounded-full px-3 py-1 text-xs font-semibold ${serverHealthy ? 'bg-emerald-400/20 text-emerald-100' : 'bg-rose-400/20 text-rose-100'}`}>{serverHealthy ? (isAr ? 'متصل' : 'Online') : (isAr ? 'غير متصل' : 'Offline')}</span></div>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Multi-vehicle Switcher Bar (only when > 1 vehicle exists) */}
         {devices.length > 1 && selectedDevice && (
           <div className="bg-white rounded-2xl border border-slate-200 p-3 mb-4 shadow-xs flex items-center justify-between gap-3">

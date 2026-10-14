@@ -2,19 +2,29 @@
 
 @layer base {
   :root { color-scheme: light; }
+  html { scroll-behavior: smooth; }
   body {
-    @apply bg-slate-50 text-slate-900;
-    background-image: radial-gradient(circle at 8% 0%, rgba(37,99,235,.075), transparent 32%), radial-gradient(circle at 100% 12%, rgba(13,148,136,.055), transparent 28%);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    -webkit-font-smoothing: antialiased;
+    @apply text-slate-900 antialiased;
+    min-height: 100vh;
+    background: radial-gradient(ellipse 65% 40% at -10% -5%, rgba(56,189,248,.13), transparent),
+      radial-gradient(ellipse 50% 36% at 110% 2%, rgba(99,102,241,.12), transparent),
+      linear-gradient(180deg, #f3f7fc 0%, #f8fafc 55%, #eef3f9 100%);
+    font-family: system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   }
-  button, select, input { transition: border-color .18s ease, background-color .18s ease, box-shadow .18s ease; }
-  button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible {
-    outline: 3px solid rgba(37, 99, 235, .40);
-    outline-offset: 2px;
-  }
+  button, select, input { transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease; }
+  :is(button,a,input,select):focus-visible { outline: 3px solid rgba(59,130,246,.45); outline-offset: 2px; }
 }
 @layer components {
   .zf-panel { @apply bg-white rounded-2xl border border-slate-200/80 shadow-sm; }
-  .zf-soft-glow { box-shadow: 0 10px 35px -24px rgba(15,23,42,.3); }
+  .zf-soft-glow { box-shadow: 0 14px 48px -28px rgba(15,23,42,.32); }
+  .zf-premium-card { @apply rounded-3xl border border-white/80 bg-white/95; box-shadow: 0 16px 45px -32px rgba(15,23,42,.38),0 2px 10px -6px rgba(15,23,42,.12); }
+  .zf-hero {
+    position:relative; overflow:hidden;
+    background: radial-gradient(circle at 80% -20%,rgba(56,189,248,.24),transparent 34%),radial-gradient(circle at 0% 100%,rgba(99,102,241,.35),transparent 40%),linear-gradient(120deg,#0c1733,#122b52 54%,#123e53);
+    box-shadow:0 24px 55px -30px rgba(15,40,85,.6);
+  }
+  .zf-hero::after {content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;background-image:linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:40px 40px;mask-image:linear-gradient(to left,black,transparent);}
+  .zf-status-dot {width:8px;height:8px;border-radius:50%;display:inline-block;background:#34d399;box-shadow:0 0 0 4px rgba(52,211,153,.17);}
+  .zf-kpi { @apply rounded-2xl border border-white/10 bg-white/10 px-4 py-3 backdrop-blur-sm; }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after {scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;} }
 }

@@ -479,7 +479,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
       </div>
 
       {/* 3. Key Vehicle Vitals Quick Cards (RPM, Coolant, Battery, Odometer) */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+      <div className="zf-premium-card p-5 shadow-xs">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             <Gauge className="w-4 h-4 text-blue-600" />
