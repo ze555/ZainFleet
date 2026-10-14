@@ -51,30 +51,6 @@ export const CAN_PARAMETER_CATALOG: Record<number, CanParameterDefinition> = {
     configDependency: 'Device AVL I/O configuration', verified: true,
     documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
   },
-  36: {
-    id: 36, officialName: 'OBD Engine RPM', nameAr: 'دورات المحرك من OBD', nameEn: 'Engine RPM (OBD)',
-    source: 'obd', sourceBusLabelAr: 'قراءة OBD', sourceBusLabelEn: 'OBD Data',
-    byteLength: 2, signed: false, multiplier: 1, unit: 'RPM', valueRange: '0 - 16384',
-    descriptionAr: 'دورات المحرك من OBD', descriptionEn: 'Engine revolutions per minute',
-    configDependency: 'OBD enabled', verified: true,
-    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
-  },
-  85: {
-    id: 85, officialName: 'CAN Engine RPM', nameAr: 'دورات المحرك من CAN', nameEn: 'Engine RPM (CAN)',
-    source: 'can_powertrain', sourceBusLabelAr: 'ناقل CAN', sourceBusLabelEn: 'Vehicle CAN',
-    byteLength: 2, signed: false, multiplier: 1, unit: 'RPM', valueRange: '0 - 16384',
-    descriptionAr: 'دورات المحرك من بيانات CAN', descriptionEn: 'CAN engine revolutions per minute',
-    configDependency: 'Supported CAN vehicle profile', verified: true,
-    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
-  },
-  48: {
-    id: 48, officialName: 'OBD Fuel Level', nameAr: 'مستوى الوقود من OBD', nameEn: 'Fuel Level (OBD)',
-    source: 'obd', sourceBusLabelAr: 'قراءة OBD', sourceBusLabelEn: 'OBD Data',
-    byteLength: 1, signed: false, multiplier: 1, unit: '%', valueRange: '0 - 100',
-    descriptionAr: 'مستوى الوقود من OBD', descriptionEn: 'Fuel level percentage',
-    configDependency: 'OBD enabled', verified: true,
-    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
-  },
   1: {
     id: 1,
     officialName: 'Digital Input 1 (DIN1)',
@@ -1063,12 +1039,12 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
 
   // --- 3. Speed: Distinguish GPS Speed vs CAN Speed ---
   const gpsSpeed = record.speed;
-  const canSpeedRaw = getParsed(81) ?? getParsed(24);
+  const canSpeedRaw = getParsed(81); // AVL 24 is GNSS speed, not vehicle CAN
   const displaySpeed = canSpeedRaw !== null && canSpeedRaw > 0 ? canSpeedRaw : gpsSpeed;
 
   // --- 4. Engine Dynamics ---
   // OBD RPM (ID 33) or CAN RPM (ID 35). NOT ID 85 which is LTE Band on FMB140!
-  let engineRpm = getParsed(85) ?? getParsed(36);
+  let engineRpm: number | null = null; // No RPM without a documented, device-specific AVL mapping
   if (engineRpm !== null && (engineRpm < 0 || engineRpm > 12000)) {
     engineRpm = null;
   }
@@ -1091,7 +1067,7 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
 
   // --- 5. Fuel & Consumption ---
   // Fuel Level %: ID 89 (OBD/CAN)
-  let fuelPercent = getParsed(89) ?? getParsed(48);
+  let fuelPercent = getParsed(89);
   if (fuelPercent !== null) {
     fuelPercent = Math.min(100, Math.max(0, Math.round(fuelPercent)));
   }
