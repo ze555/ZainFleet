@@ -176,14 +176,14 @@ const deviceRepo = new PersistentDeviceRepository();
 const telemetryRepo = new PersistentTelemetryRepository();
 
 // --- Teltonika TCP Server (raw TCP socket) ---
-const TCP_PORT = parseInt(process.env.TCP_PORT || '5000', 10);
-let HTTP_PORT = parseInt(process.env.PORT || '3000', 10);
-if (HTTP_PORT === TCP_PORT) {
-  // If user set PORT=5000 in Railway variables, avoid port collision with TCP listener
-  const fallback = process.env.NODE_ENV === 'production' ? 8080 : 3000;
-  console.warn(`[Port Config] PORT and TCP_PORT both configured to ${TCP_PORT}. Directing HTTP server to ${fallback}.`);
-  HTTP_PORT = fallback;
+// Separate internal listeners: FMB140 TCP on 5000, web/API on 8080.
+// Railway PORT can be 5000 for the TCP proxy; HTTP_PORT controls the website.
+const TCP_PORT = Number(process.env.TCP_PORT || 5000);
+const HTTP_PORT = Number(process.env.HTTP_PORT || 8080);
+if (![TCP_PORT, HTTP_PORT].every(p => Number.isInteger(p) && p > 0 && p <= 65535) || TCP_PORT === HTTP_PORT) {
+  throw new Error('Invalid port setup: TCP_PORT and HTTP_PORT must be distinct valid ports.');
 }
+console.log(`[Ports] Teltonika TCP :${TCP_PORT} | Web HTTP :${HTTP_PORT}`);
 const TCP_IDLE_TIMEOUT_MS = parseInt(process.env.TCP_IDLE_TIMEOUT_SECONDS || '300', 10) * 1000;
 const TCP_MAX_PACKET_BYTES = parseInt(process.env.TCP_MAX_PACKET_BYTES || '1048576', 10);
 
