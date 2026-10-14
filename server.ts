@@ -188,7 +188,12 @@ console.log(`[Ports] Teltonika TCP :${TCP_PORT} | Web HTTP :${HTTP_PORT}`);
 const TCP_IDLE_TIMEOUT_MS = parseInt(process.env.TCP_IDLE_TIMEOUT_SECONDS || '300', 10) * 1000;
 const TCP_MAX_PACKET_BYTES = parseInt(process.env.TCP_MAX_PACKET_BYTES || '1048576', 10);
 
+let tcpConnectionsSinceStart = 0;
+let lastTcpConnectionAt: string | null = null;
+let lastAvlPacketAt: string | null = null;
 const tcpServer = net.createServer((socket) => {
+  tcpConnectionsSinceStart += 1;
+  lastTcpConnectionAt = new Date().toISOString();
   const remote = `${socket.remoteAddress}:${socket.remotePort}`;
   console.log(`[TCP] DEVICE CONNECTED ${remote}`);
 
@@ -293,6 +298,7 @@ const tcpServer = net.createServer((socket) => {
         }
 
         const seenIso = new Date().toISOString();
+        lastAvlPacketAt = seenIso;
         if (imei) {
           let latestGpsTime = '';
           for (const rec of decoded.records) {
@@ -372,6 +378,10 @@ app.get('/health', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     tcpPort: TCP_PORT,
     httpPort: HTTP_PORT,
+    tcpConnectionsSinceStart,
+    lastTcpConnectionAt,
+    lastAvlPacketAt,
+    knownDevices: deviceRepo.getAll().length,
   });
 });
 
