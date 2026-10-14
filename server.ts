@@ -52,7 +52,7 @@ class PersistentDeviceRepository {
     }
   }
 
-  upsert(imei: string, seenAt: string, connected: boolean, lastGpsAt?: string): DeviceInfo {
+  upsert(imei: string, seenAt: string, connected: boolean, lastGpsAt?: string, receivedAvl = false): DeviceInfo {
     const existing = this.devices.get(imei);
     const tcpConnected = connected;
     const connectionStatus: 'online' | 'standby' | 'offline' = connected ? 'online' : 'offline';
@@ -62,7 +62,7 @@ class PersistentDeviceRepository {
       firstSeen: existing ? existing.firstSeen : seenAt,
       lastSeen: seenAt,
       // Handshakes/disconnects are not AVL transmissions. Update only after decoded records arrive.
-      lastPacketAt: lastGpsAt ? seenAt : (existing?.lastPacketAt || ''),
+      lastPacketAt: receivedAvl ? seenAt : (existing?.lastPacketAt || ''),
       lastGpsAt: lastGpsAt || existing?.lastGpsAt,
       tcpConnected,
       connected,
@@ -312,7 +312,7 @@ const tcpServer = net.createServer((socket) => {
             }
           }
           deviceRepo.incrementRecords(imei, decoded.records.length);
-          deviceRepo.upsert(imei, seenIso, true, latestGpsTime || undefined);
+          deviceRepo.upsert(imei, seenIso, true, latestGpsTime || undefined, true);
         }
 
         // Send 4-byte big-endian ACK
@@ -381,6 +381,7 @@ app.use(express.json());
 
 // API Endpoints matching ZainFleet original C# WebApplication
 app.get('/health', (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.json({
     status: 'healthy',
     uptimeSeconds: Math.floor(process.uptime()),
@@ -400,6 +401,7 @@ app.get('/health', (_req: Request, res: Response) => {
 });
 
 app.get('/api/devices', (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
   res.json(deviceRepo.getAll());
 });
 
