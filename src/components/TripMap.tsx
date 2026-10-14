@@ -225,7 +225,7 @@ export const TripMap: React.FC<TripMapProps> = ({
     : true;
 
   return (
-    <div className="relative w-full h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] min-h-[500px] rounded-3xl overflow-hidden border border-slate-200 shadow-xs flex flex-col">
+    <div className="relative w-full h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] min-h-[500px] rounded-3xl overflow-hidden border border-slate-200 shadow-sm flex flex-col">
       {/* Leaflet Map Canvas */}
       <div ref={mapContainerRef} className="w-full h-full z-10" />
 
@@ -373,7 +373,7 @@ export const TripMap: React.FC<TripMapProps> = ({
               onClick={() => setShowPastTrips(!showPastTrips)}
               className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
                 showPastTrips
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
               }`}
             >

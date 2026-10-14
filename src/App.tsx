@@ -197,7 +197,7 @@ export const App: React.FC = () => {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="zf-page flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
         {/* Compact connection overview, shared across dashboard views */}
         <div className="zf-panel zf-soft-glow mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
           <div className="flex items-center gap-3">

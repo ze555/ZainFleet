@@ -63,7 +63,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
   return (
     <div className="space-y-4 max-w-4xl mx-auto pb-12">
       {/* Title & Filter Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
             <Bell className="w-5 h-5" />
@@ -86,7 +86,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
             onClick={() => setFilter('all')}
             className={`px-3 py-1.5 rounded-lg transition-colors ${
               filter === 'all'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-blue-600 text-white shadow-sm'
                 : 'hover:text-slate-900'
             }`}
           >
@@ -96,7 +96,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
             onClick={() => setFilter('danger')}
             className={`px-3 py-1.5 rounded-lg transition-colors ${
               filter === 'danger'
-                ? 'bg-rose-600 text-white shadow-xs'
+                ? 'bg-rose-600 text-white shadow-sm'
                 : 'hover:text-slate-900'
             }`}
           >
@@ -106,7 +106,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
             onClick={() => setFilter('warning')}
             className={`px-3 py-1.5 rounded-lg transition-colors ${
               filter === 'warning'
-                ? 'bg-amber-600 text-white shadow-xs'
+                ? 'bg-amber-600 text-white shadow-sm'
                 : 'hover:text-slate-900'
             }`}
           >
@@ -116,7 +116,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
             onClick={() => setFilter('info')}
             className={`px-3 py-1.5 rounded-lg transition-colors ${
               filter === 'info'
-                ? 'bg-blue-600 text-white shadow-xs'
+                ? 'bg-blue-600 text-white shadow-sm'
                 : 'hover:text-slate-900'
             }`}
           >
@@ -127,7 +127,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
 
       {/* Alerts Cards List */}
       {filteredAlerts.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center shadow-xs space-y-3">
+        <div className="bg-white rounded-[28px] border border-slate-200/80 shadow-sm p-10 text-center shadow-sm space-y-3">
           <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center">
             <CheckCircle2 className="w-8 h-8" />
           </div>
@@ -149,7 +149,7 @@ export const AlertsView: React.FC<AlertsViewProps> = ({
             return (
               <div
                 key={alert.id}
-                className={`p-4 rounded-2xl border transition-all shadow-xs flex items-start gap-3.5 ${
+                className={`p-4 rounded-2xl border transition-all shadow-sm flex items-start gap-3.5 ${
                   isDanger
                     ? 'bg-rose-50/70 border-rose-200 text-rose-950'
                     : isWarning

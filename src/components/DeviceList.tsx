@@ -33,7 +33,7 @@ export const DeviceList: React.FC<DeviceListProps> = ({
   const connectedCount = devices.filter((d) => d.connected).length;
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col h-full overflow-hidden">
+    <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm shadow-sm flex flex-col h-full overflow-hidden">
       <div className="p-4 border-b border-slate-200">
         <div className="flex items-center justify-between mb-3">
           <div>

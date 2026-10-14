@@ -3,7 +3,7 @@ import { ShieldCheck, Lock, Database, Radio } from 'lucide-react';
 
 export const PrivacyPolicy: React.FC = () => {
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-xl border border-slate-200 p-8 shadow-xs space-y-6">
+    <div className="max-w-4xl mx-auto bg-white rounded-[22px] border border-slate-200/80 shadow-sm p-8 shadow-sm space-y-6">
       <div className="border-b border-slate-100 pb-4">
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2.5">
           <ShieldCheck className="w-6 h-6 text-blue-600" />

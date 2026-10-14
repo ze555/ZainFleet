@@ -44,7 +44,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
   if (!device || !record) {
     return (
       <div className="max-w-5xl mx-auto space-y-6">
-        <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center shadow-xs">
+        <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-8 sm:p-12 text-center shadow-sm">
           <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100">
             <Gauge className="w-8 h-8 animate-pulse" />
           </div>
@@ -129,9 +129,9 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
   return (
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-xs">
+          <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm">
             <Smartphone className="w-6 h-6" />
           </div>
           <div>
@@ -241,7 +241,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
       {/* Primary CAN Bus Instrument Gauges */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Fuel Gauge */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
+        <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-slate-700">
               <Fuel className="w-4 h-4 text-blue-600" /> CAN Fuel Level
@@ -285,7 +285,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
         </div>
 
         {/* Engine RPM Tachometer */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
+        <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-slate-700">
               <Gauge className="w-4 h-4 text-indigo-600" /> Engine RPM
@@ -313,7 +313,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
         </div>
 
         {/* External Battery Voltage */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
+        <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-slate-700">
               <Zap className="w-4 h-4 text-amber-500" /> Vehicle Battery
@@ -345,7 +345,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
         </div>
 
         {/* Engine Coolant Temp */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-3">
+        <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm p-5 shadow-sm space-y-3">
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span className="font-bold uppercase tracking-wider flex items-center gap-1.5 text-slate-700">
               <Thermometer className="w-4 h-4 text-rose-500" /> Coolant Temp
@@ -378,7 +378,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
       {/* Secondary Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Total Odometer */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-2">
+        <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm p-5 shadow-sm space-y-2">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
             <Milestone className="w-4 h-4 text-blue-600" /> Total Odometer (CAN)
           </span>
@@ -393,7 +393,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
         </div>
 
         {/* Vehicle Speed (CAN vs GPS) */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-2">
+        <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm p-5 shadow-sm space-y-2">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
             <Gauge className="w-4 h-4 text-emerald-600" /> Vehicle Speed
           </span>
@@ -407,7 +407,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
         </div>
 
         {/* Diagnostic Codes (DTC) */}
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-2">
+        <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm p-5 shadow-sm space-y-2">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
             <ShieldCheck className="w-4 h-4 text-emerald-600" /> On-Board Diagnostics (OBD)
           </span>
@@ -431,7 +431,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
       </div>
 
       {/* All Decoded CAN / IO Parameters Table */}
-      <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
+      <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm p-5 shadow-sm space-y-4">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">

@@ -65,7 +65,7 @@ export const TripsList: React.FC<TripsListProps> = ({ device, lang }) => {
   return (
     <div className="space-y-4 max-w-4xl mx-auto pb-12">
       {/* Title & Filter Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
             <Route className="w-5 h-5" />
@@ -89,7 +89,7 @@ export const TripsList: React.FC<TripsListProps> = ({ device, lang }) => {
               onClick={() => setFilter('all')}
               className={`px-3 py-1.5 rounded-lg transition-colors ${
                 filter === 'all'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'hover:text-slate-900'
               }`}
             >
@@ -99,7 +99,7 @@ export const TripsList: React.FC<TripsListProps> = ({ device, lang }) => {
               onClick={() => setFilter('today')}
               className={`px-3 py-1.5 rounded-lg transition-colors ${
                 filter === 'today'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'hover:text-slate-900'
               }`}
             >
@@ -109,7 +109,7 @@ export const TripsList: React.FC<TripsListProps> = ({ device, lang }) => {
               onClick={() => setFilter('week')}
               className={`px-3 py-1.5 rounded-lg transition-colors ${
                 filter === 'week'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'hover:text-slate-900'
               }`}
             >
@@ -119,7 +119,7 @@ export const TripsList: React.FC<TripsListProps> = ({ device, lang }) => {
               onClick={() => setFilter('month')}
               className={`px-3 py-1.5 rounded-lg transition-colors ${
                 filter === 'month'
-                  ? 'bg-blue-600 text-white shadow-xs'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'hover:text-slate-900'
               }`}
             >
@@ -140,7 +140,7 @@ export const TripsList: React.FC<TripsListProps> = ({ device, lang }) => {
 
       {/* Trips List */}
       {filteredTrips.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center shadow-xs space-y-3">
+        <div className="bg-white rounded-3xl border border-slate-200 p-10 text-center shadow-sm space-y-3">
           <div className="w-16 h-16 rounded-2xl bg-slate-50 text-slate-400 mx-auto flex items-center justify-center">
             <Route className="w-8 h-8" />
           </div>
@@ -173,7 +173,7 @@ export const TripsList: React.FC<TripsListProps> = ({ device, lang }) => {
               <div
                 key={trip.id}
                 onClick={() => setSelectedTrip(trip)}
-                className="bg-white rounded-2xl border border-slate-200 hover:border-blue-400/80 p-4 shadow-xs transition-all cursor-pointer group hover:shadow-md"
+                className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm hover:border-blue-400/80 p-4 shadow-sm transition-all cursor-pointer group hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div>

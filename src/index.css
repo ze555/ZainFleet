@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 @layer base {
@@ -41,4 +42,39 @@
   .zf-v2-hero .zf-v2-stats {align-self:stretch;}
   .zf-premium-card {border-radius:23px;box-shadow:0 16px 55px -38px #091c45b3,0 1px 5px #1e293b12;transition:transform .2s,box-shadow .2s;}
   .zf-premium-card:hover {transform:translateY(-2px);box-shadow:0 20px 50px -34px #091c457a;}
+}
+
+/* Unified design system applies to every ZainFleet page, not only dashboard. */
+@layer base {
+  :root { font-family: 'Inter','Cairo',system-ui,sans-serif; }
+  html[lang="ar"], [dir="rtl"] { font-family:'Cairo','Inter',system-ui,sans-serif; }
+  body { font-family:'Cairo','Inter',system-ui,sans-serif; background:linear-gradient(145deg,#edf3fc,#f8fafc 48%,#eef5fa); }
+  h1,h2,h3,h4,h5,h6 { font-family:inherit;font-weight:800;letter-spacing:-.025em; }
+  input,button,select,textarea { font-family:inherit; }
+  button {cursor:pointer;}
+}
+@layer components {
+  .zf-page {position:relative;isolation:isolate;}
+  .zf-page :is(.bg-white.rounded-xl,.bg-white.rounded-2xl,.bg-white.rounded-3xl) {border-color:#dfe7f2;box-shadow:0 12px 36px -29px rgba(8,31,66,.38),0 1px 5px rgba(18,38,68,.035);}
+  .zf-page :is(table) {border-collapse:separate;border-spacing:0;width:100%;}
+  .zf-page :is(thead) {background:#eff5fc;color:#25415f;}
+  .zf-page :is(th) {font-weight:800;letter-spacing:0;padding-top:12px;padding-bottom:12px;}
+  .zf-page :is(tbody tr) {transition:background .15s ease;}
+  .zf-page :is(tbody tr:hover) {background:#edf6ffb0;}
+  .zf-page :is(input,select,textarea) {border-radius:12px;}
+  .zf-page :is(input,select,textarea):focus {box-shadow:0 0 0 3px #60a5fa3d;}
+  .zf-page :is(button) {transition:transform .16s ease,box-shadow .16s ease,background .16s ease;}
+  .zf-page :is(button:active) {transform:scale(.985);}
+  .zf-page :is(.text-slate-400) {color:#64748b;}
+  .zf-page :is(.shadow-xs) {box-shadow:0 8px 23px -17px #163b6670;}
+  .zf-page :is(.rounded-lg) {border-radius:12px;}
+  .zf-page :is(.rounded-xl) {border-radius:18px;}
+  .zf-page :is(.rounded-2xl) {border-radius:23px;}
+  .zf-page :is(.bg-blue-600) {background:#1665d8;}
+  .zf-page :is(.bg-blue-600:hover) {background:#0d4ca9;}
+  .zf-page :is(.text-blue-600) {color:#155dc2;}
+}
+@media(max-width:640px) {
+  .zf-page :is(table) {font-size:12px;}
+  .zf-page :is(th,td) {padding-left:10px;padding-right:10px;}
 }
