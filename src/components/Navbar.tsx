@@ -9,7 +9,6 @@ interface NavbarProps {
   activeDevice: DeviceInfo | null;
   vehicleName: string;
   unreadAlertsCount: number;
-  onOpenDrawer: () => void;
   lang: 'ar' | 'en';
   setLang: (lang: 'ar' | 'en') => void;
 }
