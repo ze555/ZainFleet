@@ -78,3 +78,69 @@
   .zf-page :is(table) {font-size:12px;}
   .zf-page :is(th,td) {padding-left:10px;padding-right:10px;}
 }
+
+
+/* ZainFleet Neon Command Center - responsive visual shell */
+.zf-fleet-shell {
+  --zf-night: #061327;
+  --zf-panel: #0b2141;
+  --zf-line: rgba(42,166,255,.32);
+  --zf-ice: #5be8ff;
+  background: radial-gradient(ellipse 75% 26% at 80% 0%,rgba(0,138,255,.18),transparent),
+              radial-gradient(ellipse 40% 55% at 0% 55%,rgba(0,217,255,.08),transparent),
+              linear-gradient(145deg,#030c1e,#07162d 53%,#031020);
+  color: #eaf5ff;
+  font-family: 'Cairo', 'Inter', system-ui, sans-serif;
+}
+.zf-fleet-shell .zf-fleet-page {max-width: 1800px; padding-top: 20px}
+.zf-fleet-shell .zf-fleet-overview {
+  background:linear-gradient(115deg,#0b2444,#081b38)!important;
+  border-color:var(--zf-line)!important;
+  box-shadow:0 12px 40px #0005,inset 0 1px #5be8ff12!important;
+}
+.zf-fleet-shell .zf-fleet-overview .text-slate-900 {color:#effaff!important}
+.zf-fleet-shell .zf-fleet-overview .text-slate-500 {color:#9bb9d5!important}
+.zf-fleet-hero {position:relative; isolation:isolate; overflow:hidden; padding:26px; margin:0 0 22px;
+  border:1px solid rgba(37,173,255,.48); border-radius:24px;
+  background:radial-gradient(circle at 90% -45%,#0e78b85c,transparent 48%),linear-gradient(125deg,#0a2648,#071b36 70%,#091c37);
+  box-shadow:0 19px 60px #0007,0 0 32px #0d98ed14,inset 0 1px #83d8ff22}
+.zf-fleet-hero:before {content:"";position:absolute;inset:0;z-index:-1;opacity:.14;
+ background-image:linear-gradient(#5ddaff30 1px,transparent 1px),linear-gradient(90deg,#5ddaff30 1px,transparent 1px);
+ background-size:36px 36px;mask-image:linear-gradient(to right,transparent,#000)}
+.zf-fleet-hero-title {display:flex;gap:20px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:24px}
+.zf-fleet-eyebrow {font:800 10px 'Inter',sans-serif!important;letter-spacing:.18em;color:var(--zf-ice)!important;margin-bottom:8px}
+.zf-fleet-hero h1 {font-size:clamp(23px,3vw,38px);font-weight:900;color:#fff;line-height:1.5}
+.zf-fleet-hero-title p:last-child {color:#9fc4e0;font-size:13px;margin-top:4px}
+.zf-fleet-status {display:flex;align-items:center;gap:9px;padding:12px 17px;border:1px solid #36ccff66;
+ background:#052345cc;border-radius:999px;font-weight:800;font-size:12px;color:#bceeff}
+.zf-fleet-led {height:10px;width:10px;background:#fca311;border-radius:50%;box-shadow:0 0 16px #fca311}
+.zf-fleet-led.is-online {background:#24e3a5;box-shadow:0 0 16px #24e3a5}
+.zf-fleet-stats {display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.zf-fleet-stat {min-width:0;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:8px;
+ border:1px solid #2278b65c;background:linear-gradient(155deg,#0c3157d9,#061b34d9);padding:18px 17px;
+ border-radius:18px;box-shadow:inset 0 1px #92dfff12,0 12px 30px #0002;text-align:start}
+.zf-fleet-stat span{font-size:11px;font-weight:700;color:#9abedb}
+.zf-fleet-stat b{font-size:clamp(19px,2.2vw,32px);line-height:1.3;font-weight:900;color:#f8fdff}
+.zf-fleet-stat em{font-size:13px;color:#8eb5d5;font-style:normal;font-weight:600}
+.zf-fleet-stat small{color:#50e7ce;font:700 10px 'Cairo',sans-serif}
+.zf-fleet-stat .zf-fleet-stat-name{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.zf-fleet-stat .zf-fleet-stat-date{font-size:20px;direction:ltr}
+.zf-fleet-stat-action{cursor:pointer;color:#56dcff;transition:transform .2s,background .2s}
+.zf-fleet-stat-action:hover{transform:translateY(-3px);background:#113f67}
+.zf-fleet-stat-action svg{color:#53d9ff}
+.zf-fleet-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}
+.zf-fleet-tab{border:1px solid #1f6897;background:#071b33;color:#b8d8ef;min-height:40px;padding:9px 17px;border-radius:12px;font-size:12px;font-weight:800}
+.zf-fleet-tab.active,.zf-fleet-tab:hover{color:#fff;border-color:#23c7fa;background:#07558a;box-shadow:0 0 18px #00c8fa27}
+.zf-fleet-shell .zf-page :is(.zf-panel,.zf-premium-card){border-color:#1e5c8859}
+@media (max-width:1000px){.zf-fleet-stats{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:650px){
+ .zf-fleet-shell .zf-fleet-page{padding:12px}
+ .zf-fleet-hero{padding:18px 14px;border-radius:20px}
+ .zf-fleet-hero-title{margin-bottom:16px}
+ .zf-fleet-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .zf-fleet-stat{padding:13px 12px;min-height:105px}
+ .zf-fleet-stat b{font-size:23px}
+ .zf-fleet-stat-action{grid-column:span 2;min-height:64px;flex-direction:row;justify-content:space-between}
+ .zf-fleet-tools{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px;scrollbar-width:thin}
+ .zf-fleet-tab{flex-shrink:0}
+}
