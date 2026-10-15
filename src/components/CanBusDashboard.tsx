@@ -1,4 +1,5 @@
 import React from 'react';
+import { CAN_PARAMETER_CATALOG } from '../utils/canBusDecoder.js';
 import { DeviceInfo, TelemetrySnapshot } from '../types/fleet.js';
 import {
   Gauge,
@@ -80,6 +81,23 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
     );
   }
 
+  // Use data provenance, not mere presence of an AVL IO ID, to identify CAN telemetry.
+  // In the user's actual Codec8E samples (2026-10-15), ID 16 is tracker GPS odometer,
+  // 66 is external power, 67 is internal tracker battery: none proves a live CAN link.
+  const canIds = Array.from(ioMap.keys()).filter((id) => {
+    const source = CAN_PARAMETER_CATALOG[id]?.source;
+    return source === 'can_powertrain' || source === 'can_comfort' || source === 'obd';
+  });
+  const trackerFields = [
+    { id: 239, label: 'حالة السويتش', suffix: '', value: ioMap.has(239) ? (ioMap.get(239) === '1' ? 'ON' : 'OFF') : '—' },
+    { id: 240, label: 'حالة الحركة', suffix: '', value: ioMap.has(240) ? (ioMap.get(240) === '1' ? 'تتحرك' : 'متوقفة') : '—' },
+    { id: 21, label: 'إشارة GSM', suffix: '/5', value: ioMap.get(21) ?? '—' },
+    { id: 66, label: 'جهد السيارة الخارجي', suffix: 'V', value: ioMap.has(66) ? (Number(ioMap.get(66)) / 1000).toFixed(3) : '—' },
+    { id: 67, label: 'بطارية المتعقب', suffix: 'V', value: ioMap.has(67) ? (Number(ioMap.get(67)) / 1000).toFixed(3) : '—' },
+    { id: 16, label: 'مسافة GPS بالجهاز', suffix: 'km', value: ioMap.has(16) ? (Number(ioMap.get(16)) / 1000).toFixed(3) : '—' },
+  ];
+  const awaitingCan = canIds.length === 0;
+
   // --- Extract CAN Bus Parameters ---
   // Ignition: DIN1 (ID 1) or Ignition (ID 239)
   const rawIgnition = ioMap.get(239) ?? ioMap.get(1);
@@ -120,7 +138,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
 
   // DTC Fault Codes: ID 30, 160
   const rawDtc = ioMap.get(30) ?? ioMap.get(160);
-  const dtcCount = rawDtc ? parseInt(rawDtc, 10) : 0;
+  const dtcCount = rawDtc !== undefined ? parseInt(rawDtc, 10) : null;
 
   // Movement: ID 240
   const rawMovement = ioMap.get(240);
@@ -128,6 +146,42 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
+      <section dir="rtl" className="overflow-hidden rounded-[24px] border border-cyan-500/40 bg-[#071b35] p-5 text-slate-100 shadow-xl shadow-cyan-950/20">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-extrabold tracking-widest text-cyan-300">FMB140 • CODEC 8 EXTENDED</p>
+            <h2 className="mt-1 text-xl font-black">قراءات الجهاز الحقيقية وتشخيص CAN</h2>
+            <p className="mt-1 text-xs text-slate-400">آخر استلام: {new Date(telemetry.receivedAt).toLocaleString('ar-LY')} • عدد عناصر AVL: {ioMap.size}</p>
+          </div>
+          <div className={`rounded-xl px-3 py-2 text-xs font-extrabold ${awaitingCan ? 'border border-amber-400/50 bg-amber-500/10 text-amber-200' : 'border border-emerald-400/50 bg-emerald-400/10 text-emerald-200'}`}>
+            {awaitingCan ? 'CAN غير مستلم بعد' : `تم استقبال ${canIds.length} عناصر CAN/OBD`}
+          </div>
+        </div>
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+          {trackerFields.map((field) => (
+            <div key={field.id} className="rounded-2xl border border-cyan-400/20 bg-[#102d4d] p-3">
+              <p className="text-[11px] text-slate-400">{field.label}</p>
+              <div className="mt-2 flex flex-wrap items-baseline gap-1" dir="ltr"><b className="font-mono text-xl text-white">{field.value}</b><span className="text-xs text-cyan-300">{field.suffix}</span></div>
+              <p className="mt-1 font-mono text-[10px] text-slate-500">AVL #{field.id}</p>
+            </div>
+          ))}
+        </div>
+        {awaitingCan ? (
+          <div className="mt-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-4">
+            <p className="flex items-center gap-2 font-extrabold text-amber-200"><AlertTriangle size={18} /> الجهاز متصل ويرسل GPS وI/O، لكن هذه الحزمة لا تحتوي قراءات CAN مؤكدة.</p>
+            <p className="mt-2 text-xs leading-7 text-amber-100/90">
+              للحصول على RPM والوقود وحرارة المحرك: تحقق من توافق المركبة، توصيل CAN-H وCAN-L الصحيح،
+              اختيار ملف CAN المناسب في Teltonika Configurator وتفعيل إرسال عناصر CAN I/O.
+              السويتش ON وحده لا يؤكد أن CAN يعمل. ظهور مسافة AVL #16 لا يعني وصول CAN.
+            </p>
+            <p className="mt-2 text-xs text-amber-200">قيم RPM والحرارة والوقود وأكواد DTC ستبقى «غير مستلمة» حتى يرسلها الجهاز فعلياً؛ غياب DTC لا يعني خلو السيارة من الأعطال.</p>
+          </div>
+        ) : (
+          <div className="mt-4 rounded-xl border border-emerald-400/25 bg-emerald-500/10 p-3 text-xs text-emerald-200">
+            معرّفات CAN/OBD المؤكدة في الحزمة: {canIds.join('، ')}
+          </div>
+        )}
+      </section>
       {/* Header Bar */}
       <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-5 shadow-sm flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -219,8 +273,8 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
               {isIgnitionOn === false
                 ? 'Ignition is off (DIN1=0). GPS drift protection active (Speed 0 km/h).'
                 : isMoving
-                ? `Vehicle moving with active CAN bus communication at ${effectiveSpeed} km/h.`
-                : 'Vehicle stationary with engine idling.'}
+                ? `Vehicle moving at ${effectiveSpeed} km/h (GPS / motion; CAN not independently verified).`
+                : 'Vehicle stationary with ignition ON; engine idle not verified without RPM.'}
             </p>
           </div>
         </div>
