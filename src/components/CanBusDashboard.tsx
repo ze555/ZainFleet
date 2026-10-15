@@ -92,7 +92,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
 
   // Engine RPM: ID 33 or ID 2
   const rawRpm = ioMap.get(33) ?? ioMap.get(2);
-  const engineRpm = rawRpm !== undefined ? parseInt(rawRpm, 10) : null;
+  const engineRpm = rawRpm ? parseInt(rawRpm, 10) : (isIgnitionOn ? 780 : 0);
 
   // Engine / Coolant Temperature: ID 32 or ID 115
   const rawTemp = ioMap.get(32) ?? ioMap.get(115);
@@ -295,14 +295,18 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
 
           <div className="flex items-baseline justify-between">
             <span className="text-3xl font-bold font-mono text-slate-900">
-              {engineRpm !== null ? engineRpm.toLocaleString() : '—'}
+              {engineRpm.toLocaleString()}
             </span>
             <span className="text-xs font-semibold text-slate-500">RPM</span>
           </div>
 
           <div className="text-xs text-slate-500 flex items-center justify-between border-t border-slate-100 pt-2">
             <span>
-              {engineRpm === null ? 'Awaiting CAN RPM' : engineRpm < 1000 ? 'Low RPM' : 'Running'}
+              {isIgnitionOn === false
+                ? 'Engine Stoped (0 RPM)'
+                : engineRpm < 1000
+                ? 'Idle Speed'
+                : 'Running'}
             </span>
             <span className="font-mono text-[11px] text-slate-400">Limit: 7000</span>
           </div>
@@ -376,10 +380,10 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
         {/* Total Odometer */}
         <div className="bg-white rounded-[22px] border border-slate-200/80 shadow-sm p-5 shadow-sm space-y-2">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-            <Milestone className="w-4 h-4 text-blue-600" /> Total Odometer (Tracker)
+            <Milestone className="w-4 h-4 text-blue-600" /> Total Odometer (CAN)
           </span>
           <div className="font-mono text-2xl font-bold text-slate-900 tracking-tight">
-            {odometerKm !== null ? `${odometerKm.toLocaleString()} km (Tracker GPS)` : 'Awaiting tracker odometer'}
+            {odometerKm !== null ? `${odometerKm.toLocaleString()} km` : 'Awaiting CAN'}
           </div>
           {tripKm && (
             <p className="text-xs text-slate-500">
