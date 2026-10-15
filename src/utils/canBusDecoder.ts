@@ -1061,7 +1061,7 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
     odometerKm = Math.round(canOdo105 / 1000);
     odoSource = 'CAN_ODOMETER';
   } else if (trackerOdo16 !== null && trackerOdo16 > 0) {
-    odometerKm = Math.round(trackerOdo16 / 1000);
+    odometerKm = Math.round(trackerOdo16 * 1000) / 1000;
     odoSource = 'GPS_ACCUMULATED';
   }
 
@@ -1071,10 +1071,10 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
 
   // --- 7. Electrical System: External vs Internal Battery ---
   const extVoltageMv = getParsed(66);
-  const externalVoltageV = extVoltageMv !== null ? Math.round((extVoltageMv / 1000) * 10) / 10 : null;
+  const externalVoltageV = extVoltageMv !== null ? Math.round(extVoltageMv * 1000) / 1000 : null;
 
   const intBatteryMv = getParsed(67);
-  const trackerBatteryV = intBatteryMv !== null ? Math.round((intBatteryMv / 1000) * 100) / 100 : null;
+  const trackerBatteryV = intBatteryMv !== null ? Math.round(intBatteryMv * 1000) / 1000 : null;
 
   let alternatorStatus: CanMetrics['electrical']['alternatorStatus'] = 'unknown';
   let alternatorStatusAr = 'غير محدد';
