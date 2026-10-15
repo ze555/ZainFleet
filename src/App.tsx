@@ -246,8 +246,8 @@ export const App: React.FC = () => {
             <div className="zf-fleet-tools" role="navigation" aria-label={isAr ? 'أقسام النظام' : 'Dashboard sections'}>
               {[
                 ['dashboard', isAr ? 'الرئيسية' : 'Overview'],
-                ['tracking', isAr ? 'التتبع المباشر' : 'Live map'],
-                ['can', isAr ? 'بيانات CAN' : 'CAN data'],
+                ['map', isAr ? 'التتبع المباشر' : 'Live map'],
+                ['sensors', isAr ? 'بيانات CAN' : 'CAN data'],
                 ['diagnostics', isAr ? 'التشخيص' : 'Diagnostics'],
                 ['alerts', isAr ? 'التنبيهات' : 'Alerts'],
               ].map(([tab, label]) => (
