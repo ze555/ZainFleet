@@ -186,7 +186,7 @@ if (![TCP_PORT, HTTP_PORT].every(p => Number.isInteger(p) && p > 0 && p <= 65535
   throw new Error('Invalid port setup: TCP_PORT and HTTP_PORT must be distinct valid ports.');
 }
 console.log(`[Ports] Teltonika TCP :${TCP_PORT} | Web HTTP :${HTTP_PORT}`);
-const TCP_IDLE_TIMEOUT_MS = parseInt(process.env.TCP_IDLE_TIMEOUT_SECONDS || '300', 10) * 1000;
+const TCP_IDLE_TIMEOUT_MS = parseInt(process.env.TCP_IDLE_TIMEOUT_SECONDS || '4200', 10) * 1000;
 const TCP_MAX_PACKET_BYTES = parseInt(process.env.TCP_MAX_PACKET_BYTES || '1048576', 10);
 
 let tcpConnectionsSinceStart = 0;
@@ -471,6 +471,7 @@ app.get('/health', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     tcpPort: TCP_PORT,
     httpPort: HTTP_PORT,
+    tcpIdleTimeoutSeconds: Math.floor(TCP_IDLE_TIMEOUT_MS / 1000),
     tcpConnectionsSinceStart,
     lastTcpConnectionAt,
     lastAvlPacketAt,
