@@ -333,12 +333,14 @@ const DashboardApp: React.FC<{onLogout: () => void}> = ({onLogout}) => {
         {currentTab === 'map' && (
           <>
             {selectedDevice ? (
-              <TodayGpsRoute imei={selectedDevice.imei} lang={lang} />
-              <TripMap
-                device={selectedDevice}
-                latestTelemetry={telemetry}
-                lang={lang}
-              />
+              <>
+                <TodayGpsRoute imei={selectedDevice.imei} lang={lang} />
+                <TripMap
+                  device={selectedDevice}
+                  latestTelemetry={telemetry}
+                  lang={lang}
+                />
+              </>
             ) : (
               <WaitingForVehicleCard isAr={isAr} onRefresh={fetchDevices} device={selectedDevice || devices[0] || null} lastDataAt={telemetry?.receivedAt || null} />
             )}
