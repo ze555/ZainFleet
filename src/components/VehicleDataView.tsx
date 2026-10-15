@@ -61,11 +61,36 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
     );
   }
 
+  const activeIds = new Set(record.ioElements.map(el => el.id));
+  const canIds = record.ioElements.filter(el => {
+    // Only CAN-classified values, never tracker power, GPS odometer or ignition.
+    const genuineCanIds = [24, 30, 31, 32, 33, 36, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 100, 101, 102, 103, 104, 105, 132, 160, 162, 179, 242, 256, 282];
+    return genuineCanIds.includes(el.id);
+  });
+  const todayDate = telemetry?.receivedAt ? new Date(telemetry.receivedAt).toLocaleString(isAr ? 'ar-LY' : 'en-US') : '—';
   const dtcCount = metrics.diagnostic.dtcCount;
   const hasDtcFaults = dtcCount > 0 || metrics.diagnostic.milActive;
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto pb-12">
+      <section className="rounded-3xl border border-cyan-400/30 bg-[#08213e] p-4 text-white shadow-xl" dir={isAr ? 'rtl' : 'ltr'}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div><h2 className="font-black">{isAr ? 'المراقبة الحية — البيانات المستلمة من FMB140' : 'Live FMB140 telemetry'}</h2>
+            <p className="text-xs text-cyan-200">{isAr ? 'آخر استلام' : 'Last received'}: {todayDate}</p></div>
+          <span className={`rounded-full px-3 py-1.5 text-xs font-bold ${canIds.length ? 'bg-emerald-400/20 text-emerald-200' : 'bg-amber-400/20 text-amber-200'}`}>
+            {canIds.length ? `${canIds.length} CAN/OBD` : (isAr ? 'CAN لم يصل بعد' : 'CAN not received')}
+          </span>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="rounded-xl bg-white/10 p-3"><p className="text-xs text-slate-300">{isAr ? 'سرعة GPS' : 'GPS speed'}</p><b className="text-2xl">{record.speed}</b><span className="text-xs"> km/h</span></div>
+          <div className="rounded-xl bg-white/10 p-3"><p className="text-xs text-slate-300">{isAr ? 'السويتش' : 'Ignition'}</p><b className="text-2xl">{activeIds.has(239) ? (metrics.ignition.isOn ? 'ON' : 'OFF') : '—'}</b></div>
+          <div className="rounded-xl bg-white/10 p-3"><p className="text-xs text-slate-300">{isAr ? 'جهد السيارة' : 'Vehicle power'}</p><b className="text-2xl">{metrics.electrical.vehicleVoltageV ?? '—'}</b><span className="text-xs"> V</span></div>
+          <div className="rounded-xl bg-white/10 p-3"><p className="text-xs text-slate-300">{isAr ? 'عداد المتعقب' : 'Tracker odometer'}</p><b className="text-2xl">{activeIds.has(16) ? metrics.odometer.totalKm ?? '—' : '—'}</b><span className="text-xs"> km</span></div>
+        </div>
+        {canIds.length === 0 && <p className="mt-3 text-xs leading-7 text-amber-200">{isAr
+          ? 'الاتصال وGPS يعملان، لكن لا توجد في الحزمة الحالية بيانات مؤكدة لـ RPM أو الوقود أو الحرارة. لا تُعرض قيم افتراضية مكان البيانات المفقودة.'
+          : 'TCP/GPS are working, but no confirmed RPM, fuel or temperature CAN values are present in this packet.'}</p>}
+      </section>
       {/* Title & Sub-tabs Header */}
       <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
