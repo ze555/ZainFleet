@@ -462,7 +462,9 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
             <ShieldCheck className="w-4 h-4 text-emerald-600" /> On-Board Diagnostics (OBD)
           </span>
           <div className="flex items-center gap-2">
-            {dtcCount === 0 ? (
+            {dtcCount === null ? (
+              <span className="text-sm font-bold text-amber-700">لم تُرسل بيانات أعطال OBD / DTC</span>
+            ) : dtcCount === 0 ? (
               <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-sm">
                 <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                 <span>0 Diagnostic Faults (DTC Normal)</span>
@@ -475,7 +477,7 @@ export const CanBusDashboard: React.FC<CanBusDashboardProps> = ({
             )}
           </div>
           <p className="text-xs text-slate-500">
-            ECU status reported via FMB140 CAN adapter
+            لا يمكن تأكيد سلامة ECU عند غياب بيانات DTC
           </p>
         </div>
       </div>
