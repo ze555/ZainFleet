@@ -167,7 +167,7 @@ export const App: React.FC = () => {
   return (
     <div
       dir={isAr ? 'rtl' : 'ltr'}
-      className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans pb-16 lg:pb-0"
+      className="zf-fleet-shell min-h-screen flex flex-col font-sans pb-16 lg:pb-0"
     >
       {/* Top Navbar */}
       <Navbar
@@ -197,9 +197,9 @@ export const App: React.FC = () => {
       />
 
       {/* Main Container */}
-      <main className="zf-page flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="zf-page zf-fleet-page flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8">
         {/* Compact connection overview, shared across dashboard views */}
-        <div className="zf-panel zf-soft-glow mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
+        <div className="zf-panel zf-soft-glow zf-fleet-overview mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
           <div className="flex items-center gap-3">
             <div className="rounded-xl bg-blue-50 p-2.5 text-blue-700"><Radio className="h-5 w-5" /></div>
             <div>
@@ -222,33 +222,37 @@ export const App: React.FC = () => {
           </div>
         </div>
         {currentTab === 'dashboard' && (
-          <section className="zf-v2-hero mb-6 overflow-hidden rounded-[30px] text-white" dir={isAr ? 'rtl' : 'ltr'}>
-            <div className="zf-v2-hero-inner relative z-10 grid gap-7 p-6 sm:p-8 lg:grid-cols-[1.35fr_1fr] lg:p-10">
-              <div className="flex flex-col justify-between gap-6">
-                <div>
-                  <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-bold tracking-[.18em] text-cyan-200">
-                    <span className="zf-v2-pulse" /> ZAINFLEET / LIVE OPERATIONS
-                  </div>
-                  <h1 className="max-w-xl text-3xl font-black leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-                    {isAr ? 'قيادة أذكى. أسطول أقوى.' : 'A smarter way to move.'}
-                  </h1>
-                  <p className="mt-4 max-w-lg text-sm leading-7 text-slate-300 sm:text-base">
-                    {isAr ? 'مركز قيادة متكامل لتتبع مركباتك ومراقبة حالتها وتحليل بياناتها لحظة بلحظة.' : 'Your command center for vehicle tracking, operational insights and real-time fleet intelligence.'}
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`zf-v2-chip ${serverHealthy ? 'zf-v2-chip-ok' : 'zf-v2-chip-error'}`}><span className="zf-v2-pulse" />{serverHealthy ? (isAr ? 'الخادم يعمل' : 'Server online') : (isAr ? 'الخادم غير متصل' : 'Server offline')}</span>
-                  <span className="zf-v2-chip">{isAr ? 'مزامنة تلقائية كل 4 ثوانٍ' : 'Sync every 4 seconds'}</span>
-                </div>
+          <section className="zf-fleet-hero" aria-label={isAr ? 'لوحة حالة الأسطول' : 'Fleet status'}>
+            <div className="zf-fleet-hero-title">
+              <div>
+                <p className="zf-fleet-eyebrow">FMB140 • LIVE FLEET COMMAND</p>
+                <h1>{isAr ? 'مركز تتبع وتشخيص المركبات' : 'Vehicle Tracking & Diagnostics'}</h1>
+                <p>{isAr ? 'مراقبة مباشرة، بيانات CAN الحقيقية، والتشخيص الوقائي' : 'Live monitoring, actual CAN telemetry & preventive diagnostics'}</p>
               </div>
-              <div className="zf-v2-stats grid grid-cols-2 gap-3">
-                <div className="zf-v2-stat"><div className="text-xs text-slate-300">{isAr ? 'إجمالي المركبات' : 'Total vehicles'}</div><div className="mt-3 text-4xl font-black tabular-nums">{devices.length}</div><div className="mt-3 text-xs text-cyan-200">{isAr ? 'المسجلة في النظام' : 'Registered in fleet'}</div></div>
-                <div className="zf-v2-stat"><div className="text-xs text-slate-300">{isAr ? 'مركبات متصلة' : 'Active vehicles'}</div><div className="mt-3 text-4xl font-black tabular-nums text-emerald-300">{devices.filter(d => d.connected).length}</div><div className="mt-3 text-xs text-emerald-200">{isAr ? 'تبث بيانات حالياً' : 'Online right now'}</div></div>
-                <div className="zf-v2-stat col-span-2 flex items-center justify-between gap-3">
-                  <div><div className="text-xs text-slate-300">{isAr ? 'المركبة المحددة' : 'Selected vehicle'}</div><div className="mt-1 max-w-[210px] truncate text-base font-bold">{selectedDevice ? vehicleName : (isAr ? 'لم يتم تحديد مركبة' : 'No vehicle selected')}</div></div>
-                  <span className={`rounded-xl px-3 py-2 text-xs font-bold ${selectedDevice?.connected ? 'bg-emerald-400/15 text-emerald-200' : 'bg-slate-400/15 text-slate-200'}`}>{selectedDevice?.connected ? (isAr ? 'متصل' : 'Connected') : (isAr ? 'غير متصل' : 'Offline')}</span>
-                </div>
+              <div className="zf-fleet-status">
+                <span className={`zf-fleet-led ${selectedDevice?.connected ? 'is-online' : ''}`} />
+                {selectedDevice?.connected ? (isAr ? 'الجهاز متصل الآن' : 'Device connected') : (isAr ? 'بانتظار اتصال الجهاز' : 'Waiting for device')}
               </div>
+            </div>
+            <div className="zf-fleet-stats">
+              <div className="zf-fleet-stat"><span>{isAr ? 'حالة الخادم' : 'Server'}</span><b>{serverHealthy ? (isAr ? 'يعمل' : 'Online') : (isAr ? 'متوقف' : 'Offline')}</b><small>HTTP / TCP</small></div>
+              <div className="zf-fleet-stat"><span>{isAr ? 'المركبات المتصلة' : 'Connected'}</span><b>{devices.filter(d => d.connected).length}<em> / {devices.length}</em></b><small>{isAr ? 'مركبة' : 'Vehicles'}</small></div>
+              <div className="zf-fleet-stat"><span>{isAr ? 'الجهاز المختار' : 'Selected vehicle'}</span><b className="zf-fleet-stat-name">{selectedDevice ? vehicleName : '—'}</b><small dir="ltr">{selectedDevice?.imei || 'FMB140'}</small></div>
+              <div className="zf-fleet-stat"><span>{isAr ? 'آخر بيانات' : 'Last data'}</span><b className="zf-fleet-stat-date">{telemetry?.receivedAt ? new Date(telemetry.receivedAt).toLocaleTimeString(isAr ? 'ar-LY' : 'en-US') : '—'}</b><small>{isAr ? 'تحديث كل 4 ثوانٍ' : 'Every 4 seconds'}</small></div>
+              <button className="zf-fleet-stat zf-fleet-stat-action" onClick={() => { checkHealth(); fetchDevices(); if (selectedImei) fetchTelemetry(selectedImei); }}>
+                <span>{isAr ? 'تحديث البيانات' : 'Refresh telemetry'}</span><RotateCw size={25} /><small>{isAr ? 'فحص الآن' : 'Check now'}</small>
+              </button>
+            </div>
+            <div className="zf-fleet-tools" role="navigation" aria-label={isAr ? 'أقسام النظام' : 'Dashboard sections'}>
+              {[
+                ['dashboard', isAr ? 'الرئيسية' : 'Overview'],
+                ['map', isAr ? 'التتبع المباشر' : 'Live map'],
+                ['sensors', isAr ? 'بيانات CAN' : 'CAN data'],
+                ['diagnostics', isAr ? 'التشخيص' : 'Diagnostics'],
+                ['alerts', isAr ? 'التنبيهات' : 'Alerts'],
+              ].map(([tab, label]) => (
+                <button key={tab} className={`zf-fleet-tab ${currentTab === tab ? 'active' : ''}`} onClick={() => setCurrentTab(tab)}>{label}</button>
+              ))}
             </div>
           </section>
         )}
