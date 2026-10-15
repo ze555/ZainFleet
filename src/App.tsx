@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Navbar } from './components/Navbar.tsx';
 import { CanDashboard } from './components/CanDashboard.tsx';
 import { TripMap } from './components/TripMap.tsx';
+import { TodayGpsRoute } from './components/TodayGpsRoute.tsx';
 import { TripsList } from './components/TripsList.tsx';
 import { VehicleDataView } from './components/VehicleDataView.tsx';
 import { AlertsView } from './components/AlertsView.tsx';
@@ -332,6 +333,7 @@ const DashboardApp: React.FC<{onLogout: () => void}> = ({onLogout}) => {
         {currentTab === 'map' && (
           <>
             {selectedDevice ? (
+              <TodayGpsRoute imei={selectedDevice.imei} lang={lang} />
               <TripMap
                 device={selectedDevice}
                 latestTelemetry={telemetry}
