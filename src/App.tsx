@@ -20,9 +20,10 @@ import {
   Trash2,
   Radio,
   Settings,
+  LockKeyhole, Eye, EyeOff, LogIn, ShieldCheck, Wifi, LogOut,
 } from 'lucide-react';
 
-export const App: React.FC = () => {
+const DashboardApp: React.FC<{onLogout: () => void}> = ({onLogout}) => {
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
@@ -198,6 +199,7 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="zf-page zf-fleet-page flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="zf-login-toolbar"><span>FMB140 • ADMIN CONSOLE</span><button type="button" onClick={onLogout}><LogOut size={15} /> تسجيل الخروج</button></div>
         {/* Compact connection overview, shared across dashboard views */}
         <div className="zf-panel zf-soft-glow zf-fleet-overview mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
           <div className="flex items-center gap-3">
@@ -640,4 +642,73 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device
   );
 };
 
+
+// Login gate is mounted before the dashboard, so vehicle API polling starts only after authentication.
+export const App: React.FC = () => {
+  const [auth, setAuth] = useState<'checking' | 'guest' | 'logged-in'>('checking');
+  const [username, setUsername] = useState('Admin');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' })
+      .then(async response => response.ok ? response.json() : {authenticated: false})
+      .then(data => { if (active) setAuth(data.authenticated ? 'logged-in' : 'guest'); })
+      .catch(() => { if (active) {setAuth('guest');setError('تعذر الاتصال بالخادم. تحقق من تشغيل Railway.');} });
+    return () => { active = false; };
+  }, []);
+  const login = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true); setError('');
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST', credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) { setError(data.error || 'تعذر تسجيل الدخول'); return; }
+      setAuth('logged-in'); setPassword('');
+    } catch { setError('تعذر الاتصال بالخادم. حاول مرة أخرى.'); }
+    finally { setBusy(false); }
+  };
+  const logout = async () => {
+    try { await fetch('/api/auth/logout', {method: 'POST', credentials: 'same-origin'}); }
+    finally { setAuth('guest'); setPassword(''); }
+  };
+  if (auth === 'checking') return <div className="zf-auth-loading" dir="rtl"><ShieldCheck size={35} /> جاري التحقق من الجلسة...</div>;
+  if (auth === 'logged-in') return <DashboardApp onLogout={logout} />;
+  return (
+    <main className="zf-auth-root" dir="rtl">
+      <div className="zf-auth-orb zf-auth-orb-one" /><div className="zf-auth-orb zf-auth-orb-two" />
+      <section className="zf-auth-scene">
+        <header className="zf-auth-logo"><span className="zf-auth-logo-mark"><Wifi size={29}/></span><span><strong>FMB<span>140</span></strong><small>FLEET INTELLIGENCE PLATFORM</small></span></header>
+        <div className="zf-auth-intro"><div className="zf-auth-kicker"><span /> SMART VEHICLE INTELLIGENCE</div>
+          <h1>القوة الكاملة<br/><em>لأسطولك الذكي.</em></h1>
+          <p>منصة احترافية لتتبع المركبات، استقبال بيانات CAN الفعلية، مراقبة الأداء، والتشخيص الوقائي للأعطال.</p>
+          <div className="zf-auth-highlights"><div><ShieldCheck size={20}/> لوحة تحكم محمية</div><div><Wifi size={20}/> تتبع مباشر</div><div><LockKeyhole size={20}/> وصول آمن</div></div>
+        </div>
+        <div className="zf-auth-decor"><span className="zf-auth-ring" /><span className="zf-auth-core"><Wifi size={65}/></span></div>
+      </section>
+      <section className="zf-auth-form-side">
+        <form className="zf-auth-card" onSubmit={login}>
+          <span className="zf-auth-icon"><LockKeyhole size={28}/></span>
+          <div className="zf-auth-form-title"><span>مرحباً بعودتك</span><h2>تسجيل الدخول</h2><p>أدخل بيانات حسابك للوصول إلى مركز القيادة</p></div>
+          <label htmlFor="zf-user">اسم المستخدم</label>
+          <div className="zf-auth-input"><ShieldCheck size={18}/><input id="zf-user" autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)} required placeholder="اسم المستخدم" /></div>
+          <label htmlFor="zf-password">كلمة المرور</label>
+          <div className="zf-auth-input"><LockKeyhole size={18}/><input id="zf-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="أدخل كلمة المرور"/><button type="button" aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'} onClick={()=>setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div>
+          {error && <div role="alert" className="zf-auth-error">{error}</div>}
+          <button type="submit" className="zf-auth-submit" disabled={busy}>{busy ? 'جارٍ تسجيل الدخول...' : 'الدخول إلى النظام'}<LogIn size={19}/></button>
+          <div className="zf-auth-note"><ShieldCheck size={15}/> الحساب الافتراضي للتجربة: Admin — كلمة المرور 123456</div>
+          <p className="zf-auth-foot">ZAINFLEET © 2026 • TELTONIKA FMB140</p>
+        </form>
+      </section>
+    </main>
+  );
+};
 export default App;
+

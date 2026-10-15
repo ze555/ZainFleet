@@ -1,4 +1,5 @@
 import net from 'node:net';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import express, { Request, Response } from 'express';
@@ -388,6 +389,76 @@ app.use((req, res, next) => {
   next();
 });
 app.use(express.json());
+
+// HTTP dashboard authentication only. The raw Teltonika TCP listener remains independent.
+const AUTH_USER = process.env.ADMIN_USERNAME || 'Admin';
+const AUTH_PASSWORD = process.env.ADMIN_PASSWORD || '123456'; // Demo only: override on Railway.
+const AUTH_SECRET = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex');
+const AUTH_TTL_MS = 8 * 60 * 60 * 1000;
+const failedLogins = new Map<string, { count: number; until: number }>();
+function makeToken() {
+  const payload = Buffer.from(JSON.stringify({ user: AUTH_USER, expires: Date.now() + AUTH_TTL_MS })).toString('base64url');
+  const mac = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
+  return payload + '.' + mac;
+}
+function authenticated(req: Request): boolean {
+  const cookie = (req.headers.cookie || '').split(';').map(c => c.trim()).find(c => c.startsWith('zf_session='));
+  if (!cookie) return false;
+  const token = cookie.slice('zf_session='.length);
+  const dot = token.lastIndexOf('.');
+  if (dot < 0) return false;
+  const payload = token.slice(0, dot);
+  const signature = token.slice(dot + 1);
+  const expected = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest();
+  let provided: Buffer;
+  try { provided = Buffer.from(signature, 'base64url'); } catch { return false; }
+  if (expected.length !== provided.length || !crypto.timingSafeEqual(expected, provided)) return false;
+  try {
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return data.user === AUTH_USER && typeof data.expires === 'number' && data.expires > Date.now();
+  } catch { return false; }
+}
+function sessionCookie(value: string, maxAgeSeconds: number) {
+  const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
+  return `zf_session=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}${secure}`;
+}
+app.post('/api/auth/login', (req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
+  const ip = req.ip || 'unknown';
+  const now = Date.now();
+  const state = failedLogins.get(ip);
+  if (state && state.count >= 5 && now < state.until) {
+    res.status(429).json({ error: 'محاولات كثيرة، حاول بعد 15 دقيقة' });
+    return;
+  }
+  const user = typeof req.body?.username === 'string' ? req.body.username : '';
+  const pass = typeof req.body?.password === 'string' ? req.body.password : '';
+  const usernameOk = user === AUTH_USER;
+  const actual = crypto.createHash('sha256').update(pass).digest();
+  const expected = crypto.createHash('sha256').update(AUTH_PASSWORD).digest();
+  if (!usernameOk || !crypto.timingSafeEqual(actual, expected)) {
+    const fresh = !state || now >= state.until;
+    failedLogins.set(ip, { count: (fresh ? 0 : state.count) + 1, until: now + 15 * 60 * 1000 });
+    res.status(401).json({ error: 'اسم الدخول أو كلمة المرور غير صحيحة' });
+    return;
+  }
+  failedLogins.delete(ip);
+  res.setHeader('Set-Cookie', sessionCookie(makeToken(), AUTH_TTL_MS / 1000));
+  res.json({ authenticated: true, username: AUTH_USER });
+});
+app.get('/api/auth/session', (req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ authenticated: authenticated(req) });
+});
+app.post('/api/auth/logout', (_req: Request, res: Response) => {
+  res.setHeader('Set-Cookie', sessionCookie('', 0));
+  res.json({ authenticated: false });
+});
+// Protect API telemetry, diagnostic downloads and mutation routes from unauthenticated browsers.
+app.use('/api', (req: Request, res: Response, next) => {
+  if (!authenticated(req)) { res.status(401).json({ error: 'Authentication required' }); return; }
+  next();
+});
 
 // API Endpoints matching ZainFleet original C# WebApplication
 app.get('/health', (_req: Request, res: Response) => {

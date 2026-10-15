@@ -144,3 +144,41 @@
  .zf-fleet-tools{flex-wrap:nowrap;overflow-x:auto;padding-bottom:5px;scrollbar-width:thin}
  .zf-fleet-tab{flex-shrink:0}
 }
+
+
+/* Full-screen premium login — no static example dashboard data */
+.zf-auth-root,.zf-auth-loading{font-family:'Cairo','Inter',sans-serif;background:#030c1d;color:#eaf8ff;min-height:100dvh}
+.zf-auth-root{position:relative;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(380px,.9fr);overflow:hidden;isolation:isolate}
+.zf-auth-root:before{content:'';position:absolute;inset:0;z-index:-2;background:radial-gradient(circle at 23% 26%,#086b9d48,transparent 31%),radial-gradient(circle at 80% 72%,#0368a42c,transparent 40%),linear-gradient(115deg,#031324,#06101f 54%,#020a16)}
+.zf-auth-orb{position:absolute;width:500px;height:500px;border:1px solid #19dfff24;border-radius:50%;pointer-events:none;z-index:-1;box-shadow:0 0 110px #007aff25,inset 0 0 90px #0098f710}
+.zf-auth-orb-one{top:-250px;left:-180px}.zf-auth-orb-two{bottom:-330px;right:-100px}
+.zf-auth-scene{padding:42px clamp(30px,5vw,90px);position:relative;display:flex;flex-direction:column;justify-content:space-between;min-height:100dvh;border-left:1px solid #1574b344}
+.zf-auth-logo{display:flex;gap:14px;align-items:center;direction:ltr;align-self:flex-end}
+.zf-auth-logo-mark{display:grid;place-items:center;width:56px;height:56px;background:#03263e;color:#38ddff;border:1px solid #18bffe;border-radius:17px;box-shadow:0 0 26px #00baff36}
+.zf-auth-logo strong{display:block;font:900 34px 'Inter',sans-serif;color:white;letter-spacing:-1.5px}.zf-auth-logo strong span{color:#31d8ff}
+.zf-auth-logo small{display:block;font:700 8px 'Inter',sans-serif;letter-spacing:2px;color:#8bb8d8}
+.zf-auth-intro{position:relative;z-index:2;max-width:610px;padding:70px 0}.zf-auth-kicker{display:flex;align-items:center;gap:9px;font:800 11px 'Inter',sans-serif;letter-spacing:1.6px;color:#46e9ff;direction:ltr;justify-content:flex-end}
+.zf-auth-kicker span{height:9px;width:9px;border-radius:50%;background:#16f4b5;box-shadow:0 0 20px #16f4b5}
+.zf-auth-intro h1{font-size:clamp(35px,4vw,65px);font-weight:900;line-height:1.45;margin:25px 0 12px;color:#fff;letter-spacing:-1px}
+.zf-auth-intro h1 em{font-style:normal;background:linear-gradient(100deg,#22e7ff,#40b6ff);color:transparent;background-clip:text}
+.zf-auth-intro p{color:#a3bcd8;max-width:470px;font-size:14px;line-height:2.2}
+.zf-auth-highlights{display:flex;flex-wrap:wrap;gap:12px;margin-top:29px}.zf-auth-highlights div{display:flex;align-items:center;gap:8px;padding:10px 13px;border:1px solid #23a8e550;border-radius:12px;background:#0b29438f;color:#c8ebff;font-size:11px;font-weight:700}.zf-auth-highlights svg{color:#45deff}
+.zf-auth-decor{position:absolute;bottom:-128px;left:-95px;width:370px;height:370px;pointer-events:none;opacity:.65}.zf-auth-ring{position:absolute;inset:0;border-radius:50%;border:2px solid #00d5ff69;box-shadow:0 0 45px #0099ff80,inset 0 0 70px #0099ff26}.zf-auth-core{position:absolute;inset:95px;display:grid;place-items:center;border-radius:50%;color:#4adfff;background:#073558;box-shadow:0 0 55px #00cdff80}
+.zf-auth-form-side{display:grid;place-items:center;padding:28px;min-width:0}
+.zf-auth-card{width:min(100%,470px);padding:clamp(25px,4vw,46px);border-radius:27px;background:linear-gradient(150deg,#102a49f2,#07182de8);border:1px solid #25bffc6b;box-shadow:0 24px 100px #000b,0 0 65px #067fe022,inset 0 1px #93e6ff2b}
+.zf-auth-icon{width:62px;height:62px;border-radius:19px;display:grid;place-items:center;color:#4de4ff;background:linear-gradient(135deg,#085989,#061d3f);border:1px solid #35ccff80;box-shadow:0 0 32px #12c0ff24}
+.zf-auth-form-title{margin:22px 0 28px}.zf-auth-form-title span{color:#46e0fb;font-size:12px;font-weight:800}.zf-auth-form-title h2{font-size:31px;font-weight:900;color:#fff;margin:3px 0}.zf-auth-form-title p{color:#95b8d3;font-size:12px}
+.zf-auth-card label{display:block;color:#d3e9fb;font-size:12px;font-weight:800;margin:0 0 9px}
+.zf-auth-input{display:flex;align-items:center;gap:11px;padding:0 14px;background:#06152bd9;border:1px solid #29648d;border-radius:13px;margin-bottom:22px;transition:border-color .2s,box-shadow .2s}
+.zf-auth-input:focus-within{border-color:#35d3ff;box-shadow:0 0 0 3px #02c6ff1b}.zf-auth-input>svg{color:#36a9d7;flex-shrink:0}
+.zf-auth-input input{flex:1;min-width:0;height:52px;outline:none;border:0;background:transparent;color:white;font-size:13px;font-weight:700}.zf-auth-input input::placeholder{color:#647f9b}
+.zf-auth-input button{color:#98b3d0;background:transparent;border:0;padding:5px}
+.zf-auth-error{margin:-7px 0 16px;padding:11px 13px;background:#80203248;border:1px solid #fb71857a;color:#ffb2bf;border-radius:11px;font-size:12px;font-weight:800}
+.zf-auth-submit{width:100%;min-height:55px;display:flex;align-items:center;justify-content:center;gap:12px;border-radius:13px;border:1px solid #44d8ff;color:white;background:linear-gradient(105deg,#0758b5,#079fe1);box-shadow:0 13px 35px #009cff38;font-size:14px;font-weight:900;cursor:pointer}
+.zf-auth-submit:disabled{opacity:.6;cursor:wait}.zf-auth-submit:not(:disabled):hover{filter:brightness(1.15);transform:translateY(-2px)}
+.zf-auth-note{display:flex;align-items:center;gap:8px;color:#8daac4;font-size:11px;line-height:2;margin-top:20px;padding:12px;border-radius:11px;background:#031a2f;border:1px solid #1d587d}
+.zf-auth-note svg{color:#42e2ae;flex-shrink:0}.zf-auth-foot{text-align:center;color:#587a9b;direction:ltr;font:700 10px 'Inter',sans-serif;letter-spacing:1px;margin-top:34px}
+.zf-auth-loading{display:flex;justify-content:center;align-items:center;gap:13px;color:#57dfff;font-size:17px;font-weight:800}
+.zf-login-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;color:#6ae7ff;font:700 11px 'Inter',sans-serif;direction:ltr;margin-bottom:12px}.zf-login-toolbar button{display:flex;align-items:center;gap:8px;font-family:'Cairo',sans-serif;background:#11243d;color:#dbeafe;border:1px solid #265b87;border-radius:9px;padding:7px 12px;cursor:pointer}
+@media(max-width:900px){.zf-auth-root{grid-template-columns:1fr}.zf-auth-scene{min-height:auto;padding:26px 25px 0;border:0}.zf-auth-intro{padding:20px 0 0}.zf-auth-intro h1{font-size:27px;margin:10px 0}.zf-auth-intro p{font-size:12px}.zf-auth-highlights,.zf-auth-decor{display:none}.zf-auth-form-side{padding:20px 15px 36px}.zf-auth-card{max-width:500px;padding:26px 22px}.zf-auth-logo strong{font-size:27px}}
+@media(prefers-reduced-motion:reduce){.zf-auth-submit{transition:none}}
