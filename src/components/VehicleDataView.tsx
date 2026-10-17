@@ -70,6 +70,13 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
   const todayDate = telemetry?.receivedAt ? new Date(telemetry.receivedAt).toLocaleString(isAr ? 'ar-LY' : 'en-US') : '—';
   const dtcCount = metrics.diagnostic.dtcCount;
   const hasDtcFaults = dtcCount > 0 || metrics.diagnostic.milActive;
+  // No AVL DTC element does not mean a diagnostic scan was performed.
+  const reportedDtcIds = record.ioElements.filter(el => [30, 132, 160, 282].includes(el.id));
+  const hasDtcReport = reportedDtcIds.some(el => [30, 160, 282].includes(el.id));
+  const hasMilReport = reportedDtcIds.some(el => el.id === 132);
+  const hasDtcCodes = metrics.diagnostic.dtcCodes.length > 0;
+  const isDtcCountOnly = dtcCount > 0 && !hasDtcCodes;
+  const hasConfirmedZero = hasDtcReport && dtcCount === 0 && !hasDtcCodes;
 
   return (
     <div className="space-y-4 max-w-4xl mx-auto pb-12">
@@ -591,7 +598,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                   className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
                     hasDtcFaults
                       ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                      : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                      : 'bg-slate-100 text-slate-600 border border-slate-200'
                   }`}
                 >
                   {hasDtcFaults ? (
@@ -606,7 +613,13 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                     {isAr ? 'فحص كمبيوتر السيارة وأكواد الأعطال (OBD / DTC)' : 'Vehicle Computer Diagnostics & DTCs'}
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {isAr ? metrics.diagnostic.statusAr : metrics.diagnostic.statusEn}
+                    {!hasDtcReport
+                      ? (isAr ? 'لا توجد في الحزمة الحالية بيانات فحص DTC؛ لا يمكن الجزم بخلو السيارة من الأعطال.' : 'No DTC results in this packet; vehicle fault status is unknown.')
+                      : isDtcCountOnly
+                      ? (isAr ? `أبلغ الجهاز عن ${dtcCount} أعطال، لكنه لم يرسل الأكواد التفصيلية.` : `${dtcCount} faults reported, code details not received.`)
+                      : hasConfirmedZero && !metrics.diagnostic.milActive
+                      ? (isAr ? 'الجهاز أرسل عدد أعطال صفراً في الحزمة الحالية.' : 'Device reported zero faults in this packet.')
+                      : (isAr ? metrics.diagnostic.statusAr : metrics.diagnostic.statusEn)}
                   </p>
                 </div>
               </div>
@@ -632,7 +645,9 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                   <Zap className="w-3.5 h-3.5" />
                   <span>
                     {isAr ? 'لمبة فحص المحرك (MIL):' : 'Check Engine Light:'}{' '}
-                    {metrics.diagnostic.milActive
+                    {!hasMilReport
+                      ? (isAr ? 'غير مرسلة' : 'Not reported')
+                      : metrics.diagnostic.milActive
                       ? isAr
                         ? 'مضاءة (تنبيه عطل!)'
                         : 'Active / ON'
@@ -684,7 +699,7 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
                     </div>
 
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-800">
-                      {isAr ? 'درجة الخطورة: مهم' : 'Severity: High'}
+                      {isAr ? 'درجة الخطورة تحتاج تشخيصاً' : 'Severity requires diagnosis'}
                     </span>
                   </div>
 
@@ -702,21 +717,38 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
             </div>
           ) : (
             <div className="bg-white rounded-3xl border border-slate-200 p-8 sm:p-12 text-center shadow-sm space-y-3">
-              <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center">
-                <CheckCircle2 className="w-8 h-8" />
+              <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-600 mx-auto flex items-center justify-center">
+                <Info className="w-8 h-8" />
               </div>
               <h4 className="text-base sm:text-lg font-bold text-slate-900">
-                {isAr
-                  ? 'المنظومة سليمة تماماً — لا توجد أي أكواد أعطال مسجلة'
-                  : 'All Systems Normal — No DTC Fault Codes Detected'}
+                {isDtcCountOnly
+                  ? (isAr ? `تم استقبال عدد أعطال: ${dtcCount} — تفاصيل الأكواد لم تصل` : `Reported DTC count: ${dtcCount} — actual codes not received`)
+                  : hasConfirmedZero
+                  ? (isAr ? 'الجهاز أبلغ عن صفر أكواد في هذه الحزمة' : 'Zero DTCs reported by device in this packet')
+                  : (isAr ? 'لم تصل أكواد DTC من الجهاز' : 'DTC data not received')}
               </h4>
               <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
                 {isAr
-                  ? 'تم فحص ذاكرة الأعطال في كمبيوتر السيارة (ECU) عبر ناقل CAN/OBD. لم يتم رصد أي خلل في منظومة الاحتراق أو التبريد أو الانبعاثات، ولمبة فحص المحرك مطفأة.'
-                  : 'Electronic Control Units (ECUs) report 0 active trouble codes. Engine, transmission, and emission systems are operating nominally.'}
+                  ? 'عدم إرسال الأكواد لا يثبت سلامة جميع أنظمة السيارة. يتطلب عرض قائمة الأعطال إرسال بيانات التشخيص الفعلية من وحدة ECU عبر FMB140.'
+                  : 'Missing DTC data does not verify that the ECU has no faults. Enable transmission of actual ECU diagnostic codes from FMB140.'}
               </p>
             </div>
           )}
+
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
+            <h4 className="font-bold text-sm text-slate-900">{isAr ? 'جميع حقول التشخيص المستلمة من آخر حزمة' : 'All diagnostic fields in latest packet'}</h4>
+            <p className="text-xs text-slate-500">{isAr ? 'العناصر التي لم يرسلها الجهاز لا تُعرض كأنها صفر أو سليمة.' : 'Absent fields are not treated as zeros or normal readings.'}</p>
+            {reportedDtcIds.length ? (
+              <div className="space-y-2">
+                {reportedDtcIds.map(el => (
+                  <div key={el.id} className="flex justify-between gap-3 rounded-lg bg-slate-50 p-2 text-xs">
+                    <span>AVL ID {el.id} {el.id === 282 ? '(DTC codes)' : el.id === 160 || el.id === 30 ? '(DTC count/status)' : '(MIL flags)'}</span>
+                    <code className="break-all text-slate-900">{el.value}</code>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="text-sm text-amber-700">{isAr ? 'لم يصل أي عنصر تشخيص في هذه الحزمة.' : 'No diagnostic element received in this packet.'}</p>}
+          </div>
 
           {/* Raw Diagnostic Debug Toggle */}
           <div className="bg-slate-50 rounded-2xl border border-slate-200/80 p-4">
@@ -737,11 +769,11 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
               <div className="mt-3 pt-3 border-t border-slate-200 text-xs font-mono space-y-1.5 text-slate-700">
                 <div className="flex justify-between">
                   <span className="text-slate-400">AVL ID 282 (Fault Codes):</span>
-                  <span className="font-bold">{metrics.diagnostic.rawDtcString || 'None (0x00)'}</span>
+                  <span className="font-bold">{metrics.diagnostic.rawDtcString || 'Not reported'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">AVL ID 160 / 30 (DTC Count):</span>
-                  <span className="font-bold">{metrics.diagnostic.dtcCount}</span>
+                  <span className="font-bold">{hasDtcReport ? metrics.diagnostic.dtcCount : 'Not reported'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-400">AVL ID 132 bit 3 (Check Engine MIL):</span>
