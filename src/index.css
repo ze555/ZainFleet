@@ -182,3 +182,51 @@
 .zf-login-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;color:#6ae7ff;font:700 11px 'Inter',sans-serif;direction:ltr;margin-bottom:12px}.zf-login-toolbar button{display:flex;align-items:center;gap:8px;font-family:'Cairo',sans-serif;background:#11243d;color:#dbeafe;border:1px solid #265b87;border-radius:9px;padding:7px 12px;cursor:pointer}
 @media(max-width:900px){.zf-auth-root{grid-template-columns:1fr}.zf-auth-scene{min-height:auto;padding:26px 25px 0;border:0}.zf-auth-intro{padding:20px 0 0}.zf-auth-intro h1{font-size:27px;margin:10px 0}.zf-auth-intro p{font-size:12px}.zf-auth-highlights,.zf-auth-decor{display:none}.zf-auth-form-side{padding:20px 15px 36px}.zf-auth-card{max-width:500px;padding:26px 22px}.zf-auth-logo strong{font-size:27px}}
 @media(prefers-reduced-motion:reduce){.zf-auth-submit{transition:none}}
+
+
+/* Neon cockpit visual refresh based on user reference. Presentation only;
+   all telemetry stays sourced from the existing components and APIs. */
+.zf-fleet-shell {
+  background:radial-gradient(ellipse at 58% -8%,#123c67 0%,transparent 46%),linear-gradient(145deg,#03101f,#061a31 70%,#030d1c);
+  color:#e7f5ff;min-height:100vh;
+}
+.zf-fleet-shell .zf-fleet-page{max-width:1800px;margin-inline:auto}
+.zf-fleet-shell .zf-fleet-hero{
+  background:radial-gradient(circle at 83% 0%,#1079a840,transparent 42%),linear-gradient(125deg,#071830,#0b2646 62%,#081a32);
+  border:1px solid #2498eb80;box-shadow:0 0 25px #048dff20,0 20px 50px #0008,inset 0 1px #9fe9ff30
+}
+.zf-fleet-shell .zf-fleet-stat{
+  background:linear-gradient(145deg,#092743,#07182f);
+  border:1px solid #176697a6;box-shadow:inset 0 1px #a5e9ff18,0 10px 22px #0004
+}
+.zf-fleet-shell .zf-fleet-stat b{color:#f1fbff;text-shadow:0 0 17px #44c8ff3a}
+.zf-fleet-shell .zf-fleet-stat small,.zf-fleet-shell .zf-fleet-stat span{color:#a6c9e2}
+.zf-fleet-shell .zf-fleet-tab{background:#07192e;border:1px solid #23658c;color:#bfdef3}
+.zf-fleet-shell .zf-fleet-tab.active{
+  color:#fff;background:linear-gradient(115deg,#0758c5,#0b91e2);
+  border-color:#4dd8ff;box-shadow:0 0 20px #078fff69,inset 0 1px #e0ffff5c
+}
+.zf-fleet-shell .zf-fleet-overview{background:linear-gradient(110deg,#092745,#071629);border:1px solid #207fbf}
+.zf-fleet-shell .zf-fleet-overview .text-slate-900{color:#f1faff!important}
+.zf-fleet-shell .zf-fleet-overview .text-slate-500{color:#95bbd9!important}
+.zf-fleet-shell .zf-fleet-page :is(.bg-white,.bg-slate-50){
+  background-color:#0a2038!important;border-color:#23618e!important;
+  box-shadow:inset 0 1px #8fdfff0c,0 7px 24px #0004
+}
+.zf-fleet-shell .zf-fleet-page :is(.text-slate-900,.text-slate-800,.text-slate-700){color:#e9f6ff!important}
+.zf-fleet-shell .zf-fleet-page :is(.text-slate-600,.text-slate-500,.text-slate-400){color:#9cbfda!important}
+.zf-fleet-shell .zf-fleet-page :is(.border-slate-200,.border-slate-100){border-color:#25608d!important}
+.zf-fleet-shell .zf-fleet-page :is(.bg-blue-50,.bg-emerald-50,.bg-slate-100){background:#143653!important}
+.zf-fleet-shell .zf-fleet-page :is(.text-blue-600,.text-blue-700){color:#57caff!important}
+.zf-fleet-shell .zf-fleet-page :is(.text-emerald-700,.text-emerald-600){color:#3ff0b0!important}
+.zf-fleet-shell .zf-fleet-page :is(input,select,textarea){background:#081b33;color:#e7f5ff;border:1px solid #23669b}
+.zf-fleet-shell .zf-fleet-page :is(input,textarea)::placeholder{color:#8aacbf}
+.zf-fleet-shell .zf-fleet-page select option{background:#081b33;color:white}
+.zf-fleet-shell .zf-fleet-page .leaflet-container{background:#07182a;color:#152f48}
+.zf-fleet-shell .zf-fleet-page :is(table thead){background:#12304e;color:#cbefff}
+.zf-fleet-shell .zf-fleet-page :is(table tbody tr:hover){background:#103756}
+.zf-fleet-shell .zf-fleet-page button:focus-visible{outline:2px solid #45d6ff;outline-offset:2px}
+@media(max-width:700px){
+ .zf-fleet-shell .zf-fleet-hero{border-radius:17px;padding:14px}
+ .zf-fleet-shell .zf-fleet-stat{min-height:85px}
+}
