@@ -357,6 +357,25 @@ export const CAN_PARAMETER_CATALOG: Record<number, CanParameterDefinition> = {
     verified: true,
     documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID#CAN_adapters_elements',
   },
+  85: {
+    id: 85,
+    officialName: 'Engine RPM (CAN Adapter)',
+    nameAr: 'دوران المحرك من CAN',
+    nameEn: 'Engine RPM CAN',
+    source: 'can_powertrain',
+    sourceBusLabelAr: 'ناقل CAN للمحرك',
+    sourceBusLabelEn: 'Powertrain CAN',
+    byteLength: 2,
+    signed: false,
+    multiplier: 1,
+    unit: 'rpm',
+    valueRange: '0 - 16384 rpm',
+    descriptionAr: 'دوران المحرك المستلم عبر CAN',
+    descriptionEn: 'Engine RPM received from CAN adapter',
+    configDependency: 'CAN Adapter RPM I/O enabled',
+    verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
+  },
   87: {
     id: 87,
     officialName: 'Total Mileage (CAN Odometer)',
@@ -1007,14 +1026,14 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
   const displaySpeed = canSpeedRaw !== null && canSpeedRaw > 0 ? canSpeedRaw : gpsSpeed;
 
   // --- 4. Engine Dynamics ---
-  // OBD RPM (ID 33) or CAN RPM (ID 35). NOT ID 85 which is LTE Band on FMB140!
-  let engineRpm = getParsed(33) ?? getParsed(35);
+  // Prefer verified CAN adapter RPM ID 85. OBD RPM is ID 36.
+  let engineRpm = getParsed(85) ?? getParsed(36);
   if (engineRpm !== null && (engineRpm < 0 || engineRpm > 12000)) {
     engineRpm = null;
   }
 
-  // Coolant Temperature: OBD/CAN ID 32. NOT ID 115 which is internal PCB temperature!
-  let coolantTempC = getParsed(32);
+  // CAN engine temperature ID 115 uses tenths of °C; OBD coolant ID 32 is °C.
+  let coolantTempC = getParsed(115) ?? getParsed(32);
   if (coolantTempC !== null && (coolantTempC < -40 || coolantTempC > 180)) {
     coolantTempC = null;
   }
