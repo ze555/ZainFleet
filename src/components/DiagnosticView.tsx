@@ -68,6 +68,37 @@ export const DiagnosticView: React.FC<DiagnosticViewProps> = ({ device, lang }) 
   const [summary, setSummary] = useState<DiagnosticSummary | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [copiedHex, setCopiedHex] = useState<boolean>(false);
+  const [liveLog, setLiveLog] = useState('');
+  const [liveLogError, setLiveLogError] = useState('');
+  const [isFetchingLog, setIsFetchingLog] = useState(false);
+  const [copiedLog, setCopiedLog] = useState(false);
+  const [autoLog, setAutoLog] = useState(false);
+  const fetchLiveLog = async () => {
+    setIsFetchingLog(true);
+    setLiveLogError('');
+    try {
+      const response = await fetch('/api/diagnostics/download-log', { cache: 'no-store' });
+      if (!response.ok) throw new Error(response.status === 404 ? 'لا توجد حزم مسجلة بعد' : 'HTTP ' + response.status);
+      const log = await response.text();
+      setLiveLog(log);
+    } catch (error) {
+      setLiveLogError(error instanceof Error ? error.message : 'فشل سحب السجل');
+    } finally { setIsFetchingLog(false); }
+  };
+  useEffect(() => {
+    if (!autoLog) return;
+    fetchLiveLog();
+    const timer = setInterval(fetchLiveLog, 5000);
+    return () => clearInterval(timer);
+  }, [autoLog]);
+  const copyLiveLog = async () => {
+    if (!liveLog) return;
+    try {
+      await navigator.clipboard.writeText(liveLog);
+      setCopiedLog(true);
+      setTimeout(() => setCopiedLog(false), 1800);
+    } catch { setLiveLogError('تعذّر النسخ الآلي. حدّد النص وانسخه يدوياً.'); }
+  };
   const [filterIoSearch, setFilterIoSearch] = useState<string>('');
   const [customHexInput, setCustomHexInput] = useState<string>('');
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
@@ -164,6 +195,22 @@ export const DiagnosticView: React.FC<DiagnosticViewProps> = ({ device, lang }) 
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-16">
+      <section dir={isAr ? 'rtl' : 'ltr'} className="rounded-3xl border border-cyan-400/40 bg-[#071c37] p-4 sm:p-6 text-white shadow-xl">
+        <div className="flex flex-wrap justify-between items-start gap-3">
+          <div><h2 className="flex items-center gap-2 font-black text-lg"><Terminal className="text-cyan-300" size={22}/> {isAr ? 'أداة سحب ونسخ Live Log' : 'Live Log Pull & Copy'}</h2>
+            <p className="mt-2 text-xs leading-6 text-cyan-100/80">{isAr ? 'تسحب الحزم التي وصلت فعلياً من FMB140 إلى Railway؛ لا تقرأ ذاكرة الجهاز عن بُعد.':'Pulls packets actually received by Railway from FMB140; this does not read device memory remotely.'}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={fetchLiveLog} disabled={isFetchingLog} className="rounded-xl bg-cyan-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-60 flex items-center gap-2"><RotateCw size={15} className={isFetchingLog ? 'animate-spin' : ''}/>{isAr ? 'سحب Log' : 'Pull log'}</button>
+            <button type="button" onClick={copyLiveLog} disabled={!liveLog} className="rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-60 flex items-center gap-2">{copiedLog ? <Check size={15}/> : <Copy size={15}/>} {copiedLog ? 'تم النسخ' : isAr ? 'نسخ الكل' : 'Copy all'}</button>
+            <a href="/api/diagnostics/download-log" download="fmb140_packet_diagnostic.log" className="rounded-xl border border-cyan-400/40 px-3 py-2 text-xs font-bold text-cyan-100 flex items-center gap-2"><Download size={15}/>{isAr ? 'تنزيل' : 'Download'}</a>
+          </div>
+        </div>
+        <label className="mt-4 flex items-center gap-2 text-xs font-bold text-slate-200"><input type="checkbox" checked={autoLog} onChange={e=>setAutoLog(e.target.checked)}/>{isAr ? 'سحب تلقائي كل 5 ثوانٍ' : 'Auto-pull every 5 seconds'}</label>
+        <div className="mt-3 flex flex-wrap justify-between gap-2 text-[11px] text-slate-400"><span>{isAr ? 'حجم السجل:' : 'Log size:'} {new Blob([liveLog]).size.toLocaleString()} bytes</span><span>{isAr ? 'المعاينة تعرض آخر 60 ألف حرف؛ زر النسخ ينسخ النص كاملاً.' : 'Preview shows last 60k chars; Copy copies the complete log.'}</span></div>
+        {liveLogError && <p role="alert" className="mt-3 rounded-xl bg-rose-500/15 p-3 text-xs text-rose-200">{liveLogError}</p>}
+        <textarea aria-label={isAr ? 'سجل الحزم المستلمة' : 'Received packet log'} readOnly dir="ltr" value={liveLog.slice(-60000)} placeholder={isAr ? 'اضغط سحب Log لعرض الحزم التي استقبلها السيرفر' : 'Press Pull Log to fetch received packets'} className="mt-3 min-h-[230px] w-full rounded-xl border border-cyan-600/30 bg-[#020d1d] p-3 font-mono text-[11px] leading-5 text-emerald-200 outline-none sm:min-h-[300px]"/>
+      </section>
       {/* 1. Header Banner & Direct Download Bar */}
       <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-blue-950 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-700/60 relative overflow-hidden">
         <div className="relative z-10">
