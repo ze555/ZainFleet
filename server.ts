@@ -56,12 +56,14 @@ class PersistentDeviceRepository {
   upsert(imei: string, seenAt: string, connected: boolean, lastGpsAt?: string, receivedAvl = false): DeviceInfo {
     const existing = this.devices.get(imei);
     const tcpConnected = connected;
-    const connectionStatus: 'online' | 'standby' | 'offline' = connected ? 'online' : 'offline';
+    const lastPacket = receivedAvl ? seenAt : (existing?.lastPacketAt || '');
+    const recentlyReceived = lastPacket !== '' && Date.now() - new Date(lastPacket).getTime() < 15 * 60 * 1000;
+    const connectionStatus: 'online' | 'standby' | 'offline' = connected ? 'online' : recentlyReceived ? 'standby' : 'offline';
     const updated: DeviceInfo = {
       imei,
       name: existing?.name,
       firstSeen: existing ? existing.firstSeen : seenAt,
-      lastSeen: seenAt,
+      lastSeen: connected || receivedAvl ? seenAt : (existing?.lastSeen || seenAt),
       // Handshakes/disconnects are not AVL transmissions. Update only after decoded records arrive.
       lastPacketAt: receivedAvl ? seenAt : (existing?.lastPacketAt || ''),
       lastGpsAt: lastGpsAt || existing?.lastGpsAt,
