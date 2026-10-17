@@ -118,6 +118,29 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
           {isAr ? 'لا توجد عناصر RPM أو حرارة المحرك أو الوقود داخل آخر حزمة. تظهر هذه القيم في Configurator محلياً، لكن يلزم تفعيل إرسال عناصر CAN/OBD في AVL وحفظ إعدادات الجهاز حتى تصل إلى الموقع.' : 'RPM, coolant and fuel were not present in this packet. Configure the tracker to transmit CAN/OBD IO over AVL.'}
         </div>}
       </section>
+      <section dir={isAr ? 'rtl' : 'ltr'} className="rounded-3xl border border-cyan-300/40 bg-white p-4 shadow-sm">
+        <h3 className="mb-1 text-base font-black text-slate-900">{isAr ? 'عدادات CAN الحية — قيم واردة فقط' : 'Live CAN gauges — received values only'}</h3>
+        <p className="mb-4 text-xs leading-6 text-slate-500">{isAr ? 'يقرأ الموقع هذه العناصر مباشرة من أحدث سجل AVL. عدم إرسال العنصر يظهر — وليس صفراً افتراضياً.' : 'Gauges use the latest real AVL values; missing values display —.'}</p>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {([
+            [isAr ? 'RPM المحرك' : 'Engine RPM', metrics.engine.rpm, 'rpm'],
+            [isAr ? 'حرارة المحرك' : 'Coolant temperature', metrics.engine.coolantTempC, '°C'],
+            [isAr ? 'حمل المحرك' : 'Engine load', metrics.engine.loadPercent, '%'],
+            [isAr ? 'مستوى الوقود' : 'Fuel level', metrics.fuel.levelPercent, '%'],
+            [isAr ? 'استهلاك الوقود' : 'Fuel consumed', metrics.fuel.totalConsumedLiters, 'L'],
+            [isAr ? 'تدفق الوقود' : 'Fuel flow', metrics.fuel.instantRateLitersPerHour, 'L/h'],
+          ] as Array<[string, number | null, string]>).map(([name, value, unit]) => (
+            <div key={name} className={`rounded-2xl border p-3 ${value === null ? 'border-amber-200 bg-amber-50' : 'border-emerald-200 bg-emerald-50'}`}>
+              <p className="text-xs font-bold text-slate-600">{name}</p>
+              <b className="mt-2 block text-2xl text-slate-900">{value === null ? '—' : value}</b>
+              <small className="text-xs text-slate-500">{value === null ? (isAr ? 'لم تصل القراءة' : 'Not received') : unit}</small>
+            </div>
+          ))}
+        </div>
+        {!canIds.length && <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-7 text-amber-900">
+          {isAr ? 'فحص آخر Log: الجهاز متصل ويرسل GPS وAVL، لكن لا توجد معرّفات CAN. من Teltonika Configurator فعّل Priority = Low لعناصر CAN Adapter مثل Engine RPM وEngine Temperature وTotal Mileage، مع Event Only = No وOperand = Monitoring، ثم احفظ إلى الجهاز وانتظر حزمة جديدة. الصور المحلية ليست بيانات واردة للسيرفر.' : 'No CAN IDs in the latest packet. Enable the required CAN Adapter I/O parameters in Configurator and save to device.'}
+        </p>}
+      </section>
       {/* Title & Sub-tabs Header */}
       <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">

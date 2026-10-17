@@ -30,11 +30,11 @@ const KNOWN_CAN_PARAMS: Record<number, KnownCanParam> = {
     unit: 'RSSI',
   },
   16: {
-    nameAr: 'عداد المسافات الإجمالي من الـ CAN',
-    nameEn: 'Total Odometer (CAN)',
-    category: 'M-CAN (المحرك والحركة)',
+    nameAr: 'عداد المسافة المحسوب بواسطة جهاز GPS',
+    nameEn: 'Tracker Calculated Odometer',
+    category: 'GNSS & System',
     unit: 'km',
-    format: (v) => `${Math.round(Number(v) / 1000).toLocaleString()} km`,
+    format: (v) => `${(Number(v) / 1000).toFixed(3)} km`,
   },
   21: {
     nameAr: 'مستوى إشارة الشبكة',
@@ -77,7 +77,7 @@ const KNOWN_CAN_PARAMS: Record<number, KnownCanParam> = {
   66: {
     nameAr: 'جهد بطارية السيارة الخارجي',
     nameEn: 'External Battery Voltage',
-    category: 'M-CAN (المحرك والحركة)',
+    category: 'GNSS & System',
     unit: 'V',
     format: (v) => `${(Number(v) / 1000).toFixed(1)} V`,
   },
