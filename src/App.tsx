@@ -115,6 +115,8 @@ const DashboardApp: React.FC<{onLogout: () => void}> = ({onLogout}) => {
   }, [fetchDevices, fetchTelemetry, selectedImei, checkHealth]);
 
   const selectedDevice = devices.find((d) => d.imei === selectedImei) || null;
+  const hasRecentAvl = Boolean(selectedDevice?.lastPacketAt && Date.now() - new Date(selectedDevice.lastPacketAt).getTime() < 15 * 60 * 1000);
+  const deviceStatusLabel = selectedDevice?.connected ? (isAr ? 'TCP متصل الآن' : 'TCP connected') : hasRecentAvl ? (isAr ? 'بيانات حديثة — TCP مغلق' : 'Recent AVL — TCP closed') : (isAr ? 'لا يوجد اتصال TCP حالياً' : 'No active TCP connection');
 
   // Vehicle custom friendly name per IMEI
   const [customNames, setCustomNames] = useState<Record<string, string>>(() => {
@@ -215,7 +217,7 @@ const DashboardApp: React.FC<{onLogout: () => void}> = ({onLogout}) => {
               {serverHealthy ? (isAr ? 'الخادم متصل' : 'Server online') : (isAr ? 'الخادم غير متصل' : 'Server offline')}
             </span>
             <span className={`rounded-full px-3 py-1.5 ${selectedDevice?.connected ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
-              {selectedDevice?.connected ? (isAr ? 'الجهاز متصل' : 'Device connected') : (isAr ? 'بانتظار الجهاز' : 'Awaiting device')}
+              {deviceStatusLabel}
             </span>
             <button onClick={() => { checkHealth(); fetchDevices(); if (selectedImei) fetchTelemetry(selectedImei); }}
               className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700 hover:bg-slate-50"
@@ -234,7 +236,7 @@ const DashboardApp: React.FC<{onLogout: () => void}> = ({onLogout}) => {
               </div>
               <div className="zf-fleet-status">
                 <span className={`zf-fleet-led ${selectedDevice?.connected ? 'is-online' : ''}`} />
-                {selectedDevice?.connected ? (isAr ? 'الجهاز متصل الآن' : 'Device connected') : (isAr ? 'بانتظار اتصال الجهاز' : 'Waiting for device')}
+                {deviceStatusLabel}
               </div>
             </div>
             <div className="zf-fleet-stats">
@@ -422,7 +424,7 @@ const DashboardApp: React.FC<{onLogout: () => void}> = ({onLogout}) => {
               <div className="flex justify-between">
                 <span className="text-slate-500">{isAr ? 'الحالة:' : 'Connection:'}</span>
                 <span className="font-bold text-slate-900">
-                  {selectedDevice.connected ? (isAr ? 'متصل' : 'Connected') : (isAr ? 'غير متصل' : 'Offline')}
+                  {deviceStatusLabel}
                 </span>
               </div>
             </div>
