@@ -357,6 +357,25 @@ export const CAN_PARAMETER_CATALOG: Record<number, CanParameterDefinition> = {
     verified: true,
     documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID#CAN_adapters_elements',
   },
+  85: {
+    id: 85,
+    officialName: 'Engine RPM (CAN Adapter)',
+    nameAr: 'دوران المحرك من CAN',
+    nameEn: 'Engine RPM CAN',
+    source: 'can_powertrain',
+    sourceBusLabelAr: 'ناقل CAN للمحرك',
+    sourceBusLabelEn: 'Powertrain CAN',
+    byteLength: 2,
+    signed: false,
+    multiplier: 1,
+    unit: 'rpm',
+    valueRange: '0 - 16384 rpm',
+    descriptionAr: 'دوران المحرك المستلم عبر CAN',
+    descriptionEn: 'Engine RPM received from CAN adapter',
+    configDependency: 'CAN Adapter RPM I/O enabled',
+    verified: true,
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
+  },
   87: {
     id: 87,
     officialName: 'Total Mileage (CAN Odometer)',
@@ -473,22 +492,22 @@ export const CAN_PARAMETER_CATALOG: Record<number, CanParameterDefinition> = {
   },
   115: {
     id: 115,
-    officialName: 'PCB Temperature',
-    nameAr: 'حرارة اللوحة الإلكترونية لجهاز التتبع (PCB)',
-    nameEn: 'Tracker PCB Temperature',
-    source: 'device_io',
-    sourceBusLabelAr: 'حساس حرارة بوردة الجهاز',
-    sourceBusLabelEn: 'Internal Tracker Hardware',
-    byteLength: 1,
+    officialName: 'Engine Temperature (CAN)',
+    nameAr: 'حرارة المحرك من CAN',
+    nameEn: 'Engine Temperature (CAN)',
+    source: 'can_powertrain',
+    sourceBusLabelAr: 'ناقل CAN للمحرك',
+    sourceBusLabelEn: 'Powertrain CAN',
+    byteLength: 2,
     signed: true,
-    multiplier: 1,
+    multiplier: 0.1,
     unit: '°C',
-    valueRange: '-40 - 125 °C',
-    descriptionAr: 'درجة حرارة الدائرة الإلكترونية الداخلية لجهاز التتبع (وليس سائل تبريد المحرك)',
-    descriptionEn: 'Internal tracker motherboard temperature sensor (NOT engine coolant)',
-    configDependency: 'Permanent IO',
+    valueRange: '-60 - 127 °C',
+    descriptionAr: 'درجة حرارة المحرك من CAN والقيمة بوحدة عُشر درجة',
+    descriptionEn: 'Engine temperature in tenths of degrees Celsius',
+    configDependency: 'Enable CAN Adapter Engine Temperature',
     verified: true,
-    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID#Permanent_I.2FO_elements',
+    documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID',
   },
   132: {
     id: 132,
@@ -1007,14 +1026,14 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
   const displaySpeed = canSpeedRaw !== null && canSpeedRaw > 0 ? canSpeedRaw : gpsSpeed;
 
   // --- 4. Engine Dynamics ---
-  // OBD RPM (ID 33) or CAN RPM (ID 35). NOT ID 85 which is LTE Band on FMB140!
-  let engineRpm = getParsed(33) ?? getParsed(35);
+  // Prefer verified CAN adapter RPM ID 85. OBD RPM is ID 36.
+  let engineRpm = getParsed(85) ?? getParsed(36);
   if (engineRpm !== null && (engineRpm < 0 || engineRpm > 12000)) {
     engineRpm = null;
   }
 
-  // Coolant Temperature: OBD/CAN ID 32. NOT ID 115 which is internal PCB temperature!
-  let coolantTempC = getParsed(32);
+  // CAN engine temperature ID 115 uses tenths of °C; OBD coolant ID 32 is °C.
+  let coolantTempC = getParsed(115) ?? getParsed(32);
   if (coolantTempC !== null && (coolantTempC < -40 || coolantTempC > 180)) {
     coolantTempC = null;
   }
