@@ -102,16 +102,37 @@ const DashboardApp: React.FC<{onLogout: () => void}> = ({onLogout}) => {
     }
   }, [selectedImei, fetchTelemetry]);
 
-  // Periodic polling for live vehicle telemetry updates
+  // Refresh active telemetry every two seconds; independent of the tracker TCP
+  // upload cadence. Do not issue overlapping HTTP polls to a slow Railway instance.
   useEffect(() => {
-    const interval = setInterval(() => {
-      fetchDevices();
-      if (selectedImei) {
-        fetchTelemetry(selectedImei);
+    let polling = false;
+    let disposed = false;
+    const refresh = async () => {
+      if (polling || disposed || document.visibilityState === 'hidden') return;
+      polling = true;
+      try {
+        await Promise.all([
+          fetchDevices(),
+          selectedImei ? fetchTelemetry(selectedImei) : Promise.resolve(),
+          checkHealth(),
+        ]);
+      } finally {
+        polling = false;
       }
-      checkHealth();
-    }, 4000);
-    return () => clearInterval(interval);
+    };
+    const interval = window.setInterval(() => { void refresh(); }, 2000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void refresh();
+    };
+    const onOnline = () => { void refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('online', onOnline);
+    return () => {
+      disposed = true;
+      window.clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('online', onOnline);
+    };
   }, [fetchDevices, fetchTelemetry, selectedImei, checkHealth]);
 
   const selectedDevice = devices.find((d) => d.imei === selectedImei) || null;
@@ -209,7 +230,7 @@ const DashboardApp: React.FC<{onLogout: () => void}> = ({onLogout}) => {
             <div className="rounded-xl bg-blue-50 p-2.5 text-blue-700"><Radio className="h-5 w-5" /></div>
             <div>
               <div className="text-sm font-bold text-slate-900">{isAr ? 'مراقبة الأسطول المباشرة' : 'Fleet Live Monitor'}</div>
-              <div className="text-xs text-slate-500">{isAr ? 'تحديث تلقائي كل 4 ثوانٍ' : 'Automatically refreshed every 4 seconds'}</div>
+              <div className="text-xs text-slate-500">{isAr ? 'تحديث تلقائي كل ثانيتين' : 'Automatically refreshed every 2 seconds'}</div>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
@@ -243,7 +264,7 @@ const DashboardApp: React.FC<{onLogout: () => void}> = ({onLogout}) => {
               <div className="zf-fleet-stat"><span>{isAr ? 'حالة الخادم' : 'Server'}</span><b>{serverHealthy ? (isAr ? 'يعمل' : 'Online') : (isAr ? 'متوقف' : 'Offline')}</b><small>HTTP / TCP</small></div>
               <div className="zf-fleet-stat"><span>{isAr ? 'المركبات المتصلة' : 'Connected'}</span><b>{devices.filter(d => d.connected).length}<em> / {devices.length}</em></b><small>{isAr ? 'مركبة' : 'Vehicles'}</small></div>
               <div className="zf-fleet-stat"><span>{isAr ? 'الجهاز المختار' : 'Selected vehicle'}</span><b className="zf-fleet-stat-name">{selectedDevice ? vehicleName : '—'}</b><small dir="ltr">{selectedDevice?.imei || 'FMB140'}</small></div>
-              <div className="zf-fleet-stat"><span>{isAr ? 'آخر بيانات' : 'Last data'}</span><b className="zf-fleet-stat-date">{telemetry?.receivedAt ? new Date(telemetry.receivedAt).toLocaleTimeString(isAr ? 'ar-LY' : 'en-US') : '—'}</b><small>{isAr ? 'تحديث كل 4 ثوانٍ' : 'Every 4 seconds'}</small></div>
+              <div className="zf-fleet-stat"><span>{isAr ? 'آخر بيانات' : 'Last data'}</span><b className="zf-fleet-stat-date">{telemetry?.receivedAt ? new Date(telemetry.receivedAt).toLocaleTimeString(isAr ? 'ar-LY' : 'en-US') : '—'}</b><small>{isAr ? 'تحديث كل ثانيتين' : 'Every 2 seconds'}</small></div>
               <button className="zf-fleet-stat zf-fleet-stat-action" onClick={() => { checkHealth(); fetchDevices(); if (selectedImei) fetchTelemetry(selectedImei); }}>
                 <span>{isAr ? 'تحديث البيانات' : 'Refresh telemetry'}</span><RotateCw size={25} /><small>{isAr ? 'فحص الآن' : 'Check now'}</small>
               </button>
