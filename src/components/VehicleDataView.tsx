@@ -91,6 +91,33 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
           ? 'الاتصال وGPS يعملان، لكن لا توجد في الحزمة الحالية بيانات مؤكدة لـ RPM أو الوقود أو الحرارة. لا تُعرض قيم افتراضية مكان البيانات المفقودة.'
           : 'TCP/GPS are working, but no confirmed RPM, fuel or temperature CAN values are present in this packet.'}</p>}
       </section>
+      <section dir={isAr ? 'rtl' : 'ltr'} className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 className="font-extrabold text-slate-900">{isAr ? 'كل قراءات AVL المستلمة مباشرة' : 'All received AVL readings'}</h3>
+            <p className="text-xs text-slate-500">{isAr ? 'هذه القيم تأتي من آخر حزمة وصلت من الجهاز، وليست بيانات تجريبية' : 'Values taken from the most recent device packet, not sample data'}</p>
+          </div>
+          <button type="button" onClick={onRefresh} disabled={isLoading} className="flex items-center gap-2 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white disabled:opacity-50">
+            <RotateCw size={15} className={isLoading ? 'animate-spin' : ''}/>{isAr ? 'تحديث الآن' : 'Refresh now'}
+          </button>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {record.ioElements.map((el) => {
+            const labels: Record<number, string> = {239:'السويتش',240:'مستشعر الحركة',21:'إشارة GSM',66:'جهد السيارة V',67:'بطارية الجهاز V',68:'تيار بطارية الجهاز mA',16:'عداد مسافة الجهاز km',241:'شبكة GSM',200:'عنصر الجهاز 200',69:'عنصر الجهاز 69',181:'عنصر الجهاز 181',182:'عنصر الجهاز 182'};
+            const raw = Number(el.value);
+            const scaled = [66,67,16].includes(el.id) && Number.isFinite(raw) ? (raw / 1000).toFixed(3) : el.value;
+            const shown = el.id === 239 ? (el.value === '1' ? 'ON' : 'OFF') : el.id === 240 ? (el.value === '1' ? 'تتحرك' : 'متوقفة') : scaled;
+            return <div key={el.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[11px] text-slate-500">{labels[el.id] || `AVL ID ${el.id}`}</p>
+              <b className="mt-1 block break-all font-mono text-xl text-slate-900">{shown}</b>
+              <p className="mt-1 font-mono text-[10px] text-slate-400">ID {el.id} | raw {el.value}</p>
+            </div>;
+          })}
+        </div>
+        {canIds.length===0 && <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-6 text-amber-900">
+          {isAr ? 'لا توجد عناصر RPM أو حرارة المحرك أو الوقود داخل آخر حزمة. تظهر هذه القيم في Configurator محلياً، لكن يلزم تفعيل إرسال عناصر CAN/OBD في AVL وحفظ إعدادات الجهاز حتى تصل إلى الموقع.' : 'RPM, coolant and fuel were not present in this packet. Configure the tracker to transmit CAN/OBD IO over AVL.'}
+        </div>}
+      </section>
       {/* Title & Sub-tabs Header */}
       <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
