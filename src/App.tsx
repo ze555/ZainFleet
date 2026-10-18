@@ -728,16 +728,17 @@ export const App: React.FC = () => {
         <div className="zf-auth-decor"><span className="zf-auth-ring" /><span className="zf-auth-core"><Wifi size={65}/></span></div>
       </section>
       <section className="zf-auth-form-side">
+        <div className="zf-mobile-brand"><span className="zf-mobile-brand-logo"><Wifi size={28}/></span><div><strong>ZAIN<span>FLEET</span></strong><small>SMART VEHICLE PLATFORM</small></div></div>
         <form className="zf-auth-card" onSubmit={login}>
-          <span className="zf-auth-icon"><LockKeyhole size={28}/></span>
-          <div className="zf-auth-form-title"><span>مرحباً بعودتك</span><h2>تسجيل الدخول</h2><p>أدخل بيانات حسابك للوصول إلى مركز القيادة</p></div>
+          <div className="zf-login-identity"><span className="zf-auth-icon"><LockKeyhole size={28}/></span><span className="zf-login-identity-tag"><ShieldCheck size={13}/> PRIVATE ACCESS</span></div>
+          <div className="zf-auth-form-title"><span>مرحباً بعودتك إلى ZainFleet</span><h2>تسجيل الدخول</h2><p>تابع سياراتك ومواقعها وبياناتها المباشرة من مكان واحد</p></div>
           <label htmlFor="zf-user">اسم المستخدم</label>
           <div className="zf-auth-input"><ShieldCheck size={18}/><input id="zf-user" autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)} required placeholder="اسم المستخدم" /></div>
           <label htmlFor="zf-password">كلمة المرور</label>
           <div className="zf-auth-input"><LockKeyhole size={18}/><input id="zf-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="أدخل كلمة المرور"/><button type="button" aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'} onClick={()=>setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div>
           {error && <div role="alert" className="zf-auth-error">{error}</div>}
           <button type="submit" className="zf-auth-submit" disabled={busy}>{busy ? 'جارٍ تسجيل الدخول...' : 'الدخول إلى النظام'}<LogIn size={19}/></button>
-          <div className="zf-auth-note"><ShieldCheck size={15}/> الحساب الحالي: محمد زين — استخدم بيانات الدخول الحالية</div>
+          <div className="zf-auth-note"><ShieldCheck size={15}/> اتصال آمن بحسابك الحالي — بيانات الدخول لم تتغير</div>
           <p className="zf-auth-foot">ZAINFLEET © 2026 • TELTONIKA FMB140</p>
         </form>
       </section>
