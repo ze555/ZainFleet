@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Navbar } from './components/Navbar.tsx';
+import { UsersManagement } from './components/UsersManagement.tsx';
 import { CanDashboard } from './components/CanDashboard.tsx';
 import { TripMap } from './components/TripMap.tsx';
 import { TodayGpsRoute } from './components/TodayGpsRoute.tsx';
@@ -24,7 +25,7 @@ import {
   LockKeyhole, Eye, EyeOff, LogIn, ShieldCheck, Wifi, LogOut,
 } from 'lucide-react';
 
-const DashboardApp: React.FC<{onLogout: () => void}> = ({onLogout}) => {
+const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'user'; displayName: string}> = ({onLogout,role,displayName}) => {
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
@@ -247,7 +248,12 @@ const DashboardApp: React.FC<{onLogout: () => void}> = ({onLogout}) => {
             </button>
           </div>
         </div>
-        {currentTab === 'dashboard' && (
+        {role === 'admin' && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-700 bg-[#092442] px-4 py-3 text-white">
+          <span className="font-bold text-sm">مرحباً، {displayName} — مدير النظام</span>
+          <button type="button" onClick={()=>setCurrentTab('users')} className="rounded-xl border border-cyan-500 bg-blue-700 px-4 py-2 text-sm font-bold">إدارة المستخدمين والأجهزة</button>
+        </div>}
+        {currentTab === 'users' && role === 'admin' && <UsersManagement />}
+                {currentTab === 'dashboard' && (
           <section className="zf-fleet-hero" aria-label={isAr ? 'لوحة حالة الأسطول' : 'Fleet status'}>
             <div className="zf-fleet-hero-title">
               <div>
@@ -673,6 +679,7 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device
 // Login gate is mounted before the dashboard, so vehicle API polling starts only after authentication.
 export const App: React.FC = () => {
   const [auth, setAuth] = useState<'checking' | 'guest' | 'logged-in'>('checking');
+  const [account, setAccount] = useState<{role:'admin'|'user';displayName:string}>({role:'admin',displayName:'محمد زين'});
   const [username, setUsername] = useState('Admin');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -682,7 +689,7 @@ export const App: React.FC = () => {
     let active = true;
     fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' })
       .then(async response => response.ok ? response.json() : {authenticated: false})
-      .then(data => { if (active) setAuth(data.authenticated ? 'logged-in' : 'guest'); })
+      .then(data => { if (active) {setAuth(data.authenticated ? 'logged-in' : 'guest'); if (data.authenticated) setAccount({role:data.role === 'user' ? 'user':'admin',displayName:data.displayName||'محمد زين'}); } })
       .catch(() => { if (active) {setAuth('guest');setError('تعذر الاتصال بالخادم. تحقق من تشغيل Railway.');} });
     return () => { active = false; };
   }, []);
@@ -698,7 +705,7 @@ export const App: React.FC = () => {
       });
       const data = await response.json();
       if (!response.ok) { setError(data.error || 'تعذر تسجيل الدخول'); return; }
-      setAuth('logged-in'); setPassword('');
+      setAccount({role:data.role === 'user'?'user':'admin',displayName:data.displayName||'محمد زين'});setAuth('logged-in'); setPassword('');
     } catch { setError('تعذر الاتصال بالخادم. حاول مرة أخرى.'); }
     finally { setBusy(false); }
   };
@@ -707,7 +714,7 @@ export const App: React.FC = () => {
     finally { setAuth('guest'); setPassword(''); }
   };
   if (auth === 'checking') return <div className="zf-auth-loading" dir="rtl"><ShieldCheck size={35} /> جاري التحقق من الجلسة...</div>;
-  if (auth === 'logged-in') return <DashboardApp onLogout={logout} />;
+  if (auth === 'logged-in') return <DashboardApp onLogout={logout} role={account.role} displayName={account.displayName} />;
   return (
     <main className="zf-auth-root" dir="rtl">
       <div className="zf-auth-orb zf-auth-orb-one" /><div className="zf-auth-orb zf-auth-orb-two" />
@@ -730,7 +737,7 @@ export const App: React.FC = () => {
           <div className="zf-auth-input"><LockKeyhole size={18}/><input id="zf-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="أدخل كلمة المرور"/><button type="button" aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'} onClick={()=>setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div>
           {error && <div role="alert" className="zf-auth-error">{error}</div>}
           <button type="submit" className="zf-auth-submit" disabled={busy}>{busy ? 'جارٍ تسجيل الدخول...' : 'الدخول إلى النظام'}<LogIn size={19}/></button>
-          <div className="zf-auth-note"><ShieldCheck size={15}/> الحساب الافتراضي للتجربة: Admin — كلمة المرور 123456</div>
+          <div className="zf-auth-note"><ShieldCheck size={15}/> الحساب الحالي: محمد زين — استخدم بيانات الدخول الحالية</div>
           <p className="zf-auth-foot">ZAINFLEET © 2026 • TELTONIKA FMB140</p>
         </form>
       </section>
