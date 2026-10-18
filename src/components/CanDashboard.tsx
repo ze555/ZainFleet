@@ -52,6 +52,27 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedName, setEditedName] = useState(vehicleName);
   const [locationAddress, setLocationAddress] = useState<string>('...');
+  const fuelSettingsKey = 'zainfleet_fuel_' + device.imei;
+  const [fuelConfig, setFuelConfig] = useState<{tankLiters:string;litersPer100Km:string}>(() => {
+    try { const v = JSON.parse(localStorage.getItem('zainfleet_fuel_' + device.imei) || '{}'); return {tankLiters:String(v.tankLiters||''),litersPer100Km:String(v.litersPer100Km||'')}; }
+    catch { return {tankLiters:'',litersPer100Km:''}; }
+  });
+  const [showFuelSettings, setShowFuelSettings] = useState(false);
+  useEffect(() => {
+    try { const v=JSON.parse(localStorage.getItem(fuelSettingsKey)||'{}');setFuelConfig({tankLiters:String(v.tankLiters||''),litersPer100Km:String(v.litersPer100Km||'')}); }
+    catch {setFuelConfig({tankLiters:'',litersPer100Km:''});}
+  },[fuelSettingsKey]);
+  const tankLiters = Number(fuelConfig.tankLiters);
+  const averageConsumption = Number(fuelConfig.litersPer100Km);
+  const fuelLiters = metrics?.fuel.levelLiters;
+  const percentFromCan = metrics?.fuel.levelPercent;
+  const fuelPercentage = percentFromCan != null && Number.isFinite(percentFromCan) && percentFromCan >= 0 && percentFromCan <= 100
+    ? percentFromCan : fuelLiters != null && tankLiters > 0 && tankLiters <= 1000 ? Math.max(0,Math.min(100,fuelLiters/tankLiters*100)) : null;
+  const remainingRange = fuelLiters != null && fuelLiters >= 0 && averageConsumption > 0 && averageConsumption <= 100
+    ? Math.round(fuelLiters / averageConsumption * 100) : null;
+  const saveFuelConfig = () => {
+    localStorage.setItem(fuelSettingsKey,JSON.stringify(fuelConfig));setShowFuelSettings(false);
+  };
 
   const miniMapRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -147,6 +168,23 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
               <div className="zf-cockpit-dial-ring"><div className="zf-cockpit-dial-center"><b>{dial.value}</b><small>{dial.unit}</small></div></div>
               <span>{dial.label}</span>
             </div>)}
+          </div>
+          <div className="zf-fuel-dashboard" dir={isAr ? 'rtl' : 'ltr'}>
+            <div className="zf-fuel-heading"><span><Fuel size={21}/> {isAr ? 'الوقود والمسافة المتبقية' : 'Fuel & Driving Range'}</span>
+              <button type="button" onClick={()=>setShowFuelSettings(v=>!v)} aria-expanded={showFuelSettings}>{isAr ? 'إعدادات الخزان والاستهلاك' : 'Fuel settings'} ⚙</button>
+            </div>
+            <div className="zf-fuel-stats">
+              <div><small>{isAr ? 'نسبة الوقود' : 'Fuel percentage'}</small><strong>{fuelPercentage==null ? '—' : `${fuelPercentage.toFixed(1)}%`}</strong></div>
+              <div><small>{isAr ? 'الكمية المتبقية' : 'Fuel remaining'}</small><strong>{fuelLiters==null ? '—' : `${fuelLiters.toFixed(1)} L`}</strong></div>
+              <div><small>{isAr ? 'المسافة التقديرية' : 'Estimated range'}</small><strong>{remainingRange==null ? '—' : `${remainingRange} km`}</strong></div>
+            </div>
+            <div className="zf-fuel-track"><span style={{width:`${fuelPercentage??0}%`}}/></div>
+            <p>{isAr ? 'المسافة تقديرية حسب متوسط الاستهلاك المدخل وليست قراءة مباشرة من الجهاز.' : 'Range is estimated from configured average consumption, not direct tracker data.'}</p>
+            {showFuelSettings && <div className="zf-fuel-settings">
+              <label>{isAr?'سعة خزان السيارة (لتر)':'Tank capacity (L)'}<input type="number" min="1" max="1000" step="0.1" value={fuelConfig.tankLiters} onChange={e=>setFuelConfig(x=>({...x,tankLiters:e.target.value}))}/></label>
+              <label>{isAr?'متوسط الاستهلاك (لتر / 100 كم)':'Consumption (L/100km)'}<input type="number" min="0.1" max="100" step="0.1" value={fuelConfig.litersPer100Km} onChange={e=>setFuelConfig(x=>({...x,litersPer100Km:e.target.value}))}/></label>
+              <button type="button" onClick={saveFuelConfig}>{isAr?'حفظ':'Save'}</button>
+            </div>}
           </div>
           <div className="zf-cockpit-metrics">
             <div><Fuel size={19}/><span>{isAr ? 'الوقود' : 'Fuel'}</span><b>{metrics?.fuel.levelLiters == null ? '—' : `${metrics.fuel.levelLiters} L`}</b></div>
