@@ -530,7 +530,7 @@ app.use('/api', (req: Request, res: Response, next) => {
   if (!who) {res.sendStatus(401);return;}
   if (who.role === 'admin') {next();return;}
   if (req.path === '/devices' && req.method === 'GET') {next();return;}
-  const match = req.path.match(/^\/devices\/([^/]+)(?:\/|$)/);
+  const match = req.path.match(/^\/devices\/([^/]+)(?:\/(latest|history|trips))?$/);
   if (match && req.method === 'GET' && fleetAccess(req, match[1])) {next();return;}
   res.status(403).json({error:'ليس لديك صلاحية الوصول لهذا الجهاز أو العملية'}); 
 });
