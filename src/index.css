@@ -263,3 +263,22 @@
 .zf-cockpit-metrics b{font:900 16px 'Inter','Cairo',sans-serif;color:#f7fcff}
 @media(max-width:1020px){.zf-cockpit-grid{grid-template-columns:1fr}.zf-cockpit-map{min-height:365px}.zf-cockpit-map-canvas{min-height:265px}.zf-cockpit-dial-ring{width:min(100%,190px)}}
 @media(max-width:480px){.zf-cockpit-grid{gap:10px}.zf-cockpit-map{min-height:320px}.zf-cockpit-instruments{padding:12px;gap:13px}.zf-cockpit-dial-ring{width:min(100%,145px);padding:9px}.zf-cockpit-dial-center b{font-size:30px}.zf-cockpit-metrics>div{padding:10px 5px}}
+
+/* ZainFleet live fuel assistant – uses actual CAN liters and user-entered consumption. */
+.zf-fuel-dashboard{padding:18px;border:1px solid #159cd2;border-radius:20px;background:radial-gradient(circle at 100% 0%,#0e6b8966,transparent 45%),linear-gradient(130deg,#0b3151,#06162d);box-shadow:inset 0 1px #98edff30,0 8px 28px #0008,0 0 26px #048bff19;direction:rtl}
+.zf-fuel-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;font-size:15px;font-weight:900;color:#e6fcff}
+.zf-fuel-heading>span{display:flex;gap:8px;align-items:center}.zf-fuel-heading svg{color:#4decb8}
+.zf-fuel-heading button{border:1px solid #24799e;border-radius:10px;background:#0d3a55;color:#83dff2;font-size:11px;font-weight:800;padding:7px 10px}
+.zf-fuel-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0}
+.zf-fuel-stats>div{border-radius:14px;border:1px solid #24749b;padding:15px 10px;background:#051a31ab;min-width:0;text-align:center;box-shadow:inset 0 1px #ffffff0d}
+.zf-fuel-stats small{font-size:11px;color:#8ac6db;display:block;margin-bottom:8px;font-weight:800}
+.zf-fuel-stats strong{font-family:'Inter','Cairo',sans-serif;font-size:clamp(18px,2.6vw,30px);color:#f5fdff;display:block;white-space:nowrap}
+.zf-fuel-stats>div:last-child strong{color:#3eecba;text-shadow:0 0 14px #1eecb444}
+.zf-fuel-track{height:11px;border-radius:99px;background:#173e59;overflow:hidden;box-shadow:inset 0 2px 4px #000a}
+.zf-fuel-track span{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#05b8b5,#55efac);box-shadow:0 0 12px #28efa49c;transition:width .4s ease}
+.zf-fuel-dashboard>p{margin-top:9px;color:#8ab9cc;font-size:10px;line-height:1.9}
+.zf-fuel-settings{margin-top:13px;display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;border-top:1px solid #286184;padding-top:12px}
+.zf-fuel-settings label{font-size:11px;color:#c7e5f4;font-weight:800;flex:1 1 150px}
+.zf-fuel-settings input{display:block;margin-top:7px;width:100%;min-height:37px;border-radius:9px;border:1px solid #35789b;background:#05182c;color:white;padding:7px 10px}
+.zf-fuel-settings>button{background:#0788bf;color:#fff;padding:10px 18px;border-radius:10px;font-size:12px;font-weight:900}
+@media(max-width:420px){.zf-fuel-dashboard{padding:12px}.zf-fuel-stats{gap:6px}.zf-fuel-stats>div{padding:12px 5px}.zf-fuel-stats strong{font-size:16px}.zf-fuel-stats small{font-size:9px}}
