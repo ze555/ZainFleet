@@ -230,3 +230,36 @@
  .zf-fleet-shell .zf-fleet-hero{border-radius:17px;padding:14px}
  .zf-fleet-shell .zf-fleet-stat{min-height:85px}
 }
+
+/* Mobile-inspired night cockpit. All displayed numbers are live AVL-derived values. */
+.zf-cockpit{max-width:1580px!important}
+.zf-cockpit-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:15px;direction:ltr}
+.zf-cockpit-grid>*{min-width:0;border:1px solid #1789d0;border-radius:24px;overflow:hidden;box-shadow:0 16px 40px #0008,0 0 20px #049efa25,inset 0 1px #b2e9ff25;background:linear-gradient(150deg,#0a2445,#06142b);color:#e8f8ff}
+.zf-cockpit-map{position:relative;min-height:440px;display:flex;flex-direction:column}
+.zf-cockpit-top,.zf-cockpit-map-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 18px;direction:rtl;color:#ecfaff;font-size:13px;font-weight:900}
+.zf-cockpit-live{font:800 11px 'Cairo',sans-serif;color:#38e5ae;background:#00b98920;border:1px solid #1edbac55;border-radius:99px;padding:5px 11px}
+.zf-cockpit-map-canvas{position:relative;min-height:310px;flex:1;isolation:isolate;background:radial-gradient(circle at 40% 50%,#104e82,#07192d 75%)}
+.zf-cockpit-map-canvas .leaflet-tile-pane{filter:brightness(.75) saturate(1.18) contrast(1.13)}
+.zf-cockpit-no-gps{position:absolute;z-index:1000;inset:0;display:grid;place-items:center;text-align:center;color:#a8cbe7;font-size:13px;background:#071d31e6}
+.zf-cockpit-map-footer{font-size:12px;color:#a8cde6}
+.zf-cockpit-map-footer>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.zf-cockpit-map-footer button{white-space:nowrap;color:#50dcff;font-size:12px;font-weight:900}
+.zf-cockpit-instruments{padding:18px;display:flex;flex-direction:column;gap:18px}
+.zf-cockpit-vehicle{display:flex;align-items:center;gap:13px;direction:rtl;background:linear-gradient(100deg,#103b64,#0b1c37);padding:14px 16px;border:1px solid #1b82c5;border-radius:17px}
+.zf-cockpit-vehicle>svg{color:#42ccff;filter:drop-shadow(0 0 12px #078aff)}
+.zf-cockpit-vehicle div{display:flex;flex-direction:column;min-width:0;gap:5px}.zf-cockpit-vehicle strong{font-size:18px;color:#fff}.zf-cockpit-vehicle span{font:600 11px 'Inter','Cairo',sans-serif;color:#9ebfd8;overflow-wrap:anywhere}
+.zf-cockpit-dials{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.zf-cockpit-dial{text-align:center;min-width:0;--ring:#11b8ff;--glow:#009dff88}
+.zf-cockpit-dial.orange{--ring:#ff9229;--glow:#ff741e88}
+.zf-cockpit-dial-ring{width:min(100%,225px);aspect-ratio:1;display:grid;place-items:center;border-radius:50%;margin:0 auto 10px;padding:13px;background:conic-gradient(from 215deg,var(--ring) 0 var(--fill),#22415a var(--fill) 76%,transparent 76% 100%);box-shadow:0 0 30px var(--glow),inset 0 0 25px #000b}
+.zf-cockpit-dial-center{border-radius:50%;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,#0a3155,#040e1e 75%);border:2px solid #175d8d;box-shadow:inset 0 0 25px #000b}
+.zf-cockpit-dial-center b{font:900 clamp(29px,4vw,55px) 'Inter',sans-serif;color:#fff;text-shadow:0 0 22px var(--glow)}
+.zf-cockpit-dial-center small{color:#a4d4ed;font-size:12px;font-weight:800}
+.zf-cockpit-dial>span{font:800 13px 'Cairo',sans-serif;color:#e2f6ff}
+.zf-cockpit-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.zf-cockpit-metrics>div{border:1px solid #1d6397;border-radius:14px;background:#0d2c49;padding:13px 9px;display:flex;align-items:center;flex-direction:column;gap:6px;text-align:center;min-width:0}
+.zf-cockpit-metrics svg{color:#2deca7;filter:drop-shadow(0 0 8px #13eeb75b)}
+.zf-cockpit-metrics span{font:700 11px 'Cairo',sans-serif;color:#a6cde5}
+.zf-cockpit-metrics b{font:900 16px 'Inter','Cairo',sans-serif;color:#f7fcff}
+@media(max-width:1020px){.zf-cockpit-grid{grid-template-columns:1fr}.zf-cockpit-map{min-height:365px}.zf-cockpit-map-canvas{min-height:265px}.zf-cockpit-dial-ring{width:min(100%,190px)}}
+@media(max-width:480px){.zf-cockpit-grid{gap:10px}.zf-cockpit-map{min-height:320px}.zf-cockpit-instruments{padding:12px;gap:13px}.zf-cockpit-dial-ring{width:min(100%,145px);padding:9px}.zf-cockpit-dial-center b{font-size:30px}.zf-cockpit-metrics>div{padding:10px 5px}}

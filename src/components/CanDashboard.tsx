@@ -125,7 +125,37 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
   };
 
   return (
-    <div className="space-y-4 max-w-4xl mx-auto pb-12">
+    <div className="zf-cockpit space-y-4 max-w-7xl mx-auto pb-12">
+      <section className="zf-cockpit-grid" aria-label={isAr ? 'لوحة قيادة حية' : 'Live vehicle cockpit'}>
+        <div className="zf-cockpit-map">
+          <div className="zf-cockpit-top"><span>◉ {isAr ? 'الخريطة المباشرة' : 'LIVE MAP'}</span>
+            <span className="zf-cockpit-live">{device.tcpConnected ? (isAr ? 'متصل الآن' : 'LIVE') : (isAr ? 'آخر موقع محفوظ' : 'LAST KNOWN LOCATION')}</span></div>
+          <div className="zf-cockpit-map-canvas" ref={miniMapRef} role="img" aria-label={isAr ? 'موقع السيارة على الخريطة' : 'Vehicle location map'}>
+            {(!record || !record.latitude || !record.longitude) && <div className="zf-cockpit-no-gps">{isAr ? 'في انتظار إحداثيات GPS حقيقية' : 'Waiting for real GPS location'}</div>}
+          </div>
+          <div className="zf-cockpit-map-footer"><span>{locationAddress}</span><button onClick={() => onNavigate('map')}>{isAr ? 'فتح الخريطة' : 'Open full map'} ↗</button></div>
+        </div>
+        <div className="zf-cockpit-instruments">
+          <div className="zf-cockpit-vehicle">
+            <Car size={32} /><div><strong>{vehicleName}</strong><span>{device.imei} · {device.tcpConnected ? (isAr ? 'اتصال TCP نشط' : 'TCP connected') : (isAr ? 'لا يوجد اتصال TCP نشط' : 'TCP not connected')}</span></div>
+          </div>
+          <div className="zf-cockpit-dials">
+            {[
+              {label:isAr ? 'السرعة' : 'SPEED',value:record ? String(record.speed) : '—',unit:'km/h',amount:record ? Math.max(0,Math.min(100,record.speed/220*100)):0,color:'blue'},
+              {label:isAr ? 'دوران المحرك' : 'ENGINE RPM',value:metrics?.engine.rpm == null ? '—' : String(Math.round(metrics.engine.rpm)),unit:'rpm',amount:metrics?.engine.rpm == null ? 0 : Math.max(0,Math.min(100,metrics.engine.rpm/8000*100)),color:'orange'},
+            ].map(dial => <div className={`zf-cockpit-dial ${dial.color}`} key={dial.label} style={{'--fill': `${dial.amount}%`} as React.CSSProperties}>
+              <div className="zf-cockpit-dial-ring"><div className="zf-cockpit-dial-center"><b>{dial.value}</b><small>{dial.unit}</small></div></div>
+              <span>{dial.label}</span>
+            </div>)}
+          </div>
+          <div className="zf-cockpit-metrics">
+            <div><Fuel size={19}/><span>{isAr ? 'الوقود' : 'Fuel'}</span><b>{metrics?.fuel.levelLiters == null ? '—' : `${metrics.fuel.levelLiters} L`}</b></div>
+            <div><Activity size={19}/><span>{isAr ? 'حرارة المحرك' : 'Engine temp'}</span><b>{metrics?.engine.coolantTempC == null ? '—' : `${metrics.engine.coolantTempC}°C`}</b></div>
+            <div><Power size={19}/><span>{isAr ? 'حالة الإشعال' : 'Ignition'}</span><b>{metrics?.ignition.verified ? (metrics.ignition.isOn ? 'ON' : 'OFF') : '—'}</b></div>
+          </div>
+        </div>
+      </section>
+
       {/* 1. Main Vehicle Card (بطاقة المركبة الرئيسية) matching Screen 1 in Mockup */}
       <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm transition-all">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -357,7 +387,6 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           <div className="flex items-center gap-3 shrink-0">
             {/* Interactive mini-map thumbnail container */}
             <div
-              ref={miniMapRef}
               onClick={() => onNavigate('map')}
               className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-slate-200 shadow-2xs cursor-pointer hover:border-blue-500 transition-colors hidden xs:block"
             />
