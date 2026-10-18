@@ -392,34 +392,58 @@ app.use((req, res, next) => {
 });
 app.use(express.json());
 
+// User permissions live entirely in the HTTP layer; Teltonika TCP remains untouched.
+type FleetUser = { username: string; displayName: string; salt: string; hash: string; devices: string[]; enabled: boolean };
+const USERS_PATH = path.join(DATA_DIR, 'fleet_users.json');
+let fleetUsers: FleetUser[] = [];
+try { const loaded = JSON.parse(fs.readFileSync(USERS_PATH, 'utf8')); if (Array.isArray(loaded)) fleetUsers = loaded.filter(u => u && typeof u.username === 'string'); } catch {}
+function saveFleetUsers() {
+  const temp = USERS_PATH + '.tmp';
+  fs.writeFileSync(temp, JSON.stringify(fleetUsers, null, 2), {encoding: 'utf8', mode: 0o600});
+  fs.renameSync(temp, USERS_PATH);
+}
+function fleetPasswordHash(pass: string, salt: string): string {
+  return crypto.scryptSync(pass, salt, 64).toString('hex');
+}
+function sessionIdentity(req: Request): { user: string; role: 'admin' | 'user' } | null {
+  const cookie = (req.headers.cookie || '').split(';').map(c => c.trim()).find(c => c.startsWith('zf_session='));
+  if (!cookie) return null;
+  const token = cookie.slice('zf_session='.length);
+  const dot = token.lastIndexOf('.');
+  if (dot < 0) return null;
+  const payload = token.slice(0, dot), signature = token.slice(dot + 1);
+  const expected = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest();
+  let supplied: Buffer;
+  try { supplied = Buffer.from(signature, 'base64url'); } catch { return null; }
+  if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) return null;
+  try {
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    if (typeof data.expires !== 'number' || data.expires < Date.now()) return null;
+    if (data.user === AUTH_USER && data.role !== 'user') return { user: AUTH_USER, role: 'admin' };
+    const managed = fleetUsers.find(u => u.username === data.user && u.enabled);
+    return managed && data.role === 'user' ? { user: managed.username, role: 'user' } : null;
+  } catch { return null; }
+}
+function fleetAccess(req: Request, imei: string): boolean {
+  const identity = sessionIdentity(req);
+  if (!identity) return false;
+  if (identity.role === 'admin') return true;
+  return !!fleetUsers.find(u => u.username === identity.user && u.enabled && u.devices.includes(imei));
+}
+
 // HTTP dashboard authentication only. The raw Teltonika TCP listener remains independent.
 const AUTH_USER = process.env.ADMIN_USERNAME || 'Admin';
 const AUTH_PASSWORD = process.env.ADMIN_PASSWORD || '123456'; // Demo only: override on Railway.
 const AUTH_SECRET = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex');
 const AUTH_TTL_MS = 8 * 60 * 60 * 1000;
 const failedLogins = new Map<string, { count: number; until: number }>();
-function makeToken() {
-  const payload = Buffer.from(JSON.stringify({ user: AUTH_USER, expires: Date.now() + AUTH_TTL_MS })).toString('base64url');
+function makeToken(username = AUTH_USER, role: 'admin' | 'user' = 'admin') {
+  const payload = Buffer.from(JSON.stringify({ user: username, role, expires: Date.now() + AUTH_TTL_MS })).toString('base64url');
   const mac = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
   return payload + '.' + mac;
 }
-function authenticated(req: Request): boolean {
-  const cookie = (req.headers.cookie || '').split(';').map(c => c.trim()).find(c => c.startsWith('zf_session='));
-  if (!cookie) return false;
-  const token = cookie.slice('zf_session='.length);
-  const dot = token.lastIndexOf('.');
-  if (dot < 0) return false;
-  const payload = token.slice(0, dot);
-  const signature = token.slice(dot + 1);
-  const expected = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest();
-  let provided: Buffer;
-  try { provided = Buffer.from(signature, 'base64url'); } catch { return false; }
-  if (expected.length !== provided.length || !crypto.timingSafeEqual(expected, provided)) return false;
-  try {
-    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    return data.user === AUTH_USER && typeof data.expires === 'number' && data.expires > Date.now();
-  } catch { return false; }
-}
+function authenticated(req: Request): boolean { return sessionIdentity(req) !== null; }
+
 function sessionCookie(value: string, maxAgeSeconds: number) {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   return `zf_session=${value}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAgeSeconds}${secure}`;
@@ -435,22 +459,27 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
   }
   const user = typeof req.body?.username === 'string' ? req.body.username : '';
   const pass = typeof req.body?.password === 'string' ? req.body.password : '';
-  const usernameOk = user === AUTH_USER;
-  const actual = crypto.createHash('sha256').update(pass).digest();
-  const expected = crypto.createHash('sha256').update(AUTH_PASSWORD).digest();
-  if (!usernameOk || !crypto.timingSafeEqual(actual, expected)) {
+  const isAdmin = user === AUTH_USER;
+  const managed = fleetUsers.find(u => u.username === user && u.enabled);
+  const adminActual = crypto.createHash('sha256').update(pass).digest();
+  const adminExpected = crypto.createHash('sha256').update(AUTH_PASSWORD).digest();
+  const adminOk = isAdmin && crypto.timingSafeEqual(adminActual, adminExpected);
+  const managedOk = !isAdmin && !!managed && /^[a-f0-9]{128}$/.test(managed.hash) &&
+    crypto.timingSafeEqual(Buffer.from(fleetPasswordHash(pass, managed.salt), 'hex'), Buffer.from(managed.hash, 'hex'));
+  if (!adminOk && !managedOk) {
     const fresh = !state || now >= state.until;
     failedLogins.set(ip, { count: (fresh ? 0 : state.count) + 1, until: now + 15 * 60 * 1000 });
     res.status(401).json({ error: 'اسم الدخول أو كلمة المرور غير صحيحة' });
     return;
   }
   failedLogins.delete(ip);
-  res.setHeader('Set-Cookie', sessionCookie(makeToken(), AUTH_TTL_MS / 1000));
-  res.json({ authenticated: true, username: AUTH_USER });
+  res.setHeader('Set-Cookie', sessionCookie(makeToken(adminOk ? AUTH_USER : managed!.username, adminOk ? 'admin' : 'user'), AUTH_TTL_MS / 1000));
+  res.json({ authenticated: true, username: adminOk ? AUTH_USER : managed!.username, displayName: adminOk ? 'محمد زين' : managed!.displayName, role: adminOk ? 'admin' : 'user' });
 });
 app.get('/api/auth/session', (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
-  res.json({ authenticated: authenticated(req) });
+  const identity = sessionIdentity(req);
+  res.json({ authenticated: !!identity, username: identity?.user, role: identity?.role, displayName: identity?.role === 'admin' ? 'محمد زين' : fleetUsers.find(u => u.username === identity?.user)?.displayName });
 });
 app.post('/api/auth/logout', (_req: Request, res: Response) => {
   res.setHeader('Set-Cookie', sessionCookie('', 0));
@@ -460,6 +489,50 @@ app.post('/api/auth/logout', (_req: Request, res: Response) => {
 app.use('/api', (req: Request, res: Response, next) => {
   if (!authenticated(req)) { res.status(401).json({ error: 'Authentication required' }); return; }
   next();
+});
+
+// Only the current administrator can manage users and IMEI assignment.
+app.get('/api/admin/users', (req: Request, res: Response) => {
+  if (sessionIdentity(req)?.role !== 'admin') { res.sendStatus(403); return; }
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({admin: {username: AUTH_USER, displayName: 'محمد زين', role: 'admin', devices: deviceRepo.getAll().map(d => d.imei)}, users: fleetUsers.map(({username, displayName, devices, enabled}) => ({username, displayName, devices, enabled})), devices: deviceRepo.getAll()});
+});
+app.post('/api/admin/users', (req: Request, res: Response) => {
+  if (sessionIdentity(req)?.role !== 'admin') { res.sendStatus(403); return; }
+  const { username, displayName, password, devices } = req.body || {};
+  if (typeof username !== 'string' || !/^[a-zA-Z0-9_.-]{3,40}$/.test(username) ||
+      username === AUTH_USER || fleetUsers.some(u => u.username.toLowerCase() === username.toLowerCase()) ||
+      typeof displayName !== 'string' || !displayName.trim() || displayName.length > 100 ||
+      typeof password !== 'string' || password.length < 10 || password.length > 256 ||
+      !Array.isArray(devices) || devices.some(id => typeof id !== 'string' || !/^\d{15}$/.test(id) || !deviceRepo.get(id))) {
+    res.status(400).json({error:'بيانات المستخدم غير صالحة: كلمة المرور 10 أحرف على الأقل، والأجهزة يجب أن تكون مسجلة'}); return;
+  }
+  const salt = crypto.randomBytes(16).toString('hex');
+  fleetUsers.push({username, displayName: displayName.trim(), salt, hash: fleetPasswordHash(password, salt), devices: [...new Set(devices)], enabled: true});
+  try { saveFleetUsers(); } catch { fleetUsers.pop(); res.status(507).json({error:'تعذر حفظ المستخدم؛ تحقق من قرص Railway'}); return; }
+  res.status(201).json({success:true});
+});
+app.put('/api/admin/users/:username', (req: Request, res: Response) => {
+  if (sessionIdentity(req)?.role !== 'admin') {res.sendStatus(403);return;}
+  const u = fleetUsers.find(u => u.username === req.params.username);
+  if (!u) {res.sendStatus(404);return;}
+  const devices = req.body?.devices;
+  if (!Array.isArray(devices) || devices.some(id => typeof id !== 'string' || !/^\d{15}$/.test(id) || !deviceRepo.get(id))) {res.sendStatus(400);return;}
+  const old = {...u};
+  u.devices = [...new Set(devices)];
+  if (typeof req.body?.enabled === 'boolean') u.enabled = req.body.enabled;
+  try { saveFleetUsers(); } catch {Object.assign(u, old);res.sendStatus(507);return;}
+  res.json({success:true});
+});
+// Restrict all per-vehicle endpoints and global diagnostic/management endpoints for non-admin accounts.
+app.use('/api', (req: Request, res: Response, next) => {
+  const who = sessionIdentity(req);
+  if (!who) {res.sendStatus(401);return;}
+  if (who.role === 'admin') {next();return;}
+  if (req.path === '/devices' && req.method === 'GET') {next();return;}
+  const match = req.path.match(/^\/devices\/([^/]+)(?:\/|$)/);
+  if (match && req.method === 'GET' && fleetAccess(req, match[1])) {next();return;}
+  res.status(403).json({error:'ليس لديك صلاحية الوصول لهذا الجهاز أو العملية'}); 
 });
 
 // API Endpoints matching ZainFleet original C# WebApplication
@@ -518,7 +591,8 @@ app.get('/api/connection/diagnostics', (_req: Request, res: Response) => {
 
 app.get('/api/devices', (_req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
-  res.json(deviceRepo.getAll());
+  const who = sessionIdentity(_req);
+  res.json(who?.role === 'admin' ? deviceRepo.getAll() : deviceRepo.getAll().filter(d => fleetAccess(_req, d.imei)));
 });
 
 app.get('/api/devices/:imei', (req: Request, res: Response) => {
