@@ -387,7 +387,6 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           <div className="flex items-center gap-3 shrink-0">
             {/* Interactive mini-map thumbnail container */}
             <div
-              ref={miniMapRef}
               onClick={() => onNavigate('map')}
               className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border border-slate-200 shadow-2xs cursor-pointer hover:border-blue-500 transition-colors hidden xs:block"
             />
