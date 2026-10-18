@@ -282,3 +282,37 @@
 .zf-fuel-settings input{display:block;margin-top:7px;width:100%;min-height:37px;border-radius:9px;border:1px solid #35789b;background:#05182c;color:white;padding:7px 10px}
 .zf-fuel-settings>button{background:#0788bf;color:#fff;padding:10px 18px;border-radius:10px;font-size:12px;font-weight:900}
 @media(max-width:420px){.zf-fuel-dashboard{padding:12px}.zf-fuel-stats{gap:6px}.zf-fuel-stats>div{padding:12px 5px}.zf-fuel-stats strong{font-size:16px}.zf-fuel-stats small{font-size:9px}}
+
+/* Mobile-first premium sign-in refresh — presentation-only; auth flow unchanged. */
+.zf-auth-root{position:relative;isolation:isolate;background:radial-gradient(ellipse at 18% 20%,#124e8460,transparent 48%),radial-gradient(ellipse at 90% 83%,#06636a50,transparent 52%),#030b1a;overflow:hidden}
+.zf-auth-root:before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:linear-gradient(#2e8bc112 1px,transparent 1px),linear-gradient(90deg,#2e8bc112 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(135deg,#0008,transparent 84%)}
+.zf-auth-scene{position:relative}
+.zf-auth-card{position:relative;max-width:480px;width:100%;background:linear-gradient(155deg,#102946f5 0%,#081b32f8 58%,#071325f9 100%);border:1px solid #32bafa70;border-radius:30px;box-shadow:0 25px 100px #000b,0 0 50px #08a9ff21,inset 0 1px #9fe5ff3b;backdrop-filter:blur(20px)}
+.zf-auth-card:before{content:"";position:absolute;inset:1px 22px auto;height:2px;border-radius:100px;background:linear-gradient(90deg,transparent,#39d8ff,transparent);box-shadow:0 0 23px #1fd5ff}
+.zf-login-identity{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.zf-login-identity-tag{display:inline-flex;align-items:center;gap:6px;font:800 10px 'Inter',sans-serif;color:#61eac8;letter-spacing:1px;border:1px solid #21e4ac57;background:#03d19f13;border-radius:999px;padding:8px 10px}
+.zf-auth-form-title h2{font-size:clamp(26px,4vw,35px);letter-spacing:-.6px}
+.zf-auth-form-title p{color:#abcae1;font-size:13px}
+.zf-auth-input{border-radius:15px;background:#05172dcf;border-color:#347299;min-height:56px}
+.zf-auth-input:focus-within{border-color:#58e8ff;box-shadow:0 0 0 3px #07ceff28,0 0 18px #08ccff25}
+.zf-auth-input input{font-size:15px}
+.zf-auth-submit{border-radius:16px;min-height:58px;background:linear-gradient(95deg,#0860c2,#069dd5,#07b6bd);border-color:#66e8ffb8;box-shadow:0 12px 35px #04a9ff44,inset 0 1px #fff5}
+.zf-auth-submit:hover:not(:disabled){box-shadow:0 15px 48px #05bdfc5e;transform:translateY(-2px)}
+.zf-auth-note{border-color:#275c78;background:#071a2b;color:#a6cde5}
+.zf-mobile-brand{display:none}
+@media(max-width:900px){
+.zf-auth-root{display:flex;flex-direction:column;align-items:center;min-height:100dvh;padding:0 16px 24px;background:radial-gradient(circle at 50% -8%,#0f508278,transparent 48%),linear-gradient(160deg,#030e20,#071e34 65%,#030c1d)}
+.zf-auth-scene{display:none}
+.zf-auth-form-side{width:100%;max-width:500px;min-height:100dvh;padding:0 0 18px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.zf-mobile-brand{display:flex;align-items:center;justify-content:center;gap:12px;direction:ltr;margin:24px auto 26px;color:#eefbff}
+.zf-mobile-brand-logo{height:54px;width:54px;display:grid;place-items:center;border-radius:18px;background:linear-gradient(135deg,#075ca1,#0cc4da);box-shadow:0 0 30px #11bbff59;color:white}
+.zf-mobile-brand strong{display:block;font:900 25px 'Inter',sans-serif;letter-spacing:1px}
+.zf-mobile-brand strong span{color:#49e1fd}
+.zf-mobile-brand small{display:block;font:700 9px 'Inter',sans-serif;letter-spacing:1.4px;color:#9bb9d0;margin-top:4px}
+.zf-auth-card{max-width:460px;padding:clamp(24px,6vw,34px);border-radius:27px}
+.zf-auth-form-title{margin:20px 0 24px}
+.zf-auth-form-title h2{font-size:29px}
+.zf-auth-foot{margin-top:25px}
+}
+@media(max-width:380px){.zf-auth-root{padding-inline:10px}.zf-auth-card{padding:23px 18px}.zf-auth-form-title h2{font-size:25px}.zf-mobile-brand{margin-bottom:18px}}
+@media(prefers-reduced-motion:reduce){.zf-auth-submit:hover:not(:disabled){transform:none}}
