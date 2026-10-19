@@ -310,3 +310,14 @@
 @media(min-width:950px){.zf-mobile-login-shell{width:min(100%,485px)}.zf-mobile-visual{height:250px}.zf-mobile-login-card{padding:34px 35px}}
 @media(max-width:380px){.zf-mobile-login{padding:12px 10px}.zf-mobile-visual{height:200px}.zf-mobile-visual-text h1{font-size:20px}.zf-mobile-login-card{padding:22px 17px}.zf-mobile-brand strong{font-size:25px}}
 @media(prefers-reduced-motion:reduce){.zf-mobile-login *{transition:none!important}}
+
+/* Realistic car instrument cluster — dashboard only; telemetry is unchanged. */
+.zf-real-cluster{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:8px;padding:13px 8px 9px;border:1px solid #23739c;border-radius:22px;background:radial-gradient(ellipse at 50% 0%,#12527a55,transparent 70%),linear-gradient(180deg,#06101e,#020812);box-shadow:inset 0 2px 15px #55bafc16,0 10px 28px #0008;direction:ltr}
+.zf-real-gauge{min-width:0;text-align:center;position:relative}.zf-real-gauge-label{margin:3px 0 -5px;color:#9edaf0;font:900 11px 'Cairo','Inter',sans-serif;letter-spacing:.2px}
+.zf-real-gauge svg{display:block;width:100%;height:auto;max-width:340px;margin:auto;overflow:visible;filter:drop-shadow(0 0 9px #15bafa22)}
+.zf-real-gauge-amber svg{filter:drop-shadow(0 0 9px #ffa03420)}
+.zf-gauge-needle{transition:x2 .5s ease-in-out,y2 .5s ease-in-out}
+.zf-cluster-bottom{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;padding:0 15px 11px;color:#8da8be;font:800 10px 'Cairo','Inter',sans-serif;direction:rtl}
+.zf-cluster-online{color:#50e8b2}.zf-cluster-offline{color:#fbbe89}
+@media(max-width:460px){.zf-real-cluster{gap:2px;padding:9px 3px 4px;border-radius:17px}.zf-real-gauge-label{font-size:10px}.zf-cluster-bottom{font-size:9px;padding-inline:9px}}
+@media(prefers-reduced-motion:reduce){.zf-gauge-needle{transition:none}}
