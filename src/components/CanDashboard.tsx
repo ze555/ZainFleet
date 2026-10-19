@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { VehicleInstrumentGauge } from './VehicleInstrumentGauge.js';
 import L from 'leaflet';
 import { DeviceInfo, TelemetrySnapshot } from '../types/fleet.js';
 import { decodeCanMetrics, generateVehicleAlerts } from '../utils/canBusDecoder.js';
@@ -160,14 +161,15 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           <div className="zf-cockpit-vehicle">
             <Car size={32} /><div><strong>{vehicleName}</strong><span>{device.imei} · {device.tcpConnected ? (isAr ? 'اتصال TCP نشط' : 'TCP connected') : (isAr ? 'لا يوجد اتصال TCP نشط' : 'TCP not connected')}</span></div>
           </div>
-          <div className="zf-cockpit-dials">
-            {[
-              {label:isAr ? 'السرعة' : 'SPEED',value:record ? String(record.speed) : '—',unit:'km/h',amount:record ? Math.max(0,Math.min(100,record.speed/220*100)):0,color:'blue'},
-              {label:isAr ? 'دوران المحرك' : 'ENGINE RPM',value:metrics?.engine.rpm == null ? '—' : String(Math.round(metrics.engine.rpm)),unit:'rpm',amount:metrics?.engine.rpm == null ? 0 : Math.max(0,Math.min(100,metrics.engine.rpm/8000*100)),color:'orange'},
-            ].map(dial => <div className={`zf-cockpit-dial ${dial.color}`} key={dial.label} style={{'--fill': `${dial.amount}%`} as React.CSSProperties}>
-              <div className="zf-cockpit-dial-ring"><div className="zf-cockpit-dial-center"><b>{dial.value}</b><small>{dial.unit}</small></div></div>
-              <span>{dial.label}</span>
-            </div>)}
+          <div className="zf-real-cluster" aria-label={isAr ? 'عدادات السيارة الحقيقية' : 'Automotive instrument cluster'}>
+            <VehicleInstrumentGauge label={isAr ? 'عداد السرعة' : 'SPEEDOMETER'}
+              value={record?.speed} max={240} majorStep={40} unit="km/h" accent="cyan" stale={isStale}/>
+            <VehicleInstrumentGauge label={isAr ? 'عداد دورات المحرك' : 'TACHOMETER'}
+              value={metrics?.engine.rpm} max={8000} majorStep={1000} divisor={1000} unit="×1000 RPM" accent="amber" stale={isStale}/>
+            <div className="zf-cluster-bottom">
+              <span className={device.tcpConnected?'zf-cluster-online':'zf-cluster-offline'}>● {device.tcpConnected ? (isAr ? 'الجهاز متصل' : 'DEVICE ONLINE') : (isAr ? 'الجهاز غير متصل' : 'DEVICE OFFLINE')}</span>
+              <span>{isStale ? (isAr ? 'البيانات غير مباشرة' : 'STORED READING') : (isAr ? 'قراءة حديثة' : 'RECENT DATA')}</span>
+            </div>
           </div>
           <div className="zf-fuel-dashboard" dir={isAr ? 'rtl' : 'ltr'}>
             <div className="zf-fuel-heading"><span><Fuel size={21}/> {isAr ? 'الوقود والمسافة المتبقية' : 'Fuel & Driving Range'}</span>
