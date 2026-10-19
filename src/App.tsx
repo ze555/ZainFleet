@@ -716,31 +716,35 @@ export const App: React.FC = () => {
   if (auth === 'checking') return <div className="zf-auth-loading" dir="rtl"><ShieldCheck size={35} /> جاري التحقق من الجلسة...</div>;
   if (auth === 'logged-in') return <DashboardApp onLogout={logout} role={account.role} displayName={account.displayName} />;
   return (
-    <main className="zf-auth-root" dir="rtl">
-      <div className="zf-auth-orb zf-auth-orb-one" /><div className="zf-auth-orb zf-auth-orb-two" />
-      <section className="zf-auth-scene">
-        <header className="zf-auth-logo"><span className="zf-auth-logo-mark"><Wifi size={29}/></span><span><strong>FMB<span>140</span></strong><small>FLEET INTELLIGENCE PLATFORM</small></span></header>
-        <div className="zf-auth-intro"><div className="zf-auth-kicker"><span /> SMART VEHICLE INTELLIGENCE</div>
-          <h1>القوة الكاملة<br/><em>لأسطولك الذكي.</em></h1>
-          <p>منصة احترافية لتتبع المركبات، استقبال بيانات CAN الفعلية، مراقبة الأداء، والتشخيص الوقائي للأعطال.</p>
-          <div className="zf-auth-highlights"><div><ShieldCheck size={20}/> لوحة تحكم محمية</div><div><Wifi size={20}/> تتبع مباشر</div><div><LockKeyhole size={20}/> وصول آمن</div></div>
-        </div>
-        <div className="zf-auth-decor"><span className="zf-auth-ring" /><span className="zf-auth-core"><Wifi size={65}/></span></div>
-      </section>
-      <section className="zf-auth-form-side">
-        <form className="zf-auth-card" onSubmit={login}>
-          <span className="zf-auth-icon"><LockKeyhole size={28}/></span>
-          <div className="zf-auth-form-title"><span>مرحباً بعودتك</span><h2>تسجيل الدخول</h2><p>أدخل بيانات حسابك للوصول إلى مركز القيادة</p></div>
-          <label htmlFor="zf-user">اسم المستخدم</label>
-          <div className="zf-auth-input"><ShieldCheck size={18}/><input id="zf-user" autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)} required placeholder="اسم المستخدم" /></div>
-          <label htmlFor="zf-password">كلمة المرور</label>
-          <div className="zf-auth-input"><LockKeyhole size={18}/><input id="zf-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="أدخل كلمة المرور"/><button type="button" aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'} onClick={()=>setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}</button></div>
-          {error && <div role="alert" className="zf-auth-error">{error}</div>}
-          <button type="submit" className="zf-auth-submit" disabled={busy}>{busy ? 'جارٍ تسجيل الدخول...' : 'الدخول إلى النظام'}<LogIn size={19}/></button>
-          <div className="zf-auth-note"><ShieldCheck size={15}/> الحساب الحالي: محمد زين — استخدم بيانات الدخول الحالية</div>
-          <p className="zf-auth-foot">ZAINFLEET © 2026 • TELTONIKA FMB140</p>
-        </form>
-      </section>
+    <main className="zf-mobile-login" dir="rtl">
+      <div className="zf-mobile-login-glow zf-glow-a" aria-hidden="true" />
+      <div className="zf-mobile-login-glow zf-glow-b" aria-hidden="true" />
+      <div className="zf-mobile-login-shell">
+        <header className="zf-mobile-brand">
+          <div className="zf-mobile-brand-symbol"><Car size={29} strokeWidth={2.2}/><span className="zf-mobile-brand-ping"/></div>
+          <div><strong>ZAIN<span>FLEET</span></strong><small>SMART VEHICLE INTELLIGENCE</small></div>
+        </header>
+        <section className="zf-mobile-visual" aria-label="منصة إدارة المركبات">
+          <div className="zf-mobile-grid" aria-hidden="true" />
+          <div className="zf-mobile-vehicle"><Car size={86} strokeWidth={1.15}/><div className="zf-mobile-light zf-light-left"/><div className="zf-mobile-light zf-light-right"/></div>
+          <span className="zf-mobile-orbit zf-mobile-orbit-one" aria-hidden="true" />
+          <span className="zf-mobile-orbit zf-mobile-orbit-two" aria-hidden="true" />
+          <div className="zf-mobile-visual-text"><span><Radio size={14}/> LIVE GPS · CAN DATA</span><h1>سيارتك تحت سيطرتك.</h1><p>تتبع ذكي، تشخيص مباشر، وراحة بال في كل رحلة</p></div>
+        </section>
+        <section className="zf-mobile-login-card">
+          <div className="zf-mobile-card-heading"><span className="zf-mobile-welcome">مرحباً بعودتك <span aria-hidden="true">✦</span></span><h2>تسجيل الدخول</h2><p>ادخل إلى لوحة تحكم مركباتك بأمان</p></div>
+          <form onSubmit={login} className="zf-mobile-login-form">
+            <label htmlFor="zf-user">اسم المستخدم</label>
+            <div className="zf-mobile-input"><ShieldCheck size={19}/><input id="zf-user" autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)} required placeholder="أدخل اسم المستخدم" /></div>
+            <label htmlFor="zf-password">كلمة المرور</label>
+            <div className="zf-mobile-input"><LockKeyhole size={19}/><input id="zf-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="أدخل كلمة المرور"/><button type="button" aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'} onClick={()=>setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={20}/> : <Eye size={20}/>}</button></div>
+            {error && <p role="alert" className="zf-mobile-login-error">{error}</p>}
+            <button type="submit" className="zf-mobile-login-submit" disabled={busy}>{busy ? 'جارٍ تسجيل الدخول...' : 'الدخول إلى لوحة التحكم'}<LogIn size={19}/></button>
+          </form>
+          <p className="zf-mobile-secure"><ShieldCheck size={15}/> اتصال آمن وحسابات بصلاحيات مخصصة</p>
+        </section>
+        <footer className="zf-mobile-footer"><span>POWERED BY ZAINFLEET</span><span>© 2026</span></footer>
+      </div>
     </main>
   );
 };
