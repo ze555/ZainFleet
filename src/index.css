@@ -282,3 +282,31 @@
 .zf-fuel-settings input{display:block;margin-top:7px;width:100%;min-height:37px;border-radius:9px;border:1px solid #35789b;background:#05182c;color:white;padding:7px 10px}
 .zf-fuel-settings>button{background:#0788bf;color:#fff;padding:10px 18px;border-radius:10px;font-size:12px;font-weight:900}
 @media(max-width:420px){.zf-fuel-dashboard{padding:12px}.zf-fuel-stats{gap:6px}.zf-fuel-stats>div{padding:12px 5px}.zf-fuel-stats strong{font-size:16px}.zf-fuel-stats small{font-size:9px}}
+
+/* ZainFleet mobile-app inspired login — isolated from telemetry dashboard */
+.zf-mobile-login{min-height:100dvh;position:relative;isolation:isolate;display:grid;place-items:center;overflow:hidden;padding:22px 14px;color:#eaf8ff;background:radial-gradient(ellipse 70% 50% at 50% -10%,#0a4775,transparent 65%),linear-gradient(145deg,#030b1c,#06182b 60%,#020817);font-family:'Cairo',sans-serif}
+.zf-mobile-login-glow{position:absolute;z-index:-1;border-radius:50%;filter:blur(60px);pointer-events:none}
+.zf-glow-a{width:350px;height:350px;top:-190px;right:-140px;background:#047bea55}.zf-glow-b{width:300px;height:300px;bottom:-190px;left:-100px;background:#00bbcc23}
+.zf-mobile-login-shell{width:min(100%,440px);margin:auto;position:relative}
+.zf-mobile-brand{display:flex;align-items:center;gap:12px;justify-content:center;direction:ltr;padding:5px 0 22px}
+.zf-mobile-brand-symbol{position:relative;width:51px;height:51px;border:1px solid #39d7ff80;border-radius:16px;display:grid;place-items:center;color:#6eeaff;background:linear-gradient(135deg,#075382,#091c39);box-shadow:0 0 26px #0fbcfc55,inset 0 1px #bafaff55}
+.zf-mobile-brand-ping{position:absolute;right:-3px;top:-3px;width:10px;height:10px;border-radius:50%;background:#31eab5;box-shadow:0 0 15px #31eab5}
+.zf-mobile-brand strong{display:block;font:900 29px 'Inter',sans-serif;letter-spacing:1px;color:#fff}.zf-mobile-brand strong span{color:#43d9ff}.zf-mobile-brand small{font:700 8px 'Inter',sans-serif;letter-spacing:2.3px;color:#7bb4d7}
+.zf-mobile-visual{height:233px;position:relative;text-align:center;border:1px solid #15517a;border-radius:27px 27px 12px 12px;overflow:hidden;background:radial-gradient(ellipse at 50% 55%,#0b5b8b88,transparent 58%),linear-gradient(#0c2a49,#071b35 80%);box-shadow:0 15px 45px #0008,inset 0 1px #91d9ff27}
+.zf-mobile-grid{position:absolute;inset:0;background-image:linear-gradient(#55bcfa13 1px,transparent 1px),linear-gradient(90deg,#55bcfa13 1px,transparent 1px);background-size:25px 25px;transform:perspective(240px) rotateX(55deg) scale(1.5);transform-origin:center bottom;mask-image:linear-gradient(transparent 25%,#000)}
+.zf-mobile-orbit{position:absolute;left:50%;top:31%;border:1px solid #17b8ee55;border-radius:50%;transform:translate(-50%,-50%) rotateX(66deg);pointer-events:none}.zf-mobile-orbit-one{width:280px;height:190px}.zf-mobile-orbit-two{width:350px;height:230px;border-style:dashed;opacity:.5}
+.zf-mobile-vehicle{position:absolute;top:6px;left:50%;width:140px;height:110px;transform:translateX(-50%);display:grid;place-items:center;color:#9ceaff;filter:drop-shadow(0 0 25px #14adfdb8)}
+.zf-mobile-light{position:absolute;bottom:29px;width:14px;height:4px;border-radius:15px;background:#7ef5ff;box-shadow:0 0 22px 8px #00aaff88}.zf-light-left{left:24px}.zf-light-right{right:24px}
+.zf-mobile-visual-text{position:absolute;bottom:19px;right:8px;left:8px}.zf-mobile-visual-text>span{display:inline-flex;align-items:center;gap:6px;color:#47e8c2;font:800 10px 'Inter',sans-serif;letter-spacing:1px}.zf-mobile-visual-text h1{font-size:23px;font-weight:900;margin:5px 0;color:white}.zf-mobile-visual-text p{font-size:11px;color:#b2d6ed}
+.zf-mobile-login-card{position:relative;z-index:2;margin-top:-5px;padding:26px 25px 20px;border:1px solid #2775ab;border-radius:26px;background:linear-gradient(155deg,#102f50f7,#06172e 85%);box-shadow:0 24px 65px #000b,inset 0 1px #c5f1ff30}
+.zf-mobile-card-heading{text-align:center;margin-bottom:21px}.zf-mobile-welcome{color:#48d4ff;font-size:11px;font-weight:900}.zf-mobile-welcome span{color:#ffcb66}.zf-mobile-card-heading h2{color:white;font-size:27px;font-weight:900;margin:5px 0}.zf-mobile-card-heading p{color:#94b8cf;font-size:12px}
+.zf-mobile-login-form label{display:block;font-size:12px;font-weight:800;color:#cee8f8;margin:0 2px 7px}
+.zf-mobile-input{height:53px;border:1px solid #28658e;border-radius:14px;display:flex;align-items:center;gap:12px;padding:0 14px;margin-bottom:17px;background:#06162c;transition:border-color .2s,box-shadow .2s}.zf-mobile-input:focus-within{border-color:#32d6ff;box-shadow:0 0 0 3px #00aaff26}.zf-mobile-input>svg{flex-shrink:0;color:#41b6e7}
+.zf-mobile-input input{min-width:0;flex:1;outline:0;border:0;color:#fff;background:transparent;font-size:14px;font-weight:700}.zf-mobile-input input::placeholder{color:#698ca7}.zf-mobile-input button{padding:5px;color:#9abbd3;background:none;border:0;cursor:pointer}
+.zf-mobile-login-submit{width:100%;min-height:55px;display:flex;align-items:center;justify-content:center;gap:11px;border-radius:14px;background:linear-gradient(110deg,#0360ba,#05aee4);color:white;font-size:14px;font-weight:900;border:1px solid #53dfff;box-shadow:0 13px 31px #028ce050;cursor:pointer}.zf-mobile-login-submit:hover{filter:brightness(1.1)}.zf-mobile-login-submit:disabled{opacity:.65;cursor:wait}
+.zf-mobile-login-error{color:#fecdd3;font-size:12px;border:1px solid #fb71856b;background:#87203a4d;padding:10px;border-radius:10px;margin-bottom:12px}
+.zf-mobile-secure{margin-top:18px;display:flex;gap:8px;justify-content:center;align-items:center;color:#88adca;font-size:11px}.zf-mobile-secure svg{color:#43e9bc}
+.zf-mobile-footer{display:flex;justify-content:center;gap:18px;color:#628ca8;padding:18px 0 3px;font:700 9px 'Inter',sans-serif;letter-spacing:1.4px}
+@media(min-width:950px){.zf-mobile-login-shell{width:min(100%,485px)}.zf-mobile-visual{height:250px}.zf-mobile-login-card{padding:34px 35px}}
+@media(max-width:380px){.zf-mobile-login{padding:12px 10px}.zf-mobile-visual{height:200px}.zf-mobile-visual-text h1{font-size:20px}.zf-mobile-login-card{padding:22px 17px}.zf-mobile-brand strong{font-size:25px}}
+@media(prefers-reduced-motion:reduce){.zf-mobile-login *{transition:none!important}}
