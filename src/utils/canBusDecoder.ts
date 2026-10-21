@@ -131,19 +131,19 @@ export const CAN_PARAMETER_CATALOG: Record<number, CanParameterDefinition> = {
   },
   30: {
     id: 30,
-    officialName: 'Vehicle Speed (CAN)',
-    nameAr: 'سرعة المركبة من ناقل CAN (M-CAN)',
-    nameEn: 'Vehicle Speed (CAN Bus)',
-    source: 'can_powertrain',
+    officialName: 'Number of DTC (OBD-II)',
+    nameAr: 'عدد أعطال كمبيوتر السيارة (OBD-II)',
+    nameEn: 'Number of Diagnostic Trouble Codes',
+    source: 'diagnostic',
     sourceBusLabelAr: 'M-CAN (ناقل المحرك CAN1)',
     sourceBusLabelEn: 'M-CAN (Powertrain CAN1)',
     byteLength: 1,
     signed: false,
     multiplier: 1,
-    unit: 'km/h',
-    valueRange: '0 - 255 km/h',
-    descriptionAr: 'سرعة السيارة من ناقل حركة السيارة عبر معالج الـ CAN المدمج',
-    descriptionEn: 'Vehicle speed read from CAN1 lines by internal CAN chip',
+    unit: 'Codes',
+    valueRange: '0 - 255',
+    descriptionAr: 'عدد أكواد الأعطال التي أرسلها جهاز OBD للسيارة',
+    descriptionEn: 'Number of OBD diagnostic trouble codes reported by ECU',
     configDependency: 'CAN adapter enabled & vehicle profile set',
     verified: true,
     documentationUrl: 'https://wiki.teltonika-gps.com/view/FMB140_Teltonika_Data_Sending_Parameters_ID#CAN_adapters_elements',
@@ -1022,7 +1022,7 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
 
   // --- 3. Speed: Distinguish GPS Speed vs CAN Speed ---
   const gpsSpeed = record.speed;
-  const canSpeedRaw = getParsed(30) ?? getParsed(81) ?? getParsed(24);
+  const canSpeedRaw = getParsed(81) ?? getParsed(37) ?? getParsed(24);
   const displaySpeed = canSpeedRaw !== null && canSpeedRaw > 0 ? canSpeedRaw : gpsSpeed;
 
   // --- 4. Engine Dynamics ---
@@ -1172,8 +1172,9 @@ export function decodeCanMetrics(record: AvlRecord): CanMetrics {
   const milActive = checkEngineLight ?? false;
   const vinRaw = getRaw(256) || null;
 
-  let diagnosticStatusAr = 'المنظومة سليمة (لا توجد أكواد أعطال مسجلة)';
-  let diagnosticStatusEn = 'System Normal (No DTC Detected)';
+  const dtcReported = ioMap.has(30) || ioMap.has(160) || ioMap.has(282);
+  let diagnosticStatusAr = dtcReported ? 'وصل تقرير الأعطال ولم تُسجّل أكواد في هذه القراءة' : 'لم تصل بيانات DTC من الجهاز بعد';
+  let diagnosticStatusEn = dtcReported ? 'DTC report received; no codes reported in this record' : 'No DTC data received from device yet';
 
   if (effectiveDtcCount > 0) {
     diagnosticStatusAr = `تم رصد ${effectiveDtcCount} كود عطل مسجل بكمبيوتر السيارة`;
