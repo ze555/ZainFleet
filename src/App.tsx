@@ -251,7 +251,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
         </div>
         <div className="mb-3 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm flex justify-between gap-2"><span>لوحة تحكم: {roleLabel}</span><span>{displayName}</span></div>
         {role !== 'user' && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-700 bg-[#092442] px-4 py-3 text-white">
-          <span className="font-bold text-sm">مرحباً، {displayName} — مدير النظام</span>
+          <span className="font-bold text-sm">مرحباً، {displayName} — {roleLabel}</span>
           <button type="button" onClick={()=>setCurrentTab('users')} className="rounded-xl border border-cyan-500 bg-blue-700 px-4 py-2 text-sm font-bold">إدارة المستخدمين والأجهزة</button>
         </div>}
         {currentTab === 'users' && role !== 'user' && <UsersManagement />}
@@ -681,7 +681,7 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device
 // Login gate is mounted before the dashboard, so vehicle API polling starts only after authentication.
 export const App: React.FC = () => {
   const [auth, setAuth] = useState<'checking' | 'guest' | 'logged-in'>('checking');
-  const [account, setAccount] = useState<{role:'admin'|'user';displayName:string}>({role:'admin',displayName:'محمد زين'});
+  const [account, setAccount] = useState<{role:'admin'|'company_admin'|'user';displayName:string}>({role:'admin',displayName:'محمد زين'});
   const [username, setUsername] = useState('Admin');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
