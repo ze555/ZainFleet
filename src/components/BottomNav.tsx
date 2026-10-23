@@ -19,8 +19,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   const isAr = lang === 'ar';
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-200 z-40 lg:hidden px-2 py-1.5 shadow-lg">
-      <div className="flex items-center justify-around max-w-md mx-auto">
+    <nav className="zf-premium-bottom-nav fixed bottom-0 inset-x-0 z-40 lg:hidden px-2 py-2">
+      <div className="zf-premium-bottom-inner flex items-center justify-around max-w-md mx-auto">
         {/* 1. الرئيسية */}
         <button
           onClick={() => setCurrentTab('dashboard')}
