@@ -538,7 +538,26 @@ app.put('/api/admin/devices/:imei/company',(req:Request,res:Response)=>{
  if(!deviceRepo.get(imei)||!(companyId===null||typeof companyId==='string'&&fleetCompanies.some(c=>c.id===companyId))){res.sendStatus(400);return;}
  const before=deviceCompanies[imei];
  if(companyId===null)delete deviceCompanies[imei];else deviceCompanies[imei]=companyId;
- try{saveAssignments();res.json({success:true});}catch{if(before===undefined)delete deviceCompanies[imei];else deviceCompanies[imei]=before;res.sendStatus(507);}
+ try{
+  // Moving an IMEI to another company immediately revokes all previous user grants.
+  const previousUsers=fleetUsers.map(u=>({...u,devices:[...u.devices]}));
+  for(const user of fleetUsers)if(user.devices.includes(imei)&&user.companyId!==companyId)user.devices=user.devices.filter(id=>id!==imei);
+  try{saveAssignments();saveFleetUsers();res.json({success:true});}
+  catch(e){fleetUsers=previousUsers;throw e;}
+ }catch{if(before===undefined)delete deviceCompanies[imei];else deviceCompanies[imei]=before;try{saveAssignments();}catch{}res.sendStatus(507);}
+});
+// Explicit IMEI -> user grants. Manager may only grant vehicles in own company.
+app.put('/api/admin/users/:username/devices',(req:Request,res:Response)=>{
+ const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
+ const target=fleetUsers.find(u=>u.username===req.params.username);
+ if(!target||actor.role!=='admin'&&(target.companyId!==actor.companyId||target.role==='company_admin')){res.sendStatus(404);return;}
+ const devices=req.body?.devices;
+ if(!target.companyId||!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||deviceCompanies[id]!==target.companyId)){
+  res.status(400).json({error:'كل IMEI يجب أن يكون مسجلاً ويتبع شركة المستخدم'});return;
+ }
+ const old=[...target.devices];target.devices=[...new Set<string>(devices)];
+ try{saveFleetUsers();res.json({success:true,username:target.username,devices:target.devices});}
+ catch{target.devices=old;res.sendStatus(507);}
 });
 // Shared manager operations, scoped to their own company on every request.
 app.get('/api/admin/users',(req:Request,res:Response)=>{
@@ -560,7 +579,7 @@ app.post('/api/admin/users',(req:Request,res:Response)=>{
     username.toLowerCase()===AUTH_USER.toLowerCase()||fleetUsers.some(u=>u.username.toLowerCase()===username.toLowerCase())||
     typeof displayName!=='string'||!displayName.trim()||displayName.length>100||
     typeof password!=='string'||password.length<10||password.length>256||
-    !Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^d{15}$/.test(id)||!deviceRepo.get(id)||deviceCompanies[id]!==companyId)){
+    !Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||deviceCompanies[id]!==companyId)){
    res.status(400).json({error:'تحقق من الشركة والدور وكلمة المرور والأجهزة التابعة للشركة'});return;
  }
  const salt=crypto.randomBytes(16).toString('hex');
@@ -576,7 +595,7 @@ app.put('/api/admin/users/:username',(req:Request,res:Response)=>{
  const role=actor.role==='admin'&&['user','company_admin'].includes(req.body?.role)?req.body.role:user.role||'user';
  if(!companyId||!fleetCompanies.some(c=>c.id===companyId)||!['user','company_admin'].includes(role)){res.sendStatus(400);return;}
  const devices=req.body?.devices;
- if(!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^d{15}$/.test(id)||!deviceRepo.get(id)||deviceCompanies[id]!==companyId)){res.sendStatus(400);return;}
+ if(!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||deviceCompanies[id]!==companyId)){res.sendStatus(400);return;}
  const previous={...user};
  user.companyId=companyId;user.role=role;user.devices=[...new Set<string>(devices)];
  if(typeof req.body?.enabled==='boolean')user.enabled=req.body.enabled;
