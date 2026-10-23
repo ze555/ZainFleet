@@ -553,9 +553,9 @@ app.put('/api/admin/devices/:imei/company',(req:Request,res:Response)=>{
 app.put('/api/admin/users/:username/devices',(req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const target=fleetUsers.find(u=>u.username===req.params.username);
- if(!target||actor.role!=='admin'&&(target.companyId!==actor.companyId||target.role==='company_admin')){res.sendStatus(404);return;}
+ if(!target||(actor.role==='admin' ? (target.companyId!==null && target.companyId!==undefined) : (target.companyId!==actor.companyId||target.role==='company_admin'))){res.sendStatus(404);return;}
  const devices=req.body?.devices;
- if(!target.companyId||!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||deviceCompanies[id]!==target.companyId)){
+ if(!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(target.companyId ? deviceCompanies[id]!==target.companyId : !!deviceCompanies[id]))){
   res.status(400).json({error:'كل IMEI يجب أن يكون مسجلاً ويتبع شركة المستخدم'});return;
  }
  const old=[...target.devices];target.devices=[...new Set<string>(devices)];
@@ -566,7 +566,7 @@ app.put('/api/admin/users/:username/devices',(req:Request,res:Response)=>{
 app.get('/api/admin/users',(req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const allowed=visibleDevices(req);
- const users=fleetUsers.filter(u=>actor.role==='admin'||u.companyId===actor.companyId&&u.role!=='company_admin')
+ const users=fleetUsers.filter(u=>actor.role==='admin' ? (!u.companyId || u.role==='company_admin') : (u.companyId===actor.companyId&&u.role!=='company_admin'))
   .map(({username,displayName,devices,enabled,role,companyId})=>({username,displayName,devices,enabled,role:role||'user',companyId:companyId||null}));
  res.setHeader('Cache-Control','no-store');
  res.json({admin:{username:AUTH_USER,displayName:'محمد زين'},users,devices:allowed,companies:actor.role==='admin'?fleetCompanies:fleetCompanies.filter(c=>c.id===actor.companyId),role:actor.role,companyId:actor.companyId});
@@ -575,14 +575,15 @@ app.post('/api/admin/users',(req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const {username,displayName,password,devices}=req.body||{};
  const role=req.body?.role==='company_admin'?'company_admin':'user';
- const companyId=actor.role==='admin'?req.body?.companyId:actor.companyId;
- if((role==='company_admin'&&actor.role!=='admin')||
-    !companyId||!fleetCompanies.some(c=>c.id===companyId&&c.enabled)||
+ const companyId=actor.role==='admin'?(role==='company_admin'?req.body?.companyId:null):actor.companyId;
+ if((actor.role==='admin'&&role==='user'&&req.body?.companyId)||
+    (role==='company_admin'&&actor.role!=='admin')||
+    (companyId!==null&&!fleetCompanies.some(c=>c.id===companyId&&c.enabled))||
     typeof username!=='string'||!/^[a-zA-Z0-9_.-]{3,40}$/.test(username)||
     username.toLowerCase()===AUTH_USER.toLowerCase()||fleetUsers.some(u=>u.username.toLowerCase()===username.toLowerCase())||
     typeof displayName!=='string'||!displayName.trim()||displayName.length>100||
     typeof password!=='string'||password.length<10||password.length>256||
-    !Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||deviceCompanies[id]!==companyId)){
+    !Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(companyId ? deviceCompanies[id]!==companyId : !!deviceCompanies[id]))){
    res.status(400).json({error:'تحقق من الشركة والدور وكلمة المرور والأجهزة التابعة للشركة'});return;
  }
  const salt=crypto.randomBytes(16).toString('hex');
@@ -593,12 +594,12 @@ app.post('/api/admin/users',(req:Request,res:Response)=>{
 app.put('/api/admin/users/:username',(req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const user=fleetUsers.find(u=>u.username===req.params.username);
- if(!user||actor.role!=='admin'&&(user.companyId!==actor.companyId||user.role==='company_admin')){res.sendStatus(404);return;}
- const companyId=actor.role==='admin'&&typeof req.body?.companyId==='string'?req.body.companyId:user.companyId;
+ if(!user||(actor.role==='admin' ? (!!user.companyId&&user.role!=='company_admin') : (user.companyId!==actor.companyId||user.role==='company_admin'))){res.sendStatus(404);return;}
+ const companyId=actor.role==='admin'?user.role==='company_admin'?user.companyId:null:actor.companyId;
  const role=actor.role==='admin'&&['user','company_admin'].includes(req.body?.role)?req.body.role:user.role||'user';
- if(!companyId||!fleetCompanies.some(c=>c.id===companyId)||!['user','company_admin'].includes(role)){res.sendStatus(400);return;}
+ if((companyId&&!fleetCompanies.some(c=>c.id===companyId))||!['user','company_admin'].includes(role)||(actor.role==='admin'&&role!==user.role)){res.sendStatus(400);return;}
  const devices=req.body?.devices;
- if(!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||deviceCompanies[id]!==companyId)){res.sendStatus(400);return;}
+ if(!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(companyId ? deviceCompanies[id]!==companyId : !!deviceCompanies[id]))){res.sendStatus(400);return;}
  const previous={...user};
  user.companyId=companyId;user.role=role;user.devices=[...new Set<string>(devices)];
  if(typeof req.body?.enabled==='boolean')user.enabled=req.body.enabled;
