@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { VehicleInstrumentGauge } from './VehicleInstrumentGauge.js';
+import { AutomotiveCluster } from './AutomotiveCluster.js';
 import L from 'leaflet';
 import { DeviceInfo, TelemetrySnapshot } from '../types/fleet.js';
 import { decodeCanMetrics, generateVehicleAlerts } from '../utils/canBusDecoder.js';
@@ -161,16 +161,16 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
           <div className="zf-cockpit-vehicle">
             <Car size={32} /><div><strong>{vehicleName}</strong><span>{device.imei} · {device.tcpConnected ? (isAr ? 'اتصال TCP نشط' : 'TCP connected') : (isAr ? 'لا يوجد اتصال TCP نشط' : 'TCP not connected')}</span></div>
           </div>
-          <div className="zf-real-cluster" aria-label={isAr ? 'عدادات السيارة الحقيقية' : 'Automotive instrument cluster'}>
-            <VehicleInstrumentGauge label={isAr ? 'عداد السرعة' : 'SPEEDOMETER'}
-              value={record?.speed} max={240} majorStep={40} unit="km/h" accent="cyan" stale={isStale}/>
-            <VehicleInstrumentGauge label={isAr ? 'عداد دورات المحرك' : 'TACHOMETER'}
-              value={metrics?.engine.rpm} max={8000} majorStep={1000} divisor={1000} unit="×1000 RPM" accent="amber" stale={isStale}/>
-            <div className="zf-cluster-bottom">
-              <span className={device.tcpConnected?'zf-cluster-online':'zf-cluster-offline'}>● {device.tcpConnected ? (isAr ? 'الجهاز متصل' : 'DEVICE ONLINE') : (isAr ? 'الجهاز غير متصل' : 'DEVICE OFFLINE')}</span>
-              <span>{isStale ? (isAr ? 'البيانات غير مباشرة' : 'STORED READING') : (isAr ? 'قراءة حديثة' : 'RECENT DATA')}</span>
-            </div>
-          </div>
+          <AutomotiveCluster
+            speed={record?.speed}
+            rpm={metrics?.engine.rpm}
+            fuel={fuelPercentage}
+            temperature={metrics?.engine.coolantTempC}
+            odometer={metrics?.odometer.totalKm}
+            online={Boolean(device.tcpConnected)}
+            stale={isStale}
+            lang={lang}
+          />
           <div className="zf-premium-fuel" dir={isAr?'rtl':'ltr'}>
             <div className="zf-premium-section-head">
               <h2><Fuel size={23}/>{isAr?'الوقود ودرجة حرارة المحرك':'Fuel & engine temperature'}</h2>
