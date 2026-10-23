@@ -392,52 +392,71 @@ app.use((req, res, next) => {
 });
 app.use(express.json());
 
-// User permissions live entirely in the HTTP layer; Teltonika TCP remains untouched.
-type FleetUser = { username: string; displayName: string; salt: string; hash: string; devices: string[]; enabled: boolean };
-const USERS_PATH = path.join(DATA_DIR, 'fleet_users.json');
-let fleetUsers: FleetUser[] = [];
-try { const loaded = JSON.parse(fs.readFileSync(USERS_PATH, 'utf8')); if (Array.isArray(loaded)) fleetUsers = loaded.filter(u => u && typeof u.username === 'string'); } catch {}
-function saveFleetUsers() {
-  const temp = USERS_PATH + '.tmp';
-  fs.writeFileSync(temp, JSON.stringify(fleetUsers, null, 2), {encoding: 'utf8', mode: 0o600});
-  fs.renameSync(temp, USERS_PATH);
+// Tenant-aware authorization. Tracker TCP ingestion stays independent of browser sessions.
+type FleetRole = 'admin' | 'company_admin' | 'user';
+type FleetCompany = {id:string;name:string;enabled:boolean};
+type FleetUser = {username:string;displayName:string;salt:string;hash:string;devices:string[];enabled:boolean;role?:'company_admin'|'user';companyId?:string|null};
+const USERS_PATH = path.join(DATA_DIR,'fleet_users.json');
+const COMPANIES_PATH = path.join(DATA_DIR,'fleet_companies.json');
+const ASSIGNMENTS_PATH = path.join(DATA_DIR,'fleet_device_companies.json');
+function loadJson<T>(filename:string, fallback:T):T {try{return JSON.parse(fs.readFileSync(filename,'utf8')) as T;}catch{return fallback;}}
+let fleetUsers=loadJson<FleetUser[]>(USERS_PATH,[]).filter(u=>u&&typeof u.username==='string');
+let fleetCompanies=loadJson<FleetCompany[]>(COMPANIES_PATH,[]).filter(c=>c&&typeof c.id==='string');
+let deviceCompanies=loadJson<Record<string,string>>(ASSIGNMENTS_PATH,{});
+function saveJson(filename:string,value:unknown) {
+  const temp=filename+'.tmp';
+  fs.writeFileSync(temp,JSON.stringify(value,null,2),{encoding:'utf8',mode:0o600});
+  fs.renameSync(temp,filename);
 }
-function fleetPasswordHash(pass: string, salt: string): string {
-  return crypto.scryptSync(pass, salt, 64).toString('hex');
+const saveFleetUsers=()=>saveJson(USERS_PATH,fleetUsers);
+const saveCompanies=()=>saveJson(COMPANIES_PATH,fleetCompanies);
+const saveAssignments=()=>saveJson(ASSIGNMENTS_PATH,deviceCompanies);
+function fleetPasswordHash(pass:string,salt:string):string {return crypto.scryptSync(pass,salt,64).toString('hex');}
+function sessionIdentity(req:Request):{user:string;role:FleetRole;companyId:string|null}|null {
+ const cookie=(req.headers.cookie||'').split(';').map(c=>c.trim()).find(c=>c.startsWith('zf_session='));
+ if(!cookie)return null;
+ const token=cookie.slice('zf_session='.length),dot=token.lastIndexOf('.');
+ if(dot<0)return null;
+ const payload=token.slice(0,dot),signature=token.slice(dot+1);
+ const expected=crypto.createHmac('sha256',AUTH_SECRET).update(payload).digest();
+ let supplied:Buffer;
+ try{supplied=Buffer.from(signature,'base64url');}catch{return null;}
+ if(supplied.length!==expected.length||!crypto.timingSafeEqual(supplied,expected))return null;
+ try{
+  const data=JSON.parse(Buffer.from(payload,'base64url').toString('utf8'));
+  if(typeof data.expires!=='number'||data.expires<Date.now())return null;
+  if(data.user===AUTH_USER&&data.role==='admin')return {user:AUTH_USER,role:'admin',companyId:null};
+  const managed=fleetUsers.find(u=>u.username===data.user&&u.enabled);
+  if(!managed||data.role!==(managed.role||'user'))return null;
+  if(managed.companyId && !fleetCompanies.some(c=>c.id===managed.companyId&&c.enabled))return null;
+  return {user:managed.username,role:managed.role||'user',companyId:managed.companyId||null};
+ }catch{return null;}
 }
-function sessionIdentity(req: Request): { user: string; role: 'admin' | 'user' } | null {
-  const cookie = (req.headers.cookie || '').split(';').map(c => c.trim()).find(c => c.startsWith('zf_session='));
-  if (!cookie) return null;
-  const token = cookie.slice('zf_session='.length);
-  const dot = token.lastIndexOf('.');
-  if (dot < 0) return null;
-  const payload = token.slice(0, dot), signature = token.slice(dot + 1);
-  const expected = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest();
-  let supplied: Buffer;
-  try { supplied = Buffer.from(signature, 'base64url'); } catch { return null; }
-  if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) return null;
-  try {
-    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
-    if (typeof data.expires !== 'number' || data.expires < Date.now()) return null;
-    if (data.user === AUTH_USER && data.role !== 'user') return { user: AUTH_USER, role: 'admin' };
-    const managed = fleetUsers.find(u => u.username === data.user && u.enabled);
-    return managed && data.role === 'user' ? { user: managed.username, role: 'user' } : null;
-  } catch { return null; }
+function fleetAccess(req:Request,imei:string):boolean {
+ const identity=sessionIdentity(req);
+ if(!identity)return false;
+ if(identity.role==='admin')return true;
+ const user=fleetUsers.find(u=>u.username===identity.user&&u.enabled);
+ if(!user)return false;
+ if(identity.companyId){
+  if(deviceCompanies[imei]!==identity.companyId)return false;
+  return identity.role==='company_admin'||user.devices.includes(imei);
+ }
+ // Backward-compatible legacy users with pre-existing device grants.
+ return identity.role==='user'&&user.devices.includes(imei)&&!deviceCompanies[imei];
 }
-function fleetAccess(req: Request, imei: string): boolean {
-  const identity = sessionIdentity(req);
-  if (!identity) return false;
-  if (identity.role === 'admin') return true;
-  return !!fleetUsers.find(u => u.username === identity.user && u.enabled && u.devices.includes(imei));
+function visibleDevices(req:Request):DeviceInfo[]{return deviceRepo.getAll().filter(d=>fleetAccess(req,d.imei));}
+function managerScope(req:Request):{user:string;role:FleetRole;companyId:string|null}|null {
+ const identity=sessionIdentity(req);
+ return identity&&(identity.role==='admin'||identity.role==='company_admin')?identity:null;
 }
-
 // HTTP dashboard authentication only. The raw Teltonika TCP listener remains independent.
 const AUTH_USER = process.env.ADMIN_USERNAME || 'Admin';
 const AUTH_PASSWORD = process.env.ADMIN_PASSWORD || '123456'; // Demo only: override on Railway.
 const AUTH_SECRET = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex');
 const AUTH_TTL_MS = 8 * 60 * 60 * 1000;
 const failedLogins = new Map<string, { count: number; until: number }>();
-function makeToken(username = AUTH_USER, role: 'admin' | 'user' = 'admin') {
+function makeToken(username = AUTH_USER, role: FleetRole = 'admin') {
   const payload = Buffer.from(JSON.stringify({ user: username, role, expires: Date.now() + AUTH_TTL_MS })).toString('base64url');
   const mac = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
   return payload + '.' + mac;
@@ -473,13 +492,13 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
     return;
   }
   failedLogins.delete(ip);
-  res.setHeader('Set-Cookie', sessionCookie(makeToken(adminOk ? AUTH_USER : managed!.username, adminOk ? 'admin' : 'user'), AUTH_TTL_MS / 1000));
-  res.json({ authenticated: true, username: adminOk ? AUTH_USER : managed!.username, displayName: adminOk ? 'محمد زين' : managed!.displayName, role: adminOk ? 'admin' : 'user' });
+  res.setHeader('Set-Cookie', sessionCookie(makeToken(adminOk ? AUTH_USER : managed!.username, adminOk ? 'admin' : (managed!.role||'user')), AUTH_TTL_MS / 1000));
+  res.json({ authenticated:true, username:adminOk?AUTH_USER:managed!.username, displayName:adminOk?'محمد زين':managed!.displayName, role:adminOk?'admin':(managed!.role||'user'), companyId:adminOk?null:(managed!.companyId||null) });
 });
 app.get('/api/auth/session', (req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
   const identity = sessionIdentity(req);
-  res.json({ authenticated: !!identity, username: identity?.user, role: identity?.role, displayName: identity?.role === 'admin' ? 'محمد زين' : fleetUsers.find(u => u.username === identity?.user)?.displayName });
+  res.json({ authenticated: !!identity, username: identity?.user, role: identity?.role, displayName: identity?.role === 'admin' ? 'محمد زين' : fleetUsers.find(u => u.username === identity?.user)?.displayName, companyId: identity?.companyId || null });
 });
 app.post('/api/auth/logout', (_req: Request, res: Response) => {
   res.setHeader('Set-Cookie', sessionCookie('', 0));
@@ -491,50 +510,91 @@ app.use('/api', (req: Request, res: Response, next) => {
   next();
 });
 
-// Only the current administrator can manage users and IMEI assignment.
-app.get('/api/admin/users', (req: Request, res: Response) => {
-  if (sessionIdentity(req)?.role !== 'admin') { res.sendStatus(403); return; }
-  res.setHeader('Cache-Control', 'no-store');
-  res.json({admin: {username: AUTH_USER, displayName: 'محمد زين', role: 'admin', devices: deviceRepo.getAll().map(d => d.imei)}, users: fleetUsers.map(({username, displayName, devices, enabled}) => ({username, displayName, devices, enabled})), devices: deviceRepo.getAll()});
+// Company CRUD and vehicle assignment: available only to the global administrator.
+app.get('/api/admin/companies',(req:Request,res:Response)=>{
+ if(sessionIdentity(req)?.role!=='admin'){res.sendStatus(403);return;}
+ res.json({companies:fleetCompanies,assignments:deviceCompanies,devices:deviceRepo.getAll()});
 });
-app.post('/api/admin/users', (req: Request, res: Response) => {
-  if (sessionIdentity(req)?.role !== 'admin') { res.sendStatus(403); return; }
-  const { username, displayName, password, devices } = req.body || {};
-  if (typeof username !== 'string' || !/^[a-zA-Z0-9_.-]{3,40}$/.test(username) ||
-      username === AUTH_USER || fleetUsers.some(u => u.username.toLowerCase() === username.toLowerCase()) ||
-      typeof displayName !== 'string' || !displayName.trim() || displayName.length > 100 ||
-      typeof password !== 'string' || password.length < 10 || password.length > 256 ||
-      !Array.isArray(devices) || devices.some(id => typeof id !== 'string' || !/^\d{15}$/.test(id) || !deviceRepo.get(id))) {
-    res.status(400).json({error:'بيانات المستخدم غير صالحة: كلمة المرور 10 أحرف على الأقل، والأجهزة يجب أن تكون مسجلة'}); return;
-  }
-  const salt = crypto.randomBytes(16).toString('hex');
-  fleetUsers.push({username, displayName: displayName.trim(), salt, hash: fleetPasswordHash(password, salt), devices: [...new Set(devices)], enabled: true});
-  try { saveFleetUsers(); } catch { fleetUsers.pop(); res.status(507).json({error:'تعذر حفظ المستخدم؛ تحقق من قرص Railway'}); return; }
-  res.status(201).json({success:true});
+app.post('/api/admin/companies',(req:Request,res:Response)=>{
+ if(sessionIdentity(req)?.role!=='admin'){res.sendStatus(403);return;}
+ const name=typeof req.body?.name==='string'?req.body.name.trim():'';
+ if(name.length<2||name.length>100){res.status(400).json({error:'اسم الشركة غير صالح'});return;}
+ const company={id:crypto.randomUUID(),name,enabled:true};
+ fleetCompanies.push(company);
+ try{saveCompanies();res.status(201).json(company);}catch{fleetCompanies.pop();res.sendStatus(507);}
 });
-app.put('/api/admin/users/:username', (req: Request, res: Response) => {
-  if (sessionIdentity(req)?.role !== 'admin') {res.sendStatus(403);return;}
-  const u = fleetUsers.find(u => u.username === req.params.username);
-  if (!u) {res.sendStatus(404);return;}
-  const devices = req.body?.devices;
-  if (!Array.isArray(devices) || devices.some(id => typeof id !== 'string' || !/^\d{15}$/.test(id) || !deviceRepo.get(id))) {res.sendStatus(400);return;}
-  const old = {...u};
-  u.devices = [...new Set(devices)];
-  if (typeof req.body?.enabled === 'boolean') u.enabled = req.body.enabled;
-  try { saveFleetUsers(); } catch {Object.assign(u, old);res.sendStatus(507);return;}
-  res.json({success:true});
+app.put('/api/admin/companies/:id',(req:Request,res:Response)=>{
+ if(sessionIdentity(req)?.role!=='admin'){res.sendStatus(403);return;}
+ const c=fleetCompanies.find(c=>c.id===req.params.id);
+ if(!c){res.sendStatus(404);return;}
+ const before={...c};
+ if(typeof req.body?.name==='string'&&req.body.name.trim().length>=2&&req.body.name.length<=100)c.name=req.body.name.trim();
+ if(typeof req.body?.enabled==='boolean')c.enabled=req.body.enabled;
+ try{saveCompanies();res.json(c);}catch{Object.assign(c,before);res.sendStatus(507);}
 });
-// Restrict all per-vehicle endpoints and global diagnostic/management endpoints for non-admin accounts.
-app.use('/api', (req: Request, res: Response, next) => {
-  const who = sessionIdentity(req);
-  if (!who) {res.sendStatus(401);return;}
-  if (who.role === 'admin') {next();return;}
-  if (req.path === '/devices' && req.method === 'GET') {next();return;}
-  const match = req.path.match(/^\/devices\/([^/]+)(?:\/(latest|history|trips))?$/);
-  if (match && req.method === 'GET' && fleetAccess(req, match[1])) {next();return;}
-  res.status(403).json({error:'ليس لديك صلاحية الوصول لهذا الجهاز أو العملية'}); 
+app.put('/api/admin/devices/:imei/company',(req:Request,res:Response)=>{
+ if(sessionIdentity(req)?.role!=='admin'){res.sendStatus(403);return;}
+ const imei=String(req.params.imei),companyId=req.body?.companyId;
+ if(!deviceRepo.get(imei)||!(companyId===null||typeof companyId==='string'&&fleetCompanies.some(c=>c.id===companyId))){res.sendStatus(400);return;}
+ const before=deviceCompanies[imei];
+ if(companyId===null)delete deviceCompanies[imei];else deviceCompanies[imei]=companyId;
+ try{saveAssignments();res.json({success:true});}catch{if(before===undefined)delete deviceCompanies[imei];else deviceCompanies[imei]=before;res.sendStatus(507);}
 });
-
+// Shared manager operations, scoped to their own company on every request.
+app.get('/api/admin/users',(req:Request,res:Response)=>{
+ const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
+ const allowed=visibleDevices(req);
+ const users=fleetUsers.filter(u=>actor.role==='admin'||u.companyId===actor.companyId&&u.role!=='company_admin')
+  .map(({username,displayName,devices,enabled,role,companyId})=>({username,displayName,devices,enabled,role:role||'user',companyId:companyId||null}));
+ res.setHeader('Cache-Control','no-store');
+ res.json({admin:{username:AUTH_USER,displayName:'محمد زين'},users,devices:allowed,companies:actor.role==='admin'?fleetCompanies:fleetCompanies.filter(c=>c.id===actor.companyId),role:actor.role,companyId:actor.companyId});
+});
+app.post('/api/admin/users',(req:Request,res:Response)=>{
+ const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
+ const {username,displayName,password,devices}=req.body||{};
+ const role=req.body?.role==='company_admin'?'company_admin':'user';
+ const companyId=actor.role==='admin'?req.body?.companyId:actor.companyId;
+ if((role==='company_admin'&&actor.role!=='admin')||
+    !companyId||!fleetCompanies.some(c=>c.id===companyId&&c.enabled)||
+    typeof username!=='string'||!/^[a-zA-Z0-9_.-]{3,40}$/.test(username)||
+    username.toLowerCase()===AUTH_USER.toLowerCase()||fleetUsers.some(u=>u.username.toLowerCase()===username.toLowerCase())||
+    typeof displayName!=='string'||!displayName.trim()||displayName.length>100||
+    typeof password!=='string'||password.length<10||password.length>256||
+    !Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^d{15}$/.test(id)||!deviceRepo.get(id)||deviceCompanies[id]!==companyId)){
+   res.status(400).json({error:'تحقق من الشركة والدور وكلمة المرور والأجهزة التابعة للشركة'});return;
+ }
+ const salt=crypto.randomBytes(16).toString('hex');
+ const user:FleetUser={username,displayName:displayName.trim(),salt,hash:fleetPasswordHash(password,salt),devices:[...new Set<string>(devices)],enabled:true,role,companyId};
+ fleetUsers.push(user);
+ try{saveFleetUsers();res.status(201).json({success:true});}catch{fleetUsers.pop();res.sendStatus(507);}
+});
+app.put('/api/admin/users/:username',(req:Request,res:Response)=>{
+ const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
+ const user=fleetUsers.find(u=>u.username===req.params.username);
+ if(!user||actor.role!=='admin'&&(user.companyId!==actor.companyId||user.role==='company_admin')){res.sendStatus(404);return;}
+ const companyId=actor.role==='admin'&&typeof req.body?.companyId==='string'?req.body.companyId:user.companyId;
+ const role=actor.role==='admin'&&['user','company_admin'].includes(req.body?.role)?req.body.role:user.role||'user';
+ if(!companyId||!fleetCompanies.some(c=>c.id===companyId)||!['user','company_admin'].includes(role)){res.sendStatus(400);return;}
+ const devices=req.body?.devices;
+ if(!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^d{15}$/.test(id)||!deviceRepo.get(id)||deviceCompanies[id]!==companyId)){res.sendStatus(400);return;}
+ const previous={...user};
+ user.companyId=companyId;user.role=role;user.devices=[...new Set<string>(devices)];
+ if(typeof req.body?.enabled==='boolean')user.enabled=req.body.enabled;
+ try{saveFleetUsers();res.json({success:true});}catch{Object.assign(user,previous);res.sendStatus(507);}
+});
+// Every vehicle endpoint is tenant-scoped, including diagnostics and destructive actions.
+app.use('/api',(req:Request,res:Response,next)=>{
+ const who=sessionIdentity(req);if(!who){res.sendStatus(401);return;}
+ if(who.role==='admin'){next();return;}
+ if(req.path==='/devices'&&req.method==='GET'){next();return;}
+ const match=req.path.match(/^\/devices\/([^/]+)(?:\/.*)?$/);
+ if(match&&fleetAccess(req,match[1])){
+   if(req.method==='GET'){next();return;}
+   // Company admins may manage only their own company's devices.
+   if(who.role==='company_admin'&&req.method==='DELETE'){next();return;}
+ }
+ res.status(403).json({error:'ليس لديك صلاحية الوصول إلى هذا الجهاز أو العملية'});
+});
 // API Endpoints matching ZainFleet original C# WebApplication
 app.get('/health', (_req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
@@ -592,7 +652,7 @@ app.get('/api/connection/diagnostics', (_req: Request, res: Response) => {
 app.get('/api/devices', (_req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
   const who = sessionIdentity(_req);
-  res.json(who?.role === 'admin' ? deviceRepo.getAll() : deviceRepo.getAll().filter(d => fleetAccess(_req, d.imei)));
+  res.json(visibleDevices(_req));
 });
 
 app.get('/api/devices/:imei', (req: Request, res: Response) => {
