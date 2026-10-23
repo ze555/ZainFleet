@@ -520,6 +520,16 @@ function profileScope(req:Request,imei:string):boolean {
  if(!actor)return false;
  return actor.role==='admin'?!deviceCompanies[imei]:deviceCompanies[imei]===actor.companyId;
 }
+app.get('/api/admin/available-imeis',(req:Request,res:Response)=>{
+ const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
+ res.setHeader('Cache-Control','no-store');
+ const devices=deviceRepo.getAll().filter(d=>{
+  if(!d.connected||vehicleProfiles[d.imei])return false;
+  const owner=deviceCompanies[d.imei];
+  return actor.role==='admin'?!owner:(!owner||owner===actor.companyId);
+ }).map(d=>({imei:d.imei,connected:d.connected,lastSeen:d.lastSeen||null}));
+ res.json({devices});
+});
 app.get('/api/admin/vehicle-profiles',(req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  res.setHeader('Cache-Control','no-store');
@@ -529,7 +539,8 @@ app.put('/api/admin/vehicle-profiles/:imei',(req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const imei=String(req.params.imei);
  if(!/^[0-9]{15}$/.test(imei)){res.status(400).json({error:'IMEI يجب أن يحتوي على 15 رقماً'});return;}
- if(deviceRepo.get(imei)&&!profileScope(req,imei)){res.sendStatus(403);return;}
+ if(deviceRepo.get(imei)&&!profileScope(req,imei)&&!(actor.role==='company_admin'&&!deviceCompanies[imei]&&!vehicleProfiles[imei])){res.sendStatus(403);return;}
+ if(!deviceRepo.get(imei)||(!vehicleProfiles[imei]&&!deviceRepo.get(imei)?.connected)){res.status(400).json({error:'يجب اختيار جهاز متصل ومسجل في الخادم'});return;}
  const keys=['name','model','driverName','plateNumber','phoneNumber'] as const;
  const profile={} as VehicleProfile;
  for(const key of keys){
