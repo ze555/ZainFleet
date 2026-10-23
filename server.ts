@@ -394,7 +394,8 @@ app.use(express.json());
 
 // Tenant-aware authorization. Tracker TCP ingestion stays independent of browser sessions.
 type FleetRole = 'admin' | 'company_admin' | 'user';
-type FleetCompany = {id:string;name:string;enabled:boolean};
+type CompanySector = 'rental'|'logistics'|'school'|'general';
+type FleetCompany = {id:string;name:string;enabled:boolean;sector?:CompanySector};
 type FleetUser = {username:string;displayName:string;salt:string;hash:string;devices:string[];enabled:boolean;role?:'company_admin'|'user';companyId?:string|null};
 const USERS_PATH = path.join(DATA_DIR,'fleet_users.json');
 const COMPANIES_PATH = path.join(DATA_DIR,'fleet_companies.json');
@@ -519,7 +520,8 @@ app.post('/api/admin/companies',(req:Request,res:Response)=>{
  if(sessionIdentity(req)?.role!=='admin'){res.sendStatus(403);return;}
  const name=typeof req.body?.name==='string'?req.body.name.trim():'';
  if(name.length<2||name.length>100){res.status(400).json({error:'اسم الشركة غير صالح'});return;}
- const company={id:crypto.randomUUID(),name,enabled:true};
+ const sector:CompanySector=['rental','logistics','school','general'].includes(req.body?.sector)?req.body.sector:'general';
+ const company={id:crypto.randomUUID(),name,enabled:true,sector};
  fleetCompanies.push(company);
  try{saveCompanies();res.status(201).json(company);}catch{fleetCompanies.pop();res.sendStatus(507);}
 });
@@ -530,6 +532,7 @@ app.put('/api/admin/companies/:id',(req:Request,res:Response)=>{
  const before={...c};
  if(typeof req.body?.name==='string'&&req.body.name.trim().length>=2&&req.body.name.length<=100)c.name=req.body.name.trim();
  if(typeof req.body?.enabled==='boolean')c.enabled=req.body.enabled;
+ if(['rental','logistics','school','general'].includes(req.body?.sector))c.sector=req.body.sector;
  try{saveCompanies();res.json(c);}catch{Object.assign(c,before);res.sendStatus(507);}
 });
 app.put('/api/admin/devices/:imei/company',(req:Request,res:Response)=>{
