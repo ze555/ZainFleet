@@ -321,3 +321,37 @@
 .zf-cluster-online{color:#50e8b2}.zf-cluster-offline{color:#fbbe89}
 @media(max-width:460px){.zf-real-cluster{gap:2px;padding:9px 3px 4px;border-radius:17px}.zf-real-gauge-label{font-size:10px}.zf-cluster-bottom{font-size:9px;padding-inline:9px}}
 @media(prefers-reduced-motion:reduce){.zf-gauge-needle{transition:none}}
+
+/* Premium RTL mobile cockpit, with truthful telemetry placeholders */
+@media(max-width:1023px){
+ body{background:#04152b!important}
+ .zf-premium-navbar{background:linear-gradient(125deg,#06192f,#09294c)!important;border-bottom:1px solid #118ac083;color:white}
+ .zf-premium-navbar :is(nav,button,span){color:inherit}
+ .zf-premium-bottom-nav{background:linear-gradient(145deg,#05162e,#08294b);border-top:1px solid #0788bd;box-shadow:0 -12px 36px #00102288;padding-bottom:max(9px,env(safe-area-inset-bottom))}
+ .zf-premium-bottom-inner button{color:#bad6e9!important;min-width:55px;border-radius:16px;padding:8px 4px}
+ .zf-premium-bottom-inner button:has(.stroke-\[2\.5\]){background:linear-gradient(140deg,#0363b1,#063a75);color:#37e6ff!important;box-shadow:inset 0 0 0 1px #15beed,0 0 16px #0284c75c}
+}
+.zf-premium-fuel,.zf-premium-operational{border:1px solid #0d9ed5;border-radius:28px;background:radial-gradient(circle at 10% 0%,#0b40649a,transparent 45%),linear-gradient(135deg,#05233f,#05172f);color:#e9faff;padding:clamp(15px,3vw,24px);box-shadow:0 14px 30px #01122369;margin-top:20px}
+.zf-premium-section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:17px}
+.zf-premium-section-head h2,.zf-premium-operational h3{font-weight:900;font-size:clamp(16px,2.7vw,23px);display:flex;align-items:center;gap:8px}
+.zf-premium-section-head h2 svg,.zf-premium-operational h3 svg{color:#27f3bf}
+.zf-premium-section-head button{border:1px solid #157da7;background:#0c3656;color:#92e7fb;border-radius:13px;padding:9px 12px;font-weight:800;font-size:12px}
+.zf-premium-fuel-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px}
+.zf-premium-fuel-gauge,.zf-premium-fuel-tile,.zf-premium-temperature{border:1px solid #136a9a;background:linear-gradient(160deg,#082d52,#061a34);border-radius:22px;padding:13px;min-width:0}
+.zf-premium-fuel-gauge{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center}
+.zf-premium-dial{width:min(100%,220px);aspect-ratio:1;border-radius:50%;padding:12px;box-shadow:0 0 25px #00e1cc27}
+.zf-premium-dial>div{width:100%;height:100%;border-radius:50%;background:#06213c;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px}
+.zf-premium-dial svg{color:#3af2da}.zf-premium-dial strong{font-size:clamp(29px,6vw,55px);line-height:1.1;font-weight:900;color:white}.zf-premium-dial span{font-size:12px;font-weight:700;color:#b8dcec}
+.zf-premium-fuel-gauge small{font-size:11px;color:#a3d7e9}
+.zf-premium-fuel-right{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:stretch}
+.zf-premium-fuel-tile{display:flex;flex-direction:column;gap:9px;justify-content:center}
+.zf-premium-fuel-tile svg{color:#75dfff}.zf-premium-fuel-tile span,.zf-premium-temperature span{font-size:12px;color:#bdd7e8;font-weight:700}
+.zf-premium-fuel-tile strong{font-size:clamp(16px,3vw,24px);color:white}
+.zf-premium-temperature{grid-column:span 2;border-color:#ef8453;background:linear-gradient(125deg,#283042,#10213e);display:flex;align-items:center;flex-wrap:wrap;gap:10px;box-shadow:inset 0 -5px 25px #ff73401f}
+.zf-premium-temperature svg{color:#ff9669}.zf-premium-temperature strong{font-size:clamp(23px,4vw,36px);color:white;margin-inline-start:auto}
+.zf-premium-range-track{height:9px;background:#114463;border-radius:99px;margin-top:16px;overflow:hidden}.zf-premium-range-track span{display:block;height:100%;background:linear-gradient(90deg,#13cbea,#32f3b8);border-radius:99px}
+.zf-premium-fuel-note{color:#95bad0;font-size:11px;margin-top:10px}
+.zf-premium-operational h3{margin-bottom:14px}.zf-premium-operational-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.zf-premium-operational-grid>div{border:1px solid #0a649b;border-radius:17px;background:#082d50;padding:14px 6px;text-align:center;display:flex;align-items:center;flex-direction:column;gap:8px}
+.zf-premium-operational-grid svg{color:#31e9ce}.zf-premium-operational-grid span{color:#b8d9ee;font-size:11px}.zf-premium-operational-grid b{color:white;font-size:clamp(14px,2.8vw,22px)}
+@media(max-width:390px){.zf-premium-fuel-layout{grid-template-columns:1fr}.zf-premium-dial{max-width:180px}.zf-premium-fuel-tile{min-height:110px}}
