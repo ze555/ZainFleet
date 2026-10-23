@@ -25,8 +25,9 @@ import {
   LockKeyhole, Eye, EyeOff, LogIn, ShieldCheck, Wifi, LogOut,
 } from 'lucide-react';
 
-const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'user'; displayName: string}> = ({onLogout,role,displayName}) => {
+const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin'|'user'; displayName: string}> = ({onLogout,role,displayName}) => {
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
+  const roleLabel = role==='admin'?'المدير العام':role==='company_admin'?'مدير الشركة':'مستخدم عادي';
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [selectedImei, setSelectedImei] = useState<string | null>(null);
@@ -248,11 +249,12 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'user'; displa
             </button>
           </div>
         </div>
-        {role === 'admin' && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-700 bg-[#092442] px-4 py-3 text-white">
+        <div className="mb-3 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm flex justify-between gap-2"><span>لوحة تحكم: {roleLabel}</span><span>{displayName}</span></div>
+        {role !== 'user' && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-700 bg-[#092442] px-4 py-3 text-white">
           <span className="font-bold text-sm">مرحباً، {displayName} — مدير النظام</span>
           <button type="button" onClick={()=>setCurrentTab('users')} className="rounded-xl border border-cyan-500 bg-blue-700 px-4 py-2 text-sm font-bold">إدارة المستخدمين والأجهزة</button>
         </div>}
-        {currentTab === 'users' && role === 'admin' && <UsersManagement />}
+        {currentTab === 'users' && role !== 'user' && <UsersManagement />}
                 {currentTab === 'dashboard' && (
           <section className="zf-fleet-hero" aria-label={isAr ? 'لوحة حالة الأسطول' : 'Fleet status'}>
             <div className="zf-fleet-hero-title">
@@ -689,7 +691,7 @@ export const App: React.FC = () => {
     let active = true;
     fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' })
       .then(async response => response.ok ? response.json() : {authenticated: false})
-      .then(data => { if (active) {setAuth(data.authenticated ? 'logged-in' : 'guest'); if (data.authenticated) setAccount({role:data.role === 'user' ? 'user':'admin',displayName:data.displayName||'محمد زين'}); } })
+      .then(data => { if (active) {setAuth(data.authenticated ? 'logged-in' : 'guest'); if (data.authenticated) setAccount({role:data.role === 'company_admin' ? 'company_admin' : data.role === 'user' ? 'user':'admin',displayName:data.displayName||'محمد زين'}); } })
       .catch(() => { if (active) {setAuth('guest');setError('تعذر الاتصال بالخادم. تحقق من تشغيل Railway.');} });
     return () => { active = false; };
   }, []);
@@ -705,7 +707,7 @@ export const App: React.FC = () => {
       });
       const data = await response.json();
       if (!response.ok) { setError(data.error || 'تعذر تسجيل الدخول'); return; }
-      setAccount({role:data.role === 'user'?'user':'admin',displayName:data.displayName||'محمد زين'});setAuth('logged-in'); setPassword('');
+      setAccount({role:data.role === 'company_admin'?'company_admin':data.role === 'user'?'user':'admin',displayName:data.displayName||'محمد زين'});setAuth('logged-in'); setPassword('');
     } catch { setError('تعذر الاتصال بالخادم. حاول مرة أخرى.'); }
     finally { setBusy(false); }
   };
