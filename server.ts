@@ -511,6 +511,50 @@ app.use('/api', (req: Request, res: Response, next) => {
   next();
 });
 
+// Vehicle profiles can be created before the physical tracker first connects.
+type VehicleProfile={name:string;model:string;driverName:string;plateNumber:string;phoneNumber:string};
+const VEHICLE_PROFILES_PATH=path.join(DATA_DIR,'fleet_vehicle_profiles.json');
+const vehicleProfiles=loadJson<Record<string,VehicleProfile>>(VEHICLE_PROFILES_PATH,{});
+function profileScope(req:Request,imei:string):boolean {
+ const actor=managerScope(req);
+ if(!actor)return false;
+ return actor.role==='admin'?!deviceCompanies[imei]:deviceCompanies[imei]===actor.companyId;
+}
+app.get('/api/admin/vehicle-profiles',(req:Request,res:Response)=>{
+ const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
+ res.setHeader('Cache-Control','no-store');
+ res.json({vehicles:deviceRepo.getAll().filter(d=>profileScope(req,d.imei)).map(d=>({imei:d.imei,connected:d.connected,profile:vehicleProfiles[d.imei]||null})),role:actor.role});
+});
+app.put('/api/admin/vehicle-profiles/:imei',(req:Request,res:Response)=>{
+ const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
+ const imei=String(req.params.imei);
+ if(!/^[0-9]{15}$/.test(imei)){res.status(400).json({error:'IMEI يجب أن يحتوي على 15 رقماً'});return;}
+ if(deviceRepo.get(imei)&&!profileScope(req,imei)){res.sendStatus(403);return;}
+ const keys=['name','model','driverName','plateNumber','phoneNumber'] as const;
+ const profile={} as VehicleProfile;
+ for(const key of keys){
+  const value=req.body?.[key];
+  if(typeof value!=='string'||value.trim().length>120){res.status(400).json({error:'بيانات المركبة غير صالحة'});return;}
+  profile[key]=value.trim();
+ }
+ if(!profile.name){res.status(400).json({error:'اسم المركبة مطلوب'});return;}
+ const previous=vehicleProfiles[imei];
+ const wasNew=!deviceRepo.get(imei);
+ // Assign newly registered vehicles directly to the requesting company's fleet.
+ const oldCompany=deviceCompanies[imei];
+ if(wasNew&&actor.role==='company_admin')deviceCompanies[imei]=actor.companyId!;
+ vehicleProfiles[imei]=profile;
+ try{
+  saveJson(VEHICLE_PROFILES_PATH,vehicleProfiles);
+  if(wasNew&&actor.role==='company_admin')saveAssignments();
+  if(wasNew)deviceRepo.upsert(imei,new Date().toISOString(),false);
+  res.json({success:true,imei,profile});
+ }catch{
+  if(previous)vehicleProfiles[imei]=previous;else delete vehicleProfiles[imei];
+  if(oldCompany===undefined)delete deviceCompanies[imei];else deviceCompanies[imei]=oldCompany;
+  res.status(507).json({error:'تعذر حفظ البيانات في التخزين الدائم'});
+ }
+});
 // Company CRUD and vehicle assignment: available only to the global administrator.
 app.get('/api/admin/companies',(req:Request,res:Response)=>{
  if(sessionIdentity(req)?.role!=='admin'){res.sendStatus(403);return;}
