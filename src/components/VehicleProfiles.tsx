@@ -2,22 +2,25 @@ import React,{useEffect,useState} from 'react';
 import {CarFront,Save,Search,RefreshCw,UserRound,Phone,Hash,Truck} from 'lucide-react';
 type Profile={name:string;model:string;driverName:string;plateNumber:string;phoneNumber:string};
 type Vehicle={imei:string;connected:boolean;profile:Profile|null};
+type AvailableDevice={imei:string;connected:boolean;lastSeen:string|null};
 const blank:Profile={name:'',model:'',driverName:'',plateNumber:'',phoneNumber:''};
 export const VehicleProfiles:React.FC=()=>{
  const [vehicles,setVehicles]=useState<Vehicle[]>([]);
+ const [available,setAvailable]=useState<AvailableDevice[]>([]);
  const [imei,setImei]=useState('');
  const [profile,setProfile]=useState<Profile>({...blank});
  const [query,setQuery]=useState('');
  const [role,setRole]=useState('');
  const [message,setMessage]=useState('');
  const [busy,setBusy]=useState(false);
- const reload=async()=>{try{const res=await fetch('/api/admin/vehicle-profiles',{credentials:'same-origin',cache:'no-store'});if(!res.ok)throw Error('لا يمكن جلب السيارات');const data=await res.json();setVehicles(data.vehicles||[]);setRole(data.role||'');}catch(e){setMessage(String(e));}};
+ const [newMode,setNewMode]=useState(false);
+ const reload=async()=>{try{const res=await fetch('/api/admin/vehicle-profiles',{credentials:'same-origin',cache:'no-store'});if(!res.ok)throw Error('لا يمكن جلب السيارات');const data=await res.json();setVehicles(data.vehicles||[]);setRole(data.role||'');const free=await fetch('/api/admin/available-imeis',{credentials:'same-origin',cache:'no-store'});if(free.ok){const result=await free.json();setAvailable(result.devices||[]);}}catch(e){setMessage(String(e));}};
  useEffect(()=>{void reload();},[]);
- const select=(v:Vehicle)=>{setImei(v.imei);setProfile(v.profile?{...v.profile}:{...blank});setMessage('');};
+ const select=(v:Vehicle)=>{setNewMode(false);setImei(v.imei);setProfile(v.profile?{...v.profile}:{...blank});setMessage('');};
  const save=async(e:React.FormEvent)=>{e.preventDefault();setBusy(true);setMessage('');try{
   const res=await fetch('/api/admin/vehicle-profiles/'+encodeURIComponent(imei),{method:'PUT',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(profile)});
   const body=await res.json().catch(()=>({}));if(!res.ok)throw Error(body.error||'فشل الحفظ');
-  setMessage('تم حفظ بيانات المركبة وربطها برقم IMEI');await reload();
+  setMessage('تم حفظ بيانات المركبة وربطها برقم IMEI');setNewMode(false);await reload();
  }catch(e){setMessage(String(e));}finally{setBusy(false);}};
  const visible=vehicles.filter(v=>[v.imei,v.profile?.name,v.profile?.plateNumber,v.profile?.driverName].some(x=>(x||'').toLowerCase().includes(query.toLowerCase())));
  const field=(key:keyof Profile,label:string,placeholder:string,required=false)=><label className="block text-sm font-bold text-cyan-100">{label}<input required={required} value={profile[key]} onChange={e=>setProfile(p=>({...p,[key]:e.target.value}))} maxLength={120} placeholder={placeholder} className="mt-2 block w-full rounded-xl bg-[#07172a] text-white p-3 border border-cyan-800 focus:border-cyan-400 outline-none"/></label>;
@@ -30,7 +33,7 @@ export const VehicleProfiles:React.FC=()=>{
   <div className="grid lg:grid-cols-[.95fr_1.05fr] gap-5">
    <aside className="rounded-3xl border border-sky-800 bg-[#081d34] p-5">
     <label className="flex gap-2 items-center bg-[#06172b] border border-sky-800 rounded-xl p-3"><Search size={18}/><input className="bg-transparent outline-none w-full text-white" placeholder="بحث بالاسم أو IMEI أو اللوحة" value={query} onChange={e=>setQuery(e.target.value)}/></label>
-    <button className="my-4 w-full py-3 rounded-xl border border-cyan-500 text-cyan-200 font-bold" type="button" onClick={()=>{setImei('');setProfile({...blank});setMessage('');}}>+ تسجيل IMEI جديد</button>
+    <button className="my-4 w-full py-3 rounded-xl border border-cyan-500 text-cyan-200 font-bold" type="button" onClick={()=>{setNewMode(true);setImei('');setProfile({...blank});setMessage('');void reload();}}>+ تسجيل IMEI جديد</button>
     <div className="space-y-2 max-h-[550px] overflow-auto">
      {visible.map(v=><button key={v.imei} type="button" onClick={()=>select(v)} className={`w-full text-right rounded-xl border p-3 ${imei===v.imei?'border-cyan-400 bg-[#174164]':'border-sky-800 bg-[#07172b]'}`}>
       <span className="flex items-center gap-2 font-bold"><Truck size={17} className="text-cyan-400"/>{v.profile?.name||'مركبة غير مسماة'}</span>
@@ -42,9 +45,16 @@ export const VehicleProfiles:React.FC=()=>{
    </aside>
    <form onSubmit={save} className="rounded-3xl border border-sky-700 bg-[#092340] p-5 space-y-4">
     <h3 className="text-xl font-black">بطاقة بيانات المركبة</h3>
-    <label className="block text-sm font-bold text-cyan-100"><Hash size={15} className="inline"/> رقم IMEI (15 رقماً)
-     <input required inputMode="numeric" pattern="[0-9]{15}" maxLength={15} value={imei} onChange={e=>setImei(e.target.value.replace(/\D/g,''))} readOnly={vehicles.some(v=>v.imei===imei)} placeholder="أدخل IMEI الموجود على الجهاز" className="mt-2 w-full rounded-xl bg-[#07172a] p-3 border border-cyan-800 text-white font-mono" dir="ltr"/>
-    </label>
+    {newMode?<label className="block text-sm font-bold text-cyan-100"><Hash size={15} className="inline"/> اختر جهاز IMEI متصلاً وغير مسجل
+      <select required value={imei} onChange={e=>setImei(e.target.value)} className="mt-2 w-full rounded-xl bg-[#07172a] p-3 border border-cyan-800 text-white font-mono" dir="ltr">
+        <option value="">-- اختر جهازاً متصلاً --</option>
+        {available.map(d=><option key={d.imei} value={d.imei}>{d.imei} — Online</option>)}
+      </select>
+      {!available.length&&<span className="block mt-2 text-amber-300 text-xs">لا توجد أجهزة متصلة متاحة للتسجيل الآن. تأكد من اتصال جهاز Teltonika بالخادم، ثم اضغط تحديث.</span>}
+      <button type="button" onClick={()=>void reload()} className="mt-2 text-cyan-300 text-xs underline">تحديث الأجهزة المتصلة</button>
+    </label>:<label className="block text-sm font-bold text-cyan-100"><Hash size={15} className="inline"/> IMEI المركبة
+      <input readOnly value={imei} className="mt-2 w-full rounded-xl bg-[#07172a] p-3 border border-cyan-800 text-white font-mono" dir="ltr"/>
+    </label>}
     <div className="grid sm:grid-cols-2 gap-4">
      {field('name','اسم المركبة','سوناتا / شاحنة / حافلة',true)}
      {field('model','الموديل','Hyundai Sonata 2016')}
@@ -53,7 +63,7 @@ export const VehicleProfiles:React.FC=()=>{
      {field('phoneNumber','رقم الهاتف','09xxxxxxxx')}
     </div>
     <p className="text-xs text-cyan-200 flex items-center gap-2"><UserRound size={15}/><Phone size={15}/> تتم حماية هذه البيانات حسب صلاحيات المدير والشركة.</p>
-    <button type="submit" disabled={busy} className="flex items-center justify-center gap-2 w-full rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black p-3 disabled:opacity-50"><Save size={19}/>{busy?'جارٍ الحفظ...':'حفظ وربط IMEI'}</button>
+    <button type="submit" disabled={busy||!imei} className="flex items-center justify-center gap-2 w-full rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-black p-3 disabled:opacity-50"><Save size={19}/>{busy?'جارٍ الحفظ...':'حفظ وربط IMEI'}</button>
    </form>
   </div>
  </section>;
