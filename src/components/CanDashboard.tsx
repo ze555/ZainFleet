@@ -171,27 +171,39 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
               <span>{isStale ? (isAr ? 'البيانات غير مباشرة' : 'STORED READING') : (isAr ? 'قراءة حديثة' : 'RECENT DATA')}</span>
             </div>
           </div>
-          <div className="zf-fuel-dashboard" dir={isAr ? 'rtl' : 'ltr'}>
-            <div className="zf-fuel-heading"><span><Fuel size={21}/> {isAr ? 'الوقود والمسافة المتبقية' : 'Fuel & Driving Range'}</span>
-              <button type="button" onClick={()=>setShowFuelSettings(v=>!v)} aria-expanded={showFuelSettings}>{isAr ? 'إعدادات الخزان والاستهلاك' : 'Fuel settings'} ⚙</button>
+          <div className="zf-premium-fuel" dir={isAr?'rtl':'ltr'}>
+            <div className="zf-premium-section-head">
+              <h2><Fuel size={23}/>{isAr?'الوقود ودرجة حرارة المحرك':'Fuel & engine temperature'}</h2>
+              <button type="button" onClick={()=>setShowFuelSettings(v=>!v)} aria-expanded={showFuelSettings}>⚙ {isAr?'الإعدادات':'Settings'}</button>
             </div>
-            <div className="zf-fuel-stats">
-              <div><small>{isAr ? 'نسبة الوقود' : 'Fuel percentage'}</small><strong>{fuelPercentage==null ? '—' : `${fuelPercentage.toFixed(1)}%`}</strong></div>
-              <div><small>{isAr ? 'الكمية المتبقية' : 'Fuel remaining'}</small><strong>{fuelLiters==null ? '—' : `${fuelLiters.toFixed(1)} L`}</strong></div>
-              <div><small>{isAr ? 'المسافة التقديرية' : 'Estimated range'}</small><strong>{remainingRange==null ? '—' : `${remainingRange} km`}</strong></div>
+            <div className="zf-premium-fuel-layout">
+              <div className="zf-premium-fuel-gauge" role="meter" aria-label={isAr?'نسبة الوقود':'Fuel percentage'} aria-valuemin={0} aria-valuemax={100} aria-valuenow={fuelPercentage??undefined}>
+                <div className="zf-premium-dial" style={{background:`conic-gradient(from 220deg, #26f3a7 0%, #11d5ed ${(fuelPercentage??0)*.76}%, #124368 ${(fuelPercentage??0)*.76}%, #124368 76%, transparent 76%)`}}>
+                  <div><Fuel size={27}/><strong>{fuelPercentage==null?'—':`${fuelPercentage.toFixed(0)}%`}</strong><span>{isAr?'نسبة الوقود':'Fuel level'}</span></div>
+                </div>
+                <small>{fuelPercentage==null?(isAr?'لا توجد قراءة موثوقة للوقود':'Fuel data unavailable'):(percentFromCan!=null?(isAr?'قراءة CAN':'CAN reading'):(isAr?'محسوبة من سعة الخزان':'Calculated from tank capacity'))}</small>
+              </div>
+              <div className="zf-premium-fuel-right">
+                <div className="zf-premium-fuel-tile"><Fuel size={22}/><span>{isAr?'الوقود المتبقي':'Fuel remaining'}</span><strong>{fuelLiters==null?'—':`${fuelLiters.toFixed(1)} L`}</strong></div>
+                <div className="zf-premium-fuel-tile"><Route size={22}/><span>{isAr?'المسافة التقديرية':'Estimated range'}</span><strong>{remainingRange==null?'—':`${remainingRange} km`}</strong></div>
+                <div className="zf-premium-temperature"><Activity size={27}/><span>{isAr?'حرارة المحرك':'Engine temperature'}</span><strong>{metrics?.engine.coolantTempC==null?'—':`${metrics.engine.coolantTempC}°C`}</strong></div>
+              </div>
             </div>
-            <div className="zf-fuel-track"><span style={{width:`${fuelPercentage??0}%`}}/></div>
-            <p>{isAr ? 'المسافة تقديرية حسب متوسط الاستهلاك المدخل وليست قراءة مباشرة من الجهاز.' : 'Range is estimated from configured average consumption, not direct tracker data.'}</p>
-            {showFuelSettings && <div className="zf-fuel-settings">
-              <label>{isAr?'سعة خزان السيارة (لتر)':'Tank capacity (L)'}<input type="number" min="1" max="1000" step="0.1" value={fuelConfig.tankLiters} onChange={e=>setFuelConfig(x=>({...x,tankLiters:e.target.value}))}/></label>
-              <label>{isAr?'متوسط الاستهلاك (لتر / 100 كم)':'Consumption (L/100km)'}<input type="number" min="0.1" max="100" step="0.1" value={fuelConfig.litersPer100Km} onChange={e=>setFuelConfig(x=>({...x,litersPer100Km:e.target.value}))}/></label>
+            <div className="zf-premium-range-track"><span style={{width:`${fuelPercentage??0}%`}}/></div>
+            <p className="zf-premium-fuel-note">{isAr?'المسافة المتبقية تقديرية حسب الاستهلاك المدخل، وليست قراءة مباشرة من الجهاز.':'Range is estimated from configured consumption, not directly read from the device.'}</p>
+            {showFuelSettings&&<div className="zf-fuel-settings">
+              <label>{isAr?'سعة الخزان (لتر)':'Tank capacity (L)'}<input type="number" min="1" max="1000" step="0.1" value={fuelConfig.tankLiters} onChange={e=>setFuelConfig(v=>({...v,tankLiters:e.target.value}))}/></label>
+              <label>{isAr?'الاستهلاك لتر / 100 كم':'Consumption (L/100km)'}<input type="number" min="0.1" max="100" step="0.1" value={fuelConfig.litersPer100Km} onChange={e=>setFuelConfig(v=>({...v,litersPer100Km:e.target.value}))}/></label>
               <button type="button" onClick={saveFuelConfig}>{isAr?'حفظ':'Save'}</button>
             </div>}
           </div>
-          <div className="zf-cockpit-metrics">
-            <div><Fuel size={19}/><span>{isAr ? 'الوقود' : 'Fuel'}</span><b>{metrics?.fuel.levelLiters == null ? '—' : `${metrics.fuel.levelLiters} L`}</b></div>
-            <div><Activity size={19}/><span>{isAr ? 'حرارة المحرك' : 'Engine temp'}</span><b>{metrics?.engine.coolantTempC == null ? '—' : `${metrics.engine.coolantTempC}°C`}</b></div>
-            <div><Power size={19}/><span>{isAr ? 'حالة الإشعال' : 'Ignition'}</span><b>{metrics?.ignition.verified ? (metrics.ignition.isOn ? 'ON' : 'OFF') : '—'}</b></div>
+          <div className="zf-premium-operational">
+            <h3><Activity size={19}/>{isAr?'معلومات التشغيل الحالية':'Live operating data'}</h3>
+            <div className="zf-premium-operational-grid">
+              <div><Fuel size={22}/><span>{isAr?'الوقود':'Fuel'}</span><b>{fuelLiters==null?'—':`${fuelLiters.toFixed(1)} L`}</b></div>
+              <div><Gauge size={22}/><span>{isAr?'السرعة':'Speed'}</span><b>{record?.speed==null?'—':`${record.speed} km/h`}</b></div>
+              <div><Power size={22}/><span>{isAr?'الإشعال':'Ignition'}</span><b>{metrics?.ignition.verified?(metrics.ignition.isOn?'ON':'OFF'):'—'}</b></div>
+            </div>
           </div>
         </div>
       </section>
