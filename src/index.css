@@ -355,3 +355,41 @@
 .zf-premium-operational-grid>div{border:1px solid #0a649b;border-radius:17px;background:#082d50;padding:14px 6px;text-align:center;display:flex;align-items:center;flex-direction:column;gap:8px}
 .zf-premium-operational-grid svg{color:#31e9ce}.zf-premium-operational-grid span{color:#b8d9ee;font-size:11px}.zf-premium-operational-grid b{color:white;font-size:clamp(14px,2.8vw,22px)}
 @media(max-width:390px){.zf-premium-fuel-layout{grid-template-columns:1fr}.zf-premium-dial{max-width:180px}.zf-premium-fuel-tile{min-height:110px}}
+
+/* Realistic illuminated automotive cluster: responsive with no fabricated readings */
+.zf-auto-cluster{direction:ltr;background:radial-gradient(ellipse at 50% 0%,#162b4f,#030914 75%);border:1px solid #27496b;border-radius:26px;padding:16px 10px 13px;box-shadow:inset 0 5px 30px #000b,0 18px 45px #020b18b3;color:#f0f8ff;overflow:hidden}
+.zf-auto-cluster-top{display:flex;justify-content:space-between;align-items:center;color:#8caecb;font-size:10px;font-weight:800;padding:0 10px 7px;gap:10px}
+.zf-auto-live{color:#32efba}.zf-auto-offline{color:#febd7b}
+.zf-auto-cluster-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.9fr) minmax(0,1fr);gap:0;align-items:center}
+.zf-auto-large-dial{min-width:0;filter:drop-shadow(0 0 9px #75baff2a)}
+.zf-auto-large-dial .zf-real-gauge-label{font-size:11px;letter-spacing:.04em;color:#c4dfff}
+.zf-auto-center{align-self:center;min-width:0;display:flex;flex-direction:column;gap:11px}
+.zf-auto-minis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.zf-cluster-mini{background:linear-gradient(160deg,#061222,#112541);border:1px solid #253d56;border-radius:15px;text-align:center;padding:9px 5px;color:#edf5ff;min-width:0}
+.zf-cluster-mini-scale{display:flex;justify-content:space-between;gap:2px;align-items:center;font-size:11px;font-weight:900}.zf-cluster-mini-scale span:nth-child(2){font-size:9px;color:#bad7ea}
+.zf-cluster-mini-arc{position:relative;width:72%;height:30px;margin:5px auto;border-top:3px solid #afcbed;border-radius:100% 100% 0 0}
+.zf-cluster-mini-needle{position:absolute;bottom:0;left:50%;height:27px;width:2px;background:#ff3c48;transform-origin:center bottom;box-shadow:0 0 7px #fb2039}
+.zf-cluster-mini strong{font-size:14px}.zf-cluster-mini strong.zf-mini-hot{color:#ff766d}
+.zf-auto-lcd{border:2px solid #3e688c;border-radius:11px;background:linear-gradient(#07162d,#102d52 65%,#030e1f);padding:11px 10px;box-shadow:inset 0 0 16px #559dff24,0 0 18px #3380bf23;text-align:center}
+.zf-auto-lcd-label{font-size:10px;font-weight:900;color:#91c9f5;letter-spacing:.1em;margin-bottom:9px}
+.zf-auto-lcd-line{display:flex;align-items:center;justify-content:space-between;gap:5px;padding:7px 0;border-bottom:1px solid #43759a83;color:#b3d5ef;font-size:11px}
+.zf-auto-lcd-line b{color:#f4faff;font-size:clamp(15px,2.5vw,25px);font-variant-numeric:tabular-nums}.zf-auto-lcd-line small{font-size:10px;font-weight:500}
+.zf-auto-lcd-footer{display:flex;justify-content:space-between;gap:5px;margin-top:8px;color:#b6dfff;font-size:10px;flex-wrap:wrap}
+.zf-auto-caption{direction:rtl;text-align:center;color:#7498b3;font-size:10px;margin:7px 0 0}
+.zf-auto-large-dial .zf-real-gauge svg{width:100%;height:auto;display:block}
+.zf-auto-large-dial .zf-real-gauge-cyan svg line.zf-gauge-needle,.zf-auto-large-dial .zf-real-gauge-amber svg line.zf-gauge-needle{stroke:#ff3949;filter:drop-shadow(0 0 5px #ff273a)}
+@media(max-width:680px){
+ .zf-auto-cluster{padding:11px 5px;border-radius:20px}
+ .zf-auto-cluster-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.12fr) minmax(0,1fr)}
+ .zf-auto-large-dial .zf-real-gauge-label{font-size:8px}
+ .zf-auto-minis{gap:3px}
+ .zf-cluster-mini{padding:6px 2px;border-radius:9px}
+ .zf-cluster-mini-scale{font-size:8px}.zf-cluster-mini-scale span:nth-child(2){font-size:7px}
+ .zf-cluster-mini-arc{height:19px}.zf-cluster-mini-needle{height:19px}
+ .zf-cluster-mini strong{font-size:10px}
+ .zf-auto-lcd{padding:6px 4px;border-width:1px;border-radius:8px}
+ .zf-auto-lcd-label{font-size:7px;margin-bottom:3px}
+ .zf-auto-lcd-line{font-size:8px;padding:4px 0}
+ .zf-auto-lcd-line b{font-size:12px}.zf-auto-lcd-line small{font-size:7px}
+ .zf-auto-lcd-footer{font-size:7px}
+}
