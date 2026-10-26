@@ -28,7 +28,7 @@ export const VehicleInstrumentGauge: React.FC<GaugeProps> = ({
     return `M ${a.x.toFixed(2)} ${a.y.toFixed(2)} A ${r} ${r} 0 ${Math.abs(to - from) > 180 ? 1 : 0} 1 ${b.x.toFixed(2)} ${b.y.toFixed(2)}`;
   };
   const end = minDeg + normalized * sweep;
-  const needle = point(end, 82);
+  const needleRest = point(minDeg, 82);
   const accentColor = accent === 'cyan' ? '#43ddff' : '#ffb454';
   const ticks = Array.from({length: 55}, (_, i) => {
     const fraction = i / 54, major = i % 6 === 0, deg = minDeg + sweep * fraction;
@@ -56,11 +56,13 @@ export const VehicleInstrumentGauge: React.FC<GaugeProps> = ({
       {available && <path d={arc(minDeg, Math.max(minDeg + .1,end),123)} stroke={accentColor} strokeWidth="4" strokeLinecap="round" fill="none"/>}
       {ticks}
       {available && <>
-        <line x1="160" y1="160" x2={needle.x} y2={needle.y} stroke={accentColor} strokeWidth="4" strokeLinecap="round" className="zf-gauge-needle"/>
+        <g className="zf-gauge-needle-sweep" style={{transform: `rotate(${(normalized * sweep).toFixed(2)}deg)`, transformOrigin: "160px 160px"}}>
+          <line x1="160" y1="160" x2={needleRest.x} y2={needleRest.y} stroke={accentColor} strokeWidth="4" strokeLinecap="round"/>
+        </g>
         <circle cx="160" cy="160" r="12" fill="#172c3d" stroke={accentColor} strokeWidth="3"/>
         <circle cx="160" cy="160" r="4" fill="#d5faff"/>
       </>}
-      <text x="160" y="212" textAnchor="middle" fill="#f3fcff" fontSize="37" fontWeight="900" fontFamily="Inter,Arial,sans-serif">{available ? Math.round(value! / divisor) : '—'}</text>
+      <text x="160" y="212" textAnchor="middle" fill="#f3fcff" fontSize={divisor === 1000 ? "32" : "37"} fontWeight="900" fontFamily="Inter,Arial,sans-serif">{available ? (divisor === 1000 ? Math.round(value!).toLocaleString("en-US") : Math.round(value!)) : '—'}</text>
       <text x="160" y="234" textAnchor="middle" fill="#89bdd6" fontSize="13" fontWeight="800">{unit}</text>
       <text x="160" y="267" textAnchor="middle" fill={stale ? '#ffd08c' : '#56deb9'} fontSize="10">{stale ? 'آخر قراءة محفوظة' : available ? 'قراءة الجهاز' : 'بانتظار بيانات الجهاز'}</text>
     </svg>
