@@ -143,6 +143,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
   const measurementMs = record?.timestampMs && Number.isFinite(record.timestampMs)
     ? record.timestampMs : record?.timestamp ? new Date(record.timestamp).getTime() : NaN;
   const receivedMs = telemetry?.receivedAt ? new Date(telemetry.receivedAt).getTime() : NaN;
+  const measurementDate = Number.isFinite(measurementMs) ? new Date(measurementMs) : null;
   const validMeasurementMs = Number.isFinite(measurementMs) && measurementMs <= clockNow + 120000 ? measurementMs : NaN;
   const lastReadingMs = Number.isFinite(validMeasurementMs) ? validMeasurementMs : receivedMs;
   const readingAgeSeconds = Number.isFinite(lastReadingMs) ? Math.max(0, Math.floor((clockNow-lastReadingMs)/1000)) : null;
