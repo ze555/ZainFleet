@@ -393,3 +393,9 @@
  .zf-auto-lcd-line b{font-size:12px}.zf-auto-lcd-line small{font-size:7px}
  .zf-auto-lcd-footer{font-size:7px}
 }
+
+/* Smooth real-telemetry needle sweep; no generated RPM/speed readings. */
+.zf-gauge-needle-sweep{transition:transform .65s cubic-bezier(.23,1,.32,1);will-change:transform}
+.zf-real-gauge svg{filter:drop-shadow(0 0 14px #0fa7ff36)}
+.zf-real-gauge-amber svg{filter:drop-shadow(0 0 14px #ffa02f33)}
+@media(prefers-reduced-motion:reduce){.zf-gauge-needle-sweep{transition:none!important}}
