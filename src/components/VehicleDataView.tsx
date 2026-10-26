@@ -590,6 +590,22 @@ export const VehicleDataView: React.FC<VehicleDataViewProps> = ({
       {/* SUBTAB 2: فحص كمبيوتر السيارة وأكواد الأعطال (Diagnostics & DTC) */}
       {subTab === 'dtc' && (
         <div className="space-y-4">
+          <section className="rounded-2xl border border-amber-400/60 bg-[#321d12] p-4 text-amber-100" dir={isAr ? 'rtl' : 'ltr'}>
+            <div className="flex items-center gap-2 font-extrabold text-sm"><ShieldAlert size={20}/>{isAr ? 'حالة Check Engine وقراءة الأعطال' : 'Check Engine and DTC availability'}</div>
+            <p className="text-xs leading-7 mt-2">
+              {metrics.diagnostic.milActive && hasMilReport
+                ? (isAr ? 'وصل مؤشر لمبة المحرك مضاءة. إذا لم تصل أكواد DTC فلا يمكن معرفة سبب التحذير من هذه البيانات وحدها.' : 'MIL flag is active. If DTC codes are absent, the cause cannot be determined from this packet.')
+                : !hasMilReport
+                ? (isAr ? 'حالة لمبة المحرك غير مؤكدة من الجهاز في هذه القراءة. إن كانت اللمبة مضاءة في السيارة، يلزم فحص OBD وإرسال رموز الأعطال.' : 'MIL state is not confirmed by this record. If the dashboard lamp is on, request OBD diagnostic codes.')
+                : (isAr ? 'لا يظهر بتّ تحذير المحرك بحسب التفسير الحالي لـ AVL 132؛ هذا لا يثبت خلو السيارة من الأعطال.' : 'MIL flag not detected using current AVL 132 mapping; this does not prove no vehicle faults.')}
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="rounded-lg border border-amber-500/30 bg-black/20 p-2"><span className="block opacity-70">ID 30 / 160</span><strong>{reportedDtcIds.some(el=>el.id===30||el.id===160) ? dtcCount : '—'}</strong></div>
+              <div className="rounded-lg border border-amber-500/30 bg-black/20 p-2"><span className="block opacity-70">ID 282</span><strong>{hasDtcCodes ? metrics.diagnostic.dtcCodes.length : reportedDtcIds.some(el=>el.id===282) ? '0' : '—'}</strong></div>
+              <div className="rounded-lg border border-amber-500/30 bg-black/20 p-2"><span className="block opacity-70">ID 132</span><strong>{hasMilReport ? (metrics.diagnostic.milActive ? 'MIL ON*' : 'MIL OFF*') : '—'}</strong></div>
+            </div>
+            <p className="text-[11px] mt-3 leading-6 opacity-80">{isAr ? '* تفسير ID 132 يحتاج مطابقة مع تعريف برنامج CAN الفعلي. لا يتم اختراع أكواد أعطال لم تصل من السيارة.' : '* ID 132 interpretation requires verification against actual CAN vehicle program. No missing fault codes are fabricated.'}</p>
+          </section>
           {/* Header Card with Check Engine Lamp & Active DTC Count */}
           <div className="bg-white rounded-[24px] border border-slate-200/80 shadow-sm p-5 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
