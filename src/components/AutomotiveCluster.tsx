@@ -1,7 +1,7 @@
 import React from 'react';
 import { VehicleInstrumentGauge } from './VehicleInstrumentGauge.js';
 
-type Props = { speed?:number|null; rpm?:number|null; fuel?:number|null; temperature?:number|null; odometer?:number|null; online:boolean; stale:boolean; lang:'ar'|'en' };
+type Props = { speed?:number|null; rpm?:number|null; fuel?:number|null; temperature?:number|null; odometer?:number|null; online:boolean; stale:boolean; readingAgeText?:string; rpmSource?:string; lang:'ar'|'en' };
 const MiniGauge:React.FC<{value?:number|null;min:number;max:number;left:string;right:string;label:string;unit:string;warnHigh?:boolean}>=({value,min,max,left,right,label,unit,warnHigh})=>{
  const valid=value!=null&&Number.isFinite(value)&&value>=min&&value<=max;
  const angle=valid?-65+((value!-min)/(max-min))*130:-65;
@@ -11,7 +11,7 @@ const MiniGauge:React.FC<{value?:number|null;min:number;max:number;left:string;r
   <strong className={warnHigh&&valid&&value!>105?'zf-mini-hot':''}>{valid?`${Math.round(value!)}${unit}`:'—'}</strong>
  </div>;
 };
-export const AutomotiveCluster:React.FC<Props>=({speed,rpm,fuel,temperature,odometer,online,stale,lang})=>{
+export const AutomotiveCluster:React.FC<Props>=({speed,rpm,fuel,temperature,odometer,online,stale,readingAgeText,rpmSource,lang})=>{
  const ar=lang==='ar';
  const validFuel=fuel!=null&&Number.isFinite(fuel)&&fuel>=0&&fuel<=100?fuel:null;
  return <section className="zf-auto-cluster" aria-label={ar?'عدادات السيارة المباشرة':'Live vehicle dashboard'}>
@@ -37,6 +37,7 @@ export const AutomotiveCluster:React.FC<Props>=({speed,rpm,fuel,temperature,odom
    </div>
    <div className="zf-auto-large-dial"><VehicleInstrumentGauge label={ar?'عداد السرعة':'SPEEDOMETER'} value={speed} max={240} majorStep={40} unit="km/h" accent="cyan" stale={stale}/></div>
   </div>
+  <div className="zf-auto-caption" role="status">{ar?'مصدر RPM':'RPM source'}: {rpmSource||'—'} · {ar?'عمر آخر قراءة':'Reading age'}: {readingAgeText||'—'} · {stale ? (ar?'القراءة قديمة وليست بثاً لحظياً':'Historical reading, not live') : (ar?'قراءة حديثة':'Recent reading')}</div>
   <p className="zf-auto-caption">{ar?'العدادات تعرض البيانات المستلمة فعلياً؛ علامة — تعني عدم توفر القراءة.':'Gauges show only received data; — indicates unavailable readings.'}</p>
  </section>;
 };

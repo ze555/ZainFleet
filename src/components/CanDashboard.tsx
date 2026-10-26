@@ -134,10 +134,23 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
   }, [record?.latitude, record?.longitude]);
 
   // Freshness check: measurement time vs current time
-  const measurementDate = record ? new Date(record.timestamp) : null;
-  const isStale = measurementDate
-    ? Date.now() - measurementDate.getTime() > 5 * 60 * 1000
-    : true;
+  // A browser poll is not a new vehicle reading. Respect the AVL measurement time.
+  const [clockNow, setClockNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const measurementMs = record?.timestampMs && Number.isFinite(record.timestampMs)
+    ? record.timestampMs : record?.timestamp ? new Date(record.timestamp).getTime() : NaN;
+  const receivedMs = telemetry?.receivedAt ? new Date(telemetry.receivedAt).getTime() : NaN;
+  const validMeasurementMs = Number.isFinite(measurementMs) && measurementMs <= clockNow + 120000 ? measurementMs : NaN;
+  const lastReadingMs = Number.isFinite(validMeasurementMs) ? validMeasurementMs : receivedMs;
+  const readingAgeSeconds = Number.isFinite(lastReadingMs) ? Math.max(0, Math.floor((clockNow-lastReadingMs)/1000)) : null;
+  const isStale = readingAgeSeconds === null || readingAgeSeconds > 15;
+  const readingAgeText = readingAgeSeconds === null ? (isAr ? 'لا توجد قراءة' : 'No reading')
+    : readingAgeSeconds < 60 ? `${readingAgeSeconds} ${isAr ? 'ثانية' : 'sec'}`
+    : readingAgeSeconds < 3600 ? `${Math.floor(readingAgeSeconds/60)} ${isAr ? 'دقيقة' : 'min'}`
+    : `${Math.floor(readingAgeSeconds/3600)} ${isAr ? 'ساعة' : 'hr'}`;
 
   const handleSaveName = () => {
     if (editedName.trim()) {
@@ -169,6 +182,8 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             odometer={metrics?.odometer.totalKm}
             online={Boolean(device.tcpConnected)}
             stale={isStale}
+            readingAgeText={readingAgeText}
+            rpmSource={record?.ioElements?.some(io=>io.id===85) ? 'AVL 85' : record?.ioElements?.some(io=>io.id===36) ? 'AVL 36' : '—'}
             lang={lang}
           />
           <div className="zf-premium-fuel" dir={isAr?'rtl':'ltr'}>
