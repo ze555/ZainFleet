@@ -1,19 +1,20 @@
 import React from 'react';
 import { VehicleInstrumentGauge } from './VehicleInstrumentGauge.js';
 
-type Props = { speed?:number|null; rpm?:number|null; fuel?:number|null; fuelLiters?:number|null; temperature?:number|null; odometer?:number|null; online:boolean; stale:boolean; readingAgeText?:string; rpmSource?:string; lang:'ar'|'en' };
-const MiniGauge:React.FC<{value?:number|null;min:number;max:number;left:string;right:string;label:string;unit:string;warnHigh?:boolean}>=({value,min,max,left,right,label,unit,warnHigh})=>{
+type Props = { speed?:number|null; rpm?:number|null; fuel?:number|null; fuelLiters?:number|null; tankCapacity?:number|null; temperature?:number|null; odometer?:number|null; online:boolean; stale:boolean; readingAgeText?:string; rpmSource?:string; lang:'ar'|'en' };
+const MiniGauge:React.FC<{value?:number|null;min:number;max:number;left:string;right:string;label:string;unit:string;warnHigh?:boolean;displayText?:string}>=({value,min,max,left,right,label,unit,warnHigh,displayText})=>{
  const valid=value!=null&&Number.isFinite(value)&&value>=min&&value<=max;
  const angle=valid?-65+((value!-min)/(max-min))*130:0;
  return <div className="zf-cluster-mini">
   <div className="zf-cluster-mini-scale"><span>{left}</span><span>{label}</span><span>{right}</span></div>
   <div className="zf-cluster-mini-arc">{valid && <div className="zf-cluster-mini-needle" style={{transform:`translateX(-50%) rotate(${angle}deg)`}}/>}</div>
-  <strong className={warnHigh&&valid&&value!>105?'zf-mini-hot':''}>{valid?`${Math.round(value!)}${unit}`:'—'}</strong>
+  <strong className={warnHigh&&valid&&value!>105?'zf-mini-hot':''}>{displayText ?? (valid?`${Math.round(value!)}${unit}`:'—')}</strong>
  </div>;
 };
-export const AutomotiveCluster:React.FC<Props>=({speed,rpm,fuel,fuelLiters,temperature,odometer,online,stale,readingAgeText,rpmSource,lang})=>{
+export const AutomotiveCluster:React.FC<Props>=({speed,rpm,fuel,fuelLiters,tankCapacity,temperature,odometer,online,stale,readingAgeText,rpmSource,lang})=>{
  const ar=lang==='ar';
- const validFuel=fuel!=null&&Number.isFinite(fuel)&&fuel>=0&&fuel<=100?fuel:null;
+ const derivedFuel = fuel == null && fuelLiters != null && Number.isFinite(fuelLiters) && fuelLiters >= 0 && tankCapacity != null && Number.isFinite(tankCapacity) && tankCapacity > 0 && tankCapacity <= 1000 ? Math.min(100, Math.max(0, fuelLiters / tankCapacity * 100)) : null;
+ const validFuel = fuel!=null&&Number.isFinite(fuel)&&fuel>=0&&fuel<=100 ? fuel : derivedFuel;
  return <section className="zf-auto-cluster" aria-label={ar?'عدادات السيارة المباشرة':'Live vehicle dashboard'}>
   <div className="zf-auto-cluster-top">
    <span className={online?'zf-auto-live':'zf-auto-offline'}>● {online?(ar?'الجهاز متصل':'ONLINE'):(ar?'آخر بيانات محفوظة':'OFFLINE')}</span>
@@ -26,7 +27,7 @@ export const AutomotiveCluster:React.FC<Props>=({speed,rpm,fuel,fuelLiters,tempe
    <div className="zf-auto-center">
     <div className="zf-auto-minis">
      <MiniGauge value={temperature} min={40} max={120} left="C" right="H" label={ar?'حرارة':'TEMP'} unit="°C" warnHigh/>
-     <MiniGauge value={validFuel} min={0} max={100} left="E" right="F" label={ar?'وقود':'FUEL'} unit="%"/>
+     <MiniGauge value={validFuel} min={0} max={100} left="E" right="F" label={ar?'وقود':'FUEL'} unit="%" displayText={fuelLiters!=null && Number.isFinite(fuelLiters) && fuelLiters >= 0 ? `${fuelLiters.toFixed(1)} L` : validFuel!=null ? `${Math.round(validFuel)}%` : '—'}/>
     </div>
     <div className="zf-auto-lcd">
      <div className="zf-auto-lcd-label">{ar?'لوحة بيانات المركبة':'VEHICLE DATA'}</div>
