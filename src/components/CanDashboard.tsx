@@ -180,6 +180,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             rpm={metrics?.engine.rpm}
             fuel={fuelPercentage}
             fuelLiters={fuelLiters}
+            tankCapacity={tankLiters > 0 && tankLiters <= 1000 ? tankLiters : null}
             temperature={metrics?.engine.coolantTempC}
             odometer={metrics?.odometer.totalKm}
             online={Boolean(device.tcpConnected)}
