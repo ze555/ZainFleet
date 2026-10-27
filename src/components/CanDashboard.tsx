@@ -179,6 +179,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             speed={record?.speed}
             rpm={metrics?.engine.rpm}
             fuel={fuelPercentage}
+            fuelLiters={fuelLiters}
             temperature={metrics?.engine.coolantTempC}
             odometer={metrics?.odometer.totalKm}
             online={Boolean(device.tcpConnected)}
