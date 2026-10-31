@@ -21,6 +21,8 @@ export const UsersManagement:React.FC=()=>{
  const confirmAction=(message:string)=>new Promise<boolean>(resolve=>{confirmResolver.current=resolve;setConfirmation(message);});
  const answerConfirmation=(ok:boolean)=>{setConfirmation(null);confirmResolver.current?.(ok);confirmResolver.current=null;};
  const [search,setSearch]=useState('');
+ const [editing,setEditing]=useState<string|null>(null);
+ const [draft,setDraft]=useState<ManagedUser|null>(null);
  const [role,setRole]=useState<'company_admin'|'user'>('user');
  const [companyId,setCompanyId]=useState('');
  const [selected,setSelected]=useState<string[]>([]);
@@ -38,6 +40,20 @@ export const UsersManagement:React.FC=()=>{
  const assign=async(imei:string,next:string)=>{if(!await confirmAction('تأكيد '+(next?'تخصيص':'سحب')+' IMEI: '+imei+'؟'))return;try{await api('/api/admin/devices/'+encodeURIComponent(imei)+'/company',{method:'PUT',body:JSON.stringify({companyId:next||null})});await reload();}catch(e){setMessage(String(e));}};
  const create=async(e:React.FormEvent)=>{e.preventDefault();if(!await confirmAction('هل تؤكد حفظ '+displayName+' وربط '+selected.length+' جهاز؟'))return;setSaving(true);try{await api('/api/admin/users',{method:'POST',body:JSON.stringify({username,displayName,password,role,companyId:actualCompany||null,devices:selected,phone,email,vehicleType,plateNumber})});setUsername('');setDisplayName('');setPassword('');setPhone('');setEmail('');setVehicleType('');setPlateNumber('');setSelected([]);setMessage('تم إنشاء الحساب');await reload();}catch(e){setMessage(String(e));}finally{setSaving(false);}};
  const edit=async(user:ManagedUser,next:Partial<ManagedUser>)=>{if(!await confirmAction('تأكيد تعديل صلاحيات '+user.displayName+'؟'))return;try{const isDeviceChange=next.devices!==undefined;await api('/api/admin/users/'+encodeURIComponent(user.username)+(isDeviceChange?'/devices':''),{method:'PUT',body:JSON.stringify(isDeviceChange?{devices:next.devices}:{...user,...next})});setMessage(isDeviceChange?'تم تحديث ربط IMEI بالمستخدم':'تم تحديث المستخدم');await reload();}catch(e){setMessage(String(e));}};
+ const removeUser=async(user:ManagedUser)=>{
+  if(!await confirmAction('حذف حساب '+user.displayName+' نهائياً؟ لن يُحذف أي جهاز IMEI أو سجل رحلة.'))return;
+  setSaving(true);
+  try{await api('/api/admin/users/'+encodeURIComponent(user.username),{method:'DELETE'});setMessage('تم حذف المستخدم دون حذف بيانات السيارة');await reload();}
+  catch(e){setMessage(String(e));}finally{setSaving(false);}
+ };
+ const saveUser=async()=>{
+  if(!draft)return;
+  if(!draft.displayName.trim()){setMessage('اسم المستخدم مطلوب');return;}
+  if(!await confirmAction('تأكيد حفظ بيانات '+draft.displayName+'؟'))return;
+  setSaving(true);
+  try{await api('/api/admin/users/'+encodeURIComponent(draft.username),{method:'PUT',body:JSON.stringify(draft)});setEditing(null);setDraft(null);setMessage('تم حفظ بيانات المستخدم');await reload();}
+  catch(e){setMessage(String(e));}finally{setSaving(false);}
+ };
  const isAdmin=data?.role==='admin';
  const actualCompany=isAdmin?(role==='user'?'':companyId):data?.companyId||'';
  const available=(data?.devices||[]).filter(d=>isAdmin ? (actualCompany ? assignments[d.imei]===actualCompany : !assignments[d.imei]) : true);
@@ -71,6 +87,14 @@ export const UsersManagement:React.FC=()=>{
    <div className="bg-[#0a2038] rounded-2xl p-5 border border-sky-800 space-y-3"><h3 className="font-bold flex gap-2"><Users className="text-cyan-300"/>{isAdmin?'الحسابات والمديرون':'السائقون وأجهزتهم'}</h3><input aria-label="بحث عن مستخدم" value={search} onChange={e=>setSearch(e.target.value)} placeholder="ابحث بالاسم أو الهاتف أو اسم الدخول..." className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/>
     {visibleUsers.map(user=><article key={user.username} className="rounded-xl p-3 bg-slate-900 border border-sky-800 space-y-2">
       <div className="flex justify-between gap-2"><div><b>{user.displayName}</b><p className="text-xs text-slate-400">{user.username} — {user.role==='company_admin'?'مدير شركة':isAdmin?'فرد مستقل':'سائق'}</p>{(user.phone||user.email||user.vehicleType||user.plateNumber)&&<div className="text-xs text-slate-300 flex flex-wrap gap-x-4 gap-y-1 mt-2">{user.phone&&<span>☎ {user.phone}</span>}{user.email&&<span>✉ {user.email}</span>}{user.vehicleType&&<span>🚘 {user.vehicleType}</span>}{user.plateNumber&&<span>رقم اللوحة: {user.plateNumber}</span>}</div>}</div><label className="text-xs"><input type="checkbox" checked={user.enabled} onChange={e=>void edit(user,{enabled:e.target.checked})}/> مفعّل</label></div>
+      <div className="flex gap-2 flex-wrap"><button type="button" className="px-3 py-2 text-xs rounded-xl bg-sky-700 font-bold" onClick={()=>{setEditing(user.username);setDraft({...user});}}>تعديل بيانات السائق</button>{user.role==='user'&&<button type="button" disabled={saving} className="px-3 py-2 text-xs rounded-xl bg-rose-800 font-bold" onClick={()=>void removeUser(user)}>حذف المستخدم</button>}</div>
+      {editing===user.username&&draft&&<div className="p-4 rounded-2xl border border-cyan-500/50 bg-[#0b2945] space-y-3">
+        <h4 className="font-extrabold text-cyan-200">تعديل بيانات {user.displayName}</h4>
+        <div className="grid gap-2 sm:grid-cols-2">
+        {([['displayName','الاسم الكامل'],['phone','رقم الهاتف'],['email','البريد الإلكتروني'],['vehicleType','نوع السيارة'],['plateNumber','رقم اللوحة']] as const).map(([field,label])=><label key={field} className="text-xs flex flex-col gap-1">{label}<input className="rounded-lg p-2 bg-slate-950 border border-sky-700" value={draft[field]||''} onChange={e=>setDraft(x=>x?{...x,[field]:e.target.value}:x)}/></label>)}
+        </div>
+        <div className="flex gap-2"><button type="button" disabled={saving} onClick={()=>void saveUser()} className="px-4 py-2 rounded-lg bg-cyan-600 font-bold">تأكيد وحفظ</button><button type="button" onClick={()=>{setEditing(null);setDraft(null);}} className="px-4 py-2 rounded-lg bg-slate-700">إلغاء</button></div>
+      </div>}
       <div className="flex flex-wrap gap-2">{(data.devices||[]).filter(d=>!isAdmin||(user.companyId ? assignments[d.imei]===user.companyId : !assignments[d.imei])).map(d=><label key={d.imei} className="text-xs bg-slate-800 p-2 rounded-lg"><input type="checkbox" checked={user.devices.includes(d.imei)} onChange={e=>void edit(user,{devices:e.target.checked?[...user.devices,d.imei]:user.devices.filter(v=>v!==d.imei)})}/> {d.name||d.imei}</label>)}</div>
     </article>)}
    </div>
