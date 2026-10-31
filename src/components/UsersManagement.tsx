@@ -23,6 +23,9 @@ export const UsersManagement:React.FC=()=>{
  const [search,setSearch]=useState('');
  const [editing,setEditing]=useState<string|null>(null);
  const [draft,setDraft]=useState<ManagedUser|null>(null);
+ const [profilePassword,setProfilePassword]=useState('');
+ const [profilePasswordAgain,setProfilePasswordAgain]=useState('');
+ const openProfile=(u:ManagedUser)=>{setEditing(u.username);setDraft({...u});setProfilePassword('');setProfilePasswordAgain('');};
  const [role,setRole]=useState<'company_admin'|'user'>('user');
  const [companyId,setCompanyId]=useState('');
  const [selected,setSelected]=useState<string[]>([]);
@@ -52,6 +55,15 @@ export const UsersManagement:React.FC=()=>{
   if(!await confirmAction('تأكيد حفظ بيانات '+draft.displayName+'؟'))return;
   setSaving(true);
   try{await api('/api/admin/users/'+encodeURIComponent(draft.username),{method:'PUT',body:JSON.stringify(draft)});setEditing(null);setDraft(null);setMessage('تم حفظ بيانات المستخدم');await reload();}
+  catch(e){setMessage(String(e));}finally{setSaving(false);}
+ };
+ const saveProfilePassword=async()=>{
+  if(!draft)return;
+  if(profilePassword.length<10){setMessage('كلمة المرور يجب أن تكون 10 أحرف على الأقل');return;}
+  if(profilePassword!==profilePasswordAgain){setMessage('كلمتا المرور غير متطابقتين');return;}
+  if(!await confirmAction('هل تؤكد إعادة تعيين كلمة مرور '+draft.displayName+'؟'))return;
+  setSaving(true);
+  try{await api('/api/admin/users/'+encodeURIComponent(draft.username)+'/password',{method:'PUT',body:JSON.stringify({password:profilePassword})});setProfilePassword('');setProfilePasswordAgain('');setMessage('تم تغيير كلمة المرور بنجاح');}
   catch(e){setMessage(String(e));}finally{setSaving(false);}
  };
  const isAdmin=data?.role==='admin';
@@ -87,18 +99,31 @@ export const UsersManagement:React.FC=()=>{
    <div className="bg-[#0a2038] rounded-2xl p-5 border border-sky-800 space-y-3"><h3 className="font-bold flex gap-2"><Users className="text-cyan-300"/>{isAdmin?'الحسابات والمديرون':'السائقون وأجهزتهم'}</h3><input aria-label="بحث عن مستخدم" value={search} onChange={e=>setSearch(e.target.value)} placeholder="ابحث بالاسم أو الهاتف أو اسم الدخول..." className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/>
     {visibleUsers.map(user=><article key={user.username} className="rounded-xl p-3 bg-slate-900 border border-sky-800 space-y-2">
       <div className="flex justify-between gap-2"><div><b>{user.displayName}</b><p className="text-xs text-slate-400">{user.username} — {user.role==='company_admin'?'مدير شركة':isAdmin?'فرد مستقل':'سائق'}</p>{(user.phone||user.email||user.vehicleType||user.plateNumber)&&<div className="text-xs text-slate-300 flex flex-wrap gap-x-4 gap-y-1 mt-2">{user.phone&&<span>☎ {user.phone}</span>}{user.email&&<span>✉ {user.email}</span>}{user.vehicleType&&<span>🚘 {user.vehicleType}</span>}{user.plateNumber&&<span>رقم اللوحة: {user.plateNumber}</span>}</div>}</div><label className="text-xs"><input type="checkbox" checked={user.enabled} onChange={e=>void edit(user,{enabled:e.target.checked})}/> مفعّل</label></div>
-      <div className="flex gap-2 flex-wrap"><button type="button" className="px-3 py-2 text-xs rounded-xl bg-sky-700 font-bold" onClick={()=>{setEditing(user.username);setDraft({...user});}}>تعديل بيانات السائق</button>{user.role==='user'&&<button type="button" disabled={saving} className="px-3 py-2 text-xs rounded-xl bg-rose-800 font-bold" onClick={()=>void removeUser(user)}>حذف المستخدم</button>}</div>
-      {editing===user.username&&draft&&<div className="p-4 rounded-2xl border border-cyan-500/50 bg-[#0b2945] space-y-3">
-        <h4 className="font-extrabold text-cyan-200">تعديل بيانات {user.displayName}</h4>
-        <div className="grid gap-2 sm:grid-cols-2">
-        {([['displayName','الاسم الكامل'],['phone','رقم الهاتف'],['email','البريد الإلكتروني'],['vehicleType','نوع السيارة'],['plateNumber','رقم اللوحة']] as const).map(([field,label])=><label key={field} className="text-xs flex flex-col gap-1">{label}<input className="rounded-lg p-2 bg-slate-950 border border-sky-700" value={draft[field]||''} onChange={e=>setDraft(x=>x?{...x,[field]:e.target.value}:x)}/></label>)}
-        </div>
-        <div className="flex gap-2"><button type="button" disabled={saving} onClick={()=>void saveUser()} className="px-4 py-2 rounded-lg bg-cyan-600 font-bold">تأكيد وحفظ</button><button type="button" onClick={()=>{setEditing(null);setDraft(null);}} className="px-4 py-2 rounded-lg bg-slate-700">إلغاء</button></div>
-      </div>}
+      <div className="flex gap-2 flex-wrap"><button type="button" className="px-3 py-2 text-xs rounded-xl bg-sky-700 font-bold" onClick={()=>openProfile(user)}>عرض الملف الشخصي</button>{user.role==='user'&&<button type="button" disabled={saving} className="px-3 py-2 text-xs rounded-xl bg-rose-800 font-bold" onClick={()=>void removeUser(user)}>حذف المستخدم</button>}</div>
       <div className="flex flex-wrap gap-2">{(data.devices||[]).filter(d=>!isAdmin||(user.companyId ? assignments[d.imei]===user.companyId : !assignments[d.imei])).map(d=><label key={d.imei} className="text-xs bg-slate-800 p-2 rounded-lg"><input type="checkbox" checked={user.devices.includes(d.imei)} onChange={e=>void edit(user,{devices:e.target.checked?[...user.devices,d.imei]:user.devices.filter(v=>v!==d.imei)})}/> {d.name||d.imei}</label>)}</div>
     </article>)}
    </div>
   </div>
+  {editing && draft && <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/85 backdrop-blur-md p-3 sm:p-6" role="presentation">
+    <div role="dialog" aria-modal="true" aria-labelledby="zf-profile-title" className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[2rem] border border-cyan-400/50 bg-gradient-to-bl from-[#123c61] via-[#0b213c] to-[#070f20] shadow-[0_0_90px_rgba(14,165,233,.2)] p-5 sm:p-7 space-y-5">
+      <div className="flex justify-between items-start gap-3"><div><p className="text-cyan-300 text-xs font-bold">ZAINFLEET · USER PROFILE</p><h3 id="zf-profile-title" className="font-black text-2xl mt-2">{draft.displayName}</h3><p className="text-slate-300 text-sm mt-1">@{draft.username} · {draft.role==='company_admin'?'مدير شركة':'مستخدم / سائق'}</p></div><button type="button" onClick={()=>{setEditing(null);setDraft(null);setProfilePassword('');setProfilePasswordAgain('');}} className="rounded-xl bg-slate-800 border border-sky-800 px-4 py-2">إغلاق ×</button></div>
+      <div className="flex flex-wrap gap-2"><span className="rounded-xl bg-sky-900/60 px-3 py-2 text-xs">الحالة: {draft.enabled?'مفعّل':'موقوف'}</span><span className="rounded-xl bg-sky-900/60 px-3 py-2 text-xs">الأجهزة المخصصة: {draft.devices.length}</span><span className="rounded-xl bg-sky-900/60 px-3 py-2 text-xs">اسم الدخول: {draft.username}</span></div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {([['displayName','الاسم الكامل'],['phone','رقم الهاتف'],['email','البريد الإلكتروني'],['vehicleType','نوع السيارة'],['plateNumber','رقم لوحة السيارة']] as const).map(([field,label])=><label key={field} className="flex flex-col gap-2 text-xs text-slate-200">{label}<input type={field==='email'?'email':'text'} maxLength={field==='email'?150:field==='displayName'||field==='vehicleType'?100:field==='phone'?35:40} className="bg-[#06162a] border border-sky-700 rounded-xl p-3 text-white" value={draft[field]||''} onChange={e=>setDraft(x=>x?{...x,[field]:e.target.value}:x)}/></label>)}
+      </div>
+      <div className="border border-sky-700/50 rounded-2xl bg-slate-950/40 p-4 space-y-2">
+        <h4 className="font-bold text-cyan-200">أجهزة IMEI المخصصة للمستخدم</h4>
+        {draft.devices.length?draft.devices.map(d=><span key={d} className="inline-block ml-2 mt-2 rounded-lg bg-sky-900/60 px-3 py-2 text-xs">{d}</span>):<p className="text-slate-400 text-sm">لا توجد أجهزة مخصصة</p>}
+        <p className="text-xs text-slate-400">لتعديل الأجهزة استخدم قائمة التخصيص الخاصة بالشركة.</p>
+      </div>
+      <button type="button" disabled={saving} onClick={()=>void saveUser()} className="w-full rounded-xl bg-gradient-to-l from-blue-700 to-cyan-500 font-bold p-3 disabled:opacity-50">تأكيد حفظ بيانات المستخدم</button>
+      <div className="border-t border-sky-700/50 pt-5 space-y-3"><h4 className="text-lg font-black text-cyan-200">تغيير كلمة المرور</h4><p className="text-xs text-slate-400">كلمة المرور القديمة لا يمكن عرضها. يمكنك تعيين كلمة جديدة فقط.</p>
+       <input type="password" autoComplete="new-password" minLength={10} maxLength={256} value={profilePassword} onChange={e=>setProfilePassword(e.target.value)} placeholder="كلمة مرور جديدة (10 أحرف على الأقل)" className="w-full rounded-xl bg-[#06162a] border border-sky-700 p-3"/>
+       <input type="password" autoComplete="new-password" minLength={10} maxLength={256} value={profilePasswordAgain} onChange={e=>setProfilePasswordAgain(e.target.value)} placeholder="تأكيد كلمة المرور الجديدة" className="w-full rounded-xl bg-[#06162a] border border-sky-700 p-3"/>
+       <button type="button" disabled={saving} onClick={()=>void saveProfilePassword()} className="w-full rounded-xl border border-cyan-400 bg-sky-900 p-3 font-bold disabled:opacity-50">تأكيد تغيير كلمة المرور</button>
+      </div>
+    </div>
+  </div>}
   {confirmation && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-5" role="presentation">
     <div role="alertdialog" aria-modal="true" aria-labelledby="zf-confirm-title" className="w-full max-w-md rounded-[2rem] border border-cyan-500/60 bg-gradient-to-br from-[#103d62] via-[#081e39] to-[#071122] p-6 text-white shadow-[0_0_75px_rgba(3,174,255,.2)]">
       <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl border border-sky-400/50 bg-sky-500/20"><CheckCircle2 size={28} className="text-cyan-300"/></div>
