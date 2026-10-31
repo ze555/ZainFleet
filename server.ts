@@ -657,6 +657,7 @@ app.put('/api/admin/users/:username',(req:Request,res:Response)=>{
  if(!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(companyId ? deviceCompanies[id]!==companyId : !!deviceCompanies[id]))){res.sendStatus(400);return;}
  const previous={...user};
  user.companyId=companyId;user.role=role;user.devices=[...new Set<string>(devices)];
+ if(typeof req.body?.displayName==='string' && req.body.displayName.trim() && req.body.displayName.length<=100)user.displayName=req.body.displayName.trim();
  if(typeof req.body?.enabled==='boolean')user.enabled=req.body.enabled;
  if(typeof req.body?.phone==='string'&&req.body.phone.length<=35)user.phone=req.body.phone.trim();
  if(typeof req.body?.email==='string'&&req.body.email.length<=150&&(!req.body.email||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.body.email)))user.email=req.body.email.trim();
