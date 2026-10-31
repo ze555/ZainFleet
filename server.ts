@@ -657,12 +657,27 @@ app.put('/api/admin/users/:username',(req:Request,res:Response)=>{
  if(!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(companyId ? deviceCompanies[id]!==companyId : !!deviceCompanies[id]))){res.sendStatus(400);return;}
  const previous={...user};
  user.companyId=companyId;user.role=role;user.devices=[...new Set<string>(devices)];
+ if(typeof req.body?.displayName==='string' && req.body.displayName.trim() && req.body.displayName.length<=100)user.displayName=req.body.displayName.trim();
  if(typeof req.body?.enabled==='boolean')user.enabled=req.body.enabled;
  if(typeof req.body?.phone==='string'&&req.body.phone.length<=35)user.phone=req.body.phone.trim();
  if(typeof req.body?.email==='string'&&req.body.email.length<=150&&(!req.body.email||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.body.email)))user.email=req.body.email.trim();
  if(typeof req.body?.vehicleType==='string'&&req.body.vehicleType.length<=100)user.vehicleType=req.body.vehicleType.trim();
  if(typeof req.body?.plateNumber==='string'&&req.body.plateNumber.length<=40)user.plateNumber=req.body.plateNumber.trim();
  try{saveFleetUsers();res.json({success:true});}catch{Object.assign(user,previous);res.sendStatus(507);}
+});
+// Company managers may remove ONLY their own ordinary users; tracker ownership is never deleted.
+app.delete('/api/admin/users/:username',(req:Request,res:Response)=>{
+ const actor=managerScope(req);
+ if(!actor){res.sendStatus(403);return;}
+ const index=fleetUsers.findIndex(u=>u.username===req.params.username);
+ const target=index>=0?fleetUsers[index]:null;
+ if(!target || target.role==='company_admin' ||
+    (actor.role==='company_admin' ? target.companyId!==actor.companyId : !!target.companyId)){
+   res.status(403).json({error:'لا يمكنك حذف هذا الحساب'});return;
+ }
+ fleetUsers.splice(index,1);
+ try {saveFleetUsers();res.json({success:true});}
+ catch {fleetUsers.splice(index,0,target);res.status(507).json({error:'تعذر حفظ الحذف'});}
 });
 // Every vehicle endpoint is tenant-scoped, including diagnostics and destructive actions.
 app.use('/api',(req:Request,res:Response,next)=>{
