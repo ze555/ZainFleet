@@ -665,6 +665,19 @@ app.put('/api/admin/users/:username',(req:Request,res:Response)=>{
  if(typeof req.body?.plateNumber==='string'&&req.body.plateNumber.length<=40)user.plateNumber=req.body.plateNumber.trim();
  try{saveFleetUsers();res.json({success:true});}catch{Object.assign(user,previous);res.sendStatus(507);}
 });
+// Managers can reset passwords only for accounts they are authorized to manage.
+// Passwords are never returned by APIs; saving a reset invalidates the previous password.
+app.put('/api/admin/users/:username/password',(req:Request,res:Response)=>{
+ const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
+ const user=fleetUsers.find(u=>u.username===req.params.username);
+ if(!user || (actor.role==='admin' ? (!!user.companyId && user.role!=='company_admin') : (user.companyId!==actor.companyId || user.role==='company_admin'))){res.sendStatus(404);return;}
+ const password=req.body?.password;
+ if(typeof password!=='string'||password.length<10||password.length>256){res.status(400).json({error:'كلمة المرور يجب أن تتكون من 10 أحرف على الأقل'});return;}
+ const oldSalt=user.salt,oldHash=user.hash;
+ user.salt=crypto.randomBytes(16).toString('hex');user.hash=fleetPasswordHash(password,user.salt);
+ try{saveFleetUsers();res.setHeader('Cache-Control','no-store');res.json({success:true});}
+ catch{user.salt=oldSalt;user.hash=oldHash;res.status(507).json({error:'تعذر حفظ كلمة المرور'});}
+});
 // Company managers may remove ONLY their own ordinary users; tracker ownership is never deleted.
 app.delete('/api/admin/users/:username',(req:Request,res:Response)=>{
  const actor=managerScope(req);
