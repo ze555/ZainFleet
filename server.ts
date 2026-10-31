@@ -569,12 +569,12 @@ const GPS_REGISTRATIONS_PATH=path.join(DATA_DIR,'fleet_gps_protocol_registry.jso
 const gpsRegistrations=loadJson<Record<string,GpsRegistration>>(GPS_REGISTRATIONS_PATH,{});
 const GPS_PROTOCOLS:Record<GpsProtocol,{label:string;defaultTransport:'tcp'|'udp'|'http';port:number|null}> = {
  teltonika:{label:'Teltonika (FMB/FMC)',defaultTransport:'tcp',port:TCP_PORT},
- gt06:{label:'GT06 / Concox',defaultTransport:'tcp',port:5023},
- gps103:{label:'Coban GPS103',defaultTransport:'tcp',port:5001},
- queclink:{label:'Queclink',defaultTransport:'tcp',port:5024},
- ruptela:{label:'Ruptela',defaultTransport:'tcp',port:5046},
- suntech:{label:'Suntech',defaultTransport:'tcp',port:5011},
- topflytech:{label:'TopFlyTech',defaultTransport:'tcp',port:5022},
+ gt06:{label:'GT06 / Concox',defaultTransport:'tcp',port:null},
+ gps103:{label:'Coban GPS103',defaultTransport:'tcp',port:null},
+ queclink:{label:'Queclink',defaultTransport:'tcp',port:null},
+ ruptela:{label:'Ruptela',defaultTransport:'tcp',port:null},
+ suntech:{label:'Suntech',defaultTransport:'tcp',port:null},
+ topflytech:{label:'TopFlyTech',defaultTransport:'tcp',port:null},
  other:{label:'Other Traccar protocol (requires setup)',defaultTransport:'tcp',port:null}
 };
 app.get('/api/admin/gps-protocols',(req:Request,res:Response)=>{
