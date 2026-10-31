@@ -664,6 +664,20 @@ app.put('/api/admin/users/:username',(req:Request,res:Response)=>{
  if(typeof req.body?.plateNumber==='string'&&req.body.plateNumber.length<=40)user.plateNumber=req.body.plateNumber.trim();
  try{saveFleetUsers();res.json({success:true});}catch{Object.assign(user,previous);res.sendStatus(507);}
 });
+// Company managers may remove ONLY their own ordinary users; tracker ownership is never deleted.
+app.delete('/api/admin/users/:username',(req:Request,res:Response)=>{
+ const actor=managerScope(req);
+ if(!actor){res.sendStatus(403);return;}
+ const index=fleetUsers.findIndex(u=>u.username===req.params.username);
+ const target=index>=0?fleetUsers[index]:null;
+ if(!target || target.role==='company_admin' ||
+    (actor.role==='company_admin' ? target.companyId!==actor.companyId : !!target.companyId)){
+   res.status(403).json({error:'لا يمكنك حذف هذا الحساب'});return;
+ }
+ fleetUsers.splice(index,1);
+ try {saveFleetUsers();res.json({success:true});}
+ catch {fleetUsers.splice(index,0,target);res.status(507).json({error:'تعذر حفظ الحذف'});}
+});
 // Every vehicle endpoint is tenant-scoped, including diagnostics and destructive actions.
 app.use('/api',(req:Request,res:Response,next)=>{
  const who=sessionIdentity(req);if(!who){res.sendStatus(401);return;}
