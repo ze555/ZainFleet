@@ -1,8 +1,8 @@
-import React,{useEffect,useState} from 'react';
+import React,{useEffect,useRef,useState} from 'react';
 import {Building2,Users,UserPlus,RefreshCw,Car,Phone,Mail,Truck,CheckCircle2,Sparkles} from 'lucide-react';
 type Company={id:string;name:string;enabled:boolean;sector?:'rental'|'logistics'|'school'|'general'};
 type Device={imei:string;name?:string};
-type ManagedUser={username:string;displayName:string;devices:string[];enabled:boolean;role:'company_admin'|'user';companyId:string|null;phone?:string;email?:string;vehicleType?:string};
+type ManagedUser={username:string;displayName:string;devices:string[];enabled:boolean;role:'company_admin'|'user';companyId:string|null;phone?:string;email?:string;vehicleType?:string;plateNumber?:string};
 type Accounts={role:'admin'|'company_admin';companyId:string|null;admin:{username:string;displayName:string};users:ManagedUser[];devices:Device[];companies:Company[]};
 export const UsersManagement:React.FC=()=>{
  const [data,setData]=useState<Accounts|null>(null);
@@ -15,6 +15,11 @@ export const UsersManagement:React.FC=()=>{
  const [phone,setPhone]=useState('');
  const [email,setEmail]=useState('');
  const [vehicleType,setVehicleType]=useState('');
+ const [plateNumber,setPlateNumber]=useState('');
+ const [confirmation,setConfirmation]=useState<string|null>(null);
+ const confirmResolver=useRef<((ok:boolean)=>void)|null>(null);
+ const confirmAction=(message:string)=>new Promise<boolean>(resolve=>{confirmResolver.current=resolve;setConfirmation(message);});
+ const answerConfirmation=(ok:boolean)=>{setConfirmation(null);confirmResolver.current?.(ok);confirmResolver.current=null;};
  const [search,setSearch]=useState('');
  const [role,setRole]=useState<'company_admin'|'user'>('user');
  const [companyId,setCompanyId]=useState('');
@@ -29,10 +34,10 @@ export const UsersManagement:React.FC=()=>{
   }catch(e){setMessage(String(e));}
  };
  useEffect(()=>{void reload();},[]);
- const createCompany=async(e:React.FormEvent)=>{e.preventDefault();if(!window.confirm('هل تؤكد إنشاء الشركة '+companyName+'؟'))return;setSaving(true);try{await api('/api/admin/companies',{method:'POST',body:JSON.stringify({name:companyName,sector})});setCompanyName('');setMessage('تمت إضافة الشركة');await reload();}catch(e){setMessage(String(e));}finally{setSaving(false);}};
- const assign=async(imei:string,next:string)=>{if(!window.confirm('تأكيد '+(next?'تخصيص':'سحب')+' IMEI: '+imei+'؟'))return;try{await api('/api/admin/devices/'+encodeURIComponent(imei)+'/company',{method:'PUT',body:JSON.stringify({companyId:next||null})});await reload();}catch(e){setMessage(String(e));}};
- const create=async(e:React.FormEvent)=>{e.preventDefault();if(!window.confirm('هل تؤكد حفظ '+displayName+' وربط '+selected.length+' جهاز؟'))return;setSaving(true);try{await api('/api/admin/users',{method:'POST',body:JSON.stringify({username,displayName,password,role,companyId:actualCompany||null,devices:selected,phone,email,vehicleType})});setUsername('');setDisplayName('');setPassword('');setPhone('');setEmail('');setVehicleType('');setSelected([]);setMessage('تم إنشاء الحساب');await reload();}catch(e){setMessage(String(e));}finally{setSaving(false);}};
- const edit=async(user:ManagedUser,next:Partial<ManagedUser>)=>{if(!window.confirm('تأكيد تعديل صلاحيات '+user.displayName+'؟'))return;try{const isDeviceChange=next.devices!==undefined;await api('/api/admin/users/'+encodeURIComponent(user.username)+(isDeviceChange?'/devices':''),{method:'PUT',body:JSON.stringify(isDeviceChange?{devices:next.devices}:{...user,...next})});setMessage(isDeviceChange?'تم تحديث ربط IMEI بالمستخدم':'تم تحديث المستخدم');await reload();}catch(e){setMessage(String(e));}};
+ const createCompany=async(e:React.FormEvent)=>{e.preventDefault();if(!await confirmAction('هل تؤكد إنشاء الشركة '+companyName+'؟'))return;setSaving(true);try{await api('/api/admin/companies',{method:'POST',body:JSON.stringify({name:companyName,sector})});setCompanyName('');setMessage('تمت إضافة الشركة');await reload();}catch(e){setMessage(String(e));}finally{setSaving(false);}};
+ const assign=async(imei:string,next:string)=>{if(!await confirmAction('تأكيد '+(next?'تخصيص':'سحب')+' IMEI: '+imei+'؟'))return;try{await api('/api/admin/devices/'+encodeURIComponent(imei)+'/company',{method:'PUT',body:JSON.stringify({companyId:next||null})});await reload();}catch(e){setMessage(String(e));}};
+ const create=async(e:React.FormEvent)=>{e.preventDefault();if(!await confirmAction('هل تؤكد حفظ '+displayName+' وربط '+selected.length+' جهاز؟'))return;setSaving(true);try{await api('/api/admin/users',{method:'POST',body:JSON.stringify({username,displayName,password,role,companyId:actualCompany||null,devices:selected,phone,email,vehicleType,plateNumber})});setUsername('');setDisplayName('');setPassword('');setPhone('');setEmail('');setVehicleType('');setPlateNumber('');setSelected([]);setMessage('تم إنشاء الحساب');await reload();}catch(e){setMessage(String(e));}finally{setSaving(false);}};
+ const edit=async(user:ManagedUser,next:Partial<ManagedUser>)=>{if(!await confirmAction('تأكيد تعديل صلاحيات '+user.displayName+'؟'))return;try{const isDeviceChange=next.devices!==undefined;await api('/api/admin/users/'+encodeURIComponent(user.username)+(isDeviceChange?'/devices':''),{method:'PUT',body:JSON.stringify(isDeviceChange?{devices:next.devices}:{...user,...next})});setMessage(isDeviceChange?'تم تحديث ربط IMEI بالمستخدم':'تم تحديث المستخدم');await reload();}catch(e){setMessage(String(e));}};
  const isAdmin=data?.role==='admin';
  const actualCompany=isAdmin?(role==='user'?'':companyId):data?.companyId||'';
  const available=(data?.devices||[]).filter(d=>isAdmin ? (actualCompany ? assignments[d.imei]===actualCompany : !assignments[d.imei]) : true);
@@ -59,16 +64,27 @@ export const UsersManagement:React.FC=()=>{
     <input required minLength={3} maxLength={40} pattern="[a-zA-Z0-9_.-]{3,40}" placeholder="اسم الدخول" value={username} onChange={e=>setUsername(e.target.value)} className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/>
     <input required maxLength={100} placeholder="الاسم الكامل" value={displayName} onChange={e=>setDisplayName(e.target.value)} className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/>
     <input type="password" required minLength={10} placeholder="كلمة المرور (10 أحرف على الأقل)" value={password} onChange={e=>setPassword(e.target.value)} className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/>
-    {!isAdmin&&<div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><label className="text-xs text-slate-300 flex flex-col gap-2"><span className="flex gap-2 items-center"><Phone size={15}/>رقم الهاتف</span><input type="tel" maxLength={35} value={phone} onChange={e=>setPhone(e.target.value)} placeholder="09xxxxxxxx" className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/></label><label className="text-xs text-slate-300 flex flex-col gap-2"><span className="flex gap-2 items-center"><Mail size={15}/>البريد الإلكتروني</span><input type="email" maxLength={150} value={email} onChange={e=>setEmail(e.target.value)} placeholder="driver@example.com" className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/></label><label className="text-xs text-slate-300 flex flex-col gap-2 sm:col-span-2"><span className="flex gap-2 items-center"><Truck size={15}/>نوع السيارة</span><input maxLength={100} value={vehicleType} onChange={e=>setVehicleType(e.target.value)} placeholder="سوناتا / شاحنة / حافلة" className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/></label></div>}
+    {!isAdmin&&<div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><label className="text-xs text-slate-300 flex flex-col gap-2"><span className="flex gap-2 items-center"><Phone size={15}/>رقم الهاتف</span><input type="tel" maxLength={35} value={phone} onChange={e=>setPhone(e.target.value)} placeholder="09xxxxxxxx" className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/></label><label className="text-xs text-slate-300 flex flex-col gap-2"><span className="flex gap-2 items-center"><Mail size={15}/>البريد الإلكتروني</span><input type="email" maxLength={150} value={email} onChange={e=>setEmail(e.target.value)} placeholder="driver@example.com" className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/></label><label className="text-xs text-slate-300 flex flex-col gap-2 sm:col-span-2"><span className="flex gap-2 items-center"><Truck size={15}/>نوع السيارة</span><input maxLength={100} value={vehicleType} onChange={e=>setVehicleType(e.target.value)} placeholder="سوناتا / شاحنة / حافلة" className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/></label><label className="text-xs text-slate-300 flex flex-col gap-2 sm:col-span-2"><span>رقم لوحة السيارة</span><input maxLength={40} value={plateNumber} onChange={e=>setPlateNumber(e.target.value)} placeholder="رقم لوحة المركبة" className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/></label></div>}
     <fieldset><legend className="text-xs mb-2">اختر أجهزة IMEI التابعة لهذه الشركة</legend><div className="max-h-48 overflow-auto space-y-2">{available.map(d=><label key={d.imei} className="flex gap-2 p-2 rounded-lg bg-slate-900 text-xs"><input type="checkbox" checked={selected.includes(d.imei)} onChange={e=>setSelected(v=>e.target.checked?[...v,d.imei]:v.filter(i=>i!==d.imei))}/>{d.name||d.imei}</label>)}</div></fieldset>
     <button disabled={saving||(isAdmin&&role==='company_admin'&&!actualCompany)} className="w-full rounded-xl bg-gradient-to-l from-cyan-500 to-blue-700 hover:from-cyan-400 hover:to-blue-600 disabled:opacity-50 p-3.5 font-bold shadow-lg flex items-center justify-center gap-2"><CheckCircle2 size={18}/>{saving?'جارٍ الحفظ...':isAdmin?'تأكيد وحفظ الحساب':'تأكيد وإضافة السائق'}</button>
    </form>
    <div className="bg-[#0a2038] rounded-2xl p-5 border border-sky-800 space-y-3"><h3 className="font-bold flex gap-2"><Users className="text-cyan-300"/>{isAdmin?'الحسابات والمديرون':'السائقون وأجهزتهم'}</h3><input aria-label="بحث عن مستخدم" value={search} onChange={e=>setSearch(e.target.value)} placeholder="ابحث بالاسم أو الهاتف أو اسم الدخول..." className="w-full bg-slate-900 p-3 rounded-xl border border-sky-700"/>
     {visibleUsers.map(user=><article key={user.username} className="rounded-xl p-3 bg-slate-900 border border-sky-800 space-y-2">
-      <div className="flex justify-between gap-2"><div><b>{user.displayName}</b><p className="text-xs text-slate-400">{user.username} — {user.role==='company_admin'?'مدير شركة':isAdmin?'فرد مستقل':'سائق'}</p>{(user.phone||user.email||user.vehicleType)&&<div className="text-xs text-slate-300 flex flex-wrap gap-x-4 gap-y-1 mt-2">{user.phone&&<span>☎ {user.phone}</span>}{user.email&&<span>✉ {user.email}</span>}{user.vehicleType&&<span>🚘 {user.vehicleType}</span>}</div></div><label className="text-xs"><input type="checkbox" checked={user.enabled} onChange={e=>void edit(user,{enabled:e.target.checked})}/> مفعّل</label></div>
+      <div className="flex justify-between gap-2"><div><b>{user.displayName}</b><p className="text-xs text-slate-400">{user.username} — {user.role==='company_admin'?'مدير شركة':isAdmin?'فرد مستقل':'سائق'}</p>{(user.phone||user.email||user.vehicleType||user.plateNumber)&&<div className="text-xs text-slate-300 flex flex-wrap gap-x-4 gap-y-1 mt-2">{user.phone&&<span>☎ {user.phone}</span>}{user.email&&<span>✉ {user.email}</span>}{user.vehicleType&&<span>🚘 {user.vehicleType}</span>}{user.plateNumber&&<span>رقم اللوحة: {user.plateNumber}</span>}</div></div><label className="text-xs"><input type="checkbox" checked={user.enabled} onChange={e=>void edit(user,{enabled:e.target.checked})}/> مفعّل</label></div>
       <div className="flex flex-wrap gap-2">{(data.devices||[]).filter(d=>!isAdmin||(user.companyId ? assignments[d.imei]===user.companyId : !assignments[d.imei])).map(d=><label key={d.imei} className="text-xs bg-slate-800 p-2 rounded-lg"><input type="checkbox" checked={user.devices.includes(d.imei)} onChange={e=>void edit(user,{devices:e.target.checked?[...user.devices,d.imei]:user.devices.filter(v=>v!==d.imei)})}/> {d.name||d.imei}</label>)}</div>
     </article>)}
    </div>
   </div>
+  {confirmation && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-5" role="presentation">
+    <div role="alertdialog" aria-modal="true" aria-labelledby="zf-confirm-title" className="w-full max-w-md rounded-[2rem] border border-cyan-500/60 bg-gradient-to-br from-[#103d62] via-[#081e39] to-[#071122] p-6 text-white shadow-[0_0_75px_rgba(3,174,255,.2)]">
+      <div className="mb-4 grid h-14 w-14 place-items-center rounded-2xl border border-sky-400/50 bg-sky-500/20"><CheckCircle2 size={28} className="text-cyan-300"/></div>
+      <h3 id="zf-confirm-title" className="text-xl font-black">تأكيد العملية</h3>
+      <p className="my-4 text-sm leading-8 text-slate-200">{confirmation}</p>
+      <div className="grid grid-cols-2 gap-3">
+        <button type="button" autoFocus onClick={()=>answerConfirmation(false)} className="rounded-xl border border-sky-700 bg-[#122c48] p-3 font-bold">إلغاء</button>
+        <button type="button" onClick={()=>answerConfirmation(true)} className="rounded-xl border border-cyan-400 bg-gradient-to-l from-blue-600 to-cyan-500 p-3 font-bold shadow-lg">تأكيد الحفظ</button>
+      </div>
+    </div>
+  </div>}
  </section>;
 };
