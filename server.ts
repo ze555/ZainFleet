@@ -396,7 +396,7 @@ app.use(express.json());
 type FleetRole = 'admin' | 'company_admin' | 'user';
 type CompanySector = 'rental'|'logistics'|'school'|'general';
 type FleetCompany = {id:string;name:string;enabled:boolean;sector?:CompanySector};
-type FleetUser = {username:string;displayName:string;salt:string;hash:string;devices:string[];enabled:boolean;role?:'company_admin'|'user';companyId?:string|null};
+type FleetUser = {username:string;displayName:string;salt:string;hash:string;devices:string[];enabled:boolean;role?:'company_admin'|'user';companyId?:string|null;phone?:string;email?:string;vehicleType?:string};
 const USERS_PATH = path.join(DATA_DIR,'fleet_users.json');
 const COMPANIES_PATH = path.join(DATA_DIR,'fleet_companies.json');
 const ASSIGNMENTS_PATH = path.join(DATA_DIR,'fleet_device_companies.json');
@@ -518,7 +518,7 @@ const vehicleProfiles=loadJson<Record<string,VehicleProfile>>(VEHICLE_PROFILES_P
 function profileScope(req:Request,imei:string):boolean {
  const actor=managerScope(req);
  if(!actor)return false;
- return actor.role==='admin'?!deviceCompanies[imei]:deviceCompanies[imei]===actor.companyId;
+ return actor.role==='admin'?true:deviceCompanies[imei]===actor.companyId;
 }
 app.get('/api/admin/available-imeis',(req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
@@ -526,7 +526,7 @@ app.get('/api/admin/available-imeis',(req:Request,res:Response)=>{
  const devices=deviceRepo.getAll().filter(d=>{
   if(!d.connected||vehicleProfiles[d.imei])return false;
   const owner=deviceCompanies[d.imei];
-  return actor.role==='admin'?!owner:(!owner||owner===actor.companyId);
+  return actor.role==='admin'?!owner:owner===actor.companyId;
  }).map(d=>({imei:d.imei,connected:d.connected,lastSeen:d.lastSeen||null}));
  res.json({devices});
 });
@@ -539,7 +539,7 @@ app.put('/api/admin/vehicle-profiles/:imei',(req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const imei=String(req.params.imei);
  if(!/^[0-9]{15}$/.test(imei)){res.status(400).json({error:'IMEI يجب أن يحتوي على 15 رقماً'});return;}
- if(deviceRepo.get(imei)&&!profileScope(req,imei)&&!(actor.role==='company_admin'&&!deviceCompanies[imei]&&!vehicleProfiles[imei])){res.sendStatus(403);return;}
+ if(!profileScope(req,imei)){res.sendStatus(403);return;}
  if(!deviceRepo.get(imei)||(!vehicleProfiles[imei]&&!deviceRepo.get(imei)?.connected)){res.status(400).json({error:'يجب اختيار جهاز متصل ومسجل في الخادم'});return;}
  const keys=['name','model','driverName','plateNumber','phoneNumber'] as const;
  const profile={} as VehicleProfile;
@@ -551,18 +551,13 @@ app.put('/api/admin/vehicle-profiles/:imei',(req:Request,res:Response)=>{
  if(!profile.name){res.status(400).json({error:'اسم المركبة مطلوب'});return;}
  const previous=vehicleProfiles[imei];
  const wasNew=!deviceRepo.get(imei);
- // Assign newly registered vehicles directly to the requesting company's fleet.
- const oldCompany=deviceCompanies[imei];
- if(wasNew&&actor.role==='company_admin')deviceCompanies[imei]=actor.companyId!;
  vehicleProfiles[imei]=profile;
  try{
   saveJson(VEHICLE_PROFILES_PATH,vehicleProfiles);
-  if(wasNew&&actor.role==='company_admin')saveAssignments();
   if(wasNew)deviceRepo.upsert(imei,new Date().toISOString(),false);
   res.json({success:true,imei,profile});
  }catch{
   if(previous)vehicleProfiles[imei]=previous;else delete vehicleProfiles[imei];
-  if(oldCompany===undefined)delete deviceCompanies[imei];else deviceCompanies[imei]=oldCompany;
   res.status(507).json({error:'تعذر حفظ البيانات في التخزين الدائم'});
  }
 });
@@ -622,13 +617,16 @@ app.get('/api/admin/users',(req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const allowed=visibleDevices(req);
  const users=fleetUsers.filter(u=>actor.role==='admin' ? (!u.companyId || u.role==='company_admin') : (u.companyId===actor.companyId&&u.role!=='company_admin'))
-  .map(({username,displayName,devices,enabled,role,companyId})=>({username,displayName,devices,enabled,role:role||'user',companyId:companyId||null}));
+  .map(({username,displayName,devices,enabled,role,companyId,phone,email,vehicleType})=>({username,displayName,devices,enabled,role:role||'user',companyId:companyId||null,phone:phone||'',email:email||'',vehicleType:vehicleType||''}));
  res.setHeader('Cache-Control','no-store');
  res.json({admin:{username:AUTH_USER,displayName:'محمد زين'},users,devices:allowed,companies:actor.role==='admin'?fleetCompanies:fleetCompanies.filter(c=>c.id===actor.companyId),role:actor.role,companyId:actor.companyId});
 });
 app.post('/api/admin/users',(req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const {username,displayName,password,devices}=req.body||{};
+ const phone=typeof req.body?.phone==='string'?req.body.phone.trim():'';
+ const email=typeof req.body?.email==='string'?req.body.email.trim():'';
+ const vehicleType=typeof req.body?.vehicleType==='string'?req.body.vehicleType.trim():'';
  const role=req.body?.role==='company_admin'?'company_admin':'user';
  const companyId=actor.role==='admin'?(role==='company_admin'?req.body?.companyId:null):actor.companyId;
  if((actor.role==='admin'&&role==='user'&&req.body?.companyId)||
@@ -638,11 +636,12 @@ app.post('/api/admin/users',(req:Request,res:Response)=>{
     username.toLowerCase()===AUTH_USER.toLowerCase()||fleetUsers.some(u=>u.username.toLowerCase()===username.toLowerCase())||
     typeof displayName!=='string'||!displayName.trim()||displayName.length>100||
     typeof password!=='string'||password.length<10||password.length>256||
+    phone.length>35||email.length>150||(email!==''&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))||vehicleType.length>100||
     !Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(companyId ? deviceCompanies[id]!==companyId : !!deviceCompanies[id]))){
    res.status(400).json({error:'تحقق من الشركة والدور وكلمة المرور والأجهزة التابعة للشركة'});return;
  }
  const salt=crypto.randomBytes(16).toString('hex');
- const user:FleetUser={username,displayName:displayName.trim(),salt,hash:fleetPasswordHash(password,salt),devices:[...new Set<string>(devices)],enabled:true,role,companyId};
+ const user:FleetUser={username,displayName:displayName.trim(),salt,hash:fleetPasswordHash(password,salt),devices:[...new Set<string>(devices)],enabled:true,role,companyId,phone,email,vehicleType};
  fleetUsers.push(user);
  try{saveFleetUsers();res.status(201).json({success:true});}catch{fleetUsers.pop();res.sendStatus(507);}
 });
@@ -658,6 +657,9 @@ app.put('/api/admin/users/:username',(req:Request,res:Response)=>{
  const previous={...user};
  user.companyId=companyId;user.role=role;user.devices=[...new Set<string>(devices)];
  if(typeof req.body?.enabled==='boolean')user.enabled=req.body.enabled;
+ if(typeof req.body?.phone==='string'&&req.body.phone.length<=35)user.phone=req.body.phone.trim();
+ if(typeof req.body?.email==='string'&&req.body.email.length<=150&&(!req.body.email||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.body.email)))user.email=req.body.email.trim();
+ if(typeof req.body?.vehicleType==='string'&&req.body.vehicleType.length<=100)user.vehicleType=req.body.vehicleType.trim();
  try{saveFleetUsers();res.json({success:true});}catch{Object.assign(user,previous);res.sendStatus(507);}
 });
 // Every vehicle endpoint is tenant-scoped, including diagnostics and destructive actions.
