@@ -670,8 +670,8 @@ app.use('/api',(req:Request,res:Response,next)=>{
  const match=req.path.match(/^\/devices\/([^/]+)(?:\/.*)?$/);
  if(match&&fleetAccess(req,match[1])){
    if(req.method==='GET'){next();return;}
-   // Company admins may manage only their own company's devices.
-   if(who.role==='company_admin'&&req.method==='DELETE'){next();return;}
+   // Only the global administrator may delete a tracker or change fleet-wide ownership.
+   // Company managers have read access to their assigned devices only.
  }
  res.status(403).json({error:'ليس لديك صلاحية الوصول إلى هذا الجهاز أو العملية'});
 });
