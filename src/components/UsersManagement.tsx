@@ -1,5 +1,5 @@
 import React,{useEffect,useState} from 'react';
-import {Building2,Users,UserPlus,RefreshCw,ShieldCheck,Car,Phone,Mail,Truck,CheckCircle2,Sparkles} from 'lucide-react';
+import {Building2,Users,UserPlus,RefreshCw,Car,Phone,Mail,Truck,CheckCircle2,Sparkles} from 'lucide-react';
 type Company={id:string;name:string;enabled:boolean;sector?:'rental'|'logistics'|'school'|'general'};
 type Device={imei:string;name?:string};
 type ManagedUser={username:string;displayName:string;devices:string[];enabled:boolean;role:'company_admin'|'user';companyId:string|null;phone?:string;email?:string;vehicleType?:string};
@@ -35,7 +35,7 @@ export const UsersManagement:React.FC=()=>{
  const edit=async(user:ManagedUser,next:Partial<ManagedUser>)=>{if(!window.confirm('تأكيد تعديل صلاحيات '+user.displayName+'؟'))return;try{const isDeviceChange=next.devices!==undefined;await api('/api/admin/users/'+encodeURIComponent(user.username)+(isDeviceChange?'/devices':''),{method:'PUT',body:JSON.stringify(isDeviceChange?{devices:next.devices}:{...user,...next})});setMessage(isDeviceChange?'تم تحديث ربط IMEI بالمستخدم':'تم تحديث المستخدم');await reload();}catch(e){setMessage(String(e));}};
  const isAdmin=data?.role==='admin';
  const actualCompany=isAdmin?(role==='user'?'':companyId):data?.companyId||'';
- const available=(data?.devices||[]).filter(d=>isAdmin ? (actualCompany ? assignments[d.imei]===actualCompany : !assignments[d.imei]) : assignments[d.imei]===data?.companyId);
+ const available=(data?.devices||[]).filter(d=>isAdmin ? (actualCompany ? assignments[d.imei]===actualCompany : !assignments[d.imei]) : true);
  const visibleUsers=(data?.users||[]).filter(u=>(u.displayName+' '+u.username+' '+(u.phone||'')).toLowerCase().includes(search.toLowerCase()));
  return <section dir="rtl" className="max-w-7xl mx-auto space-y-6 pb-16 text-white">
   <div className="rounded-[2rem] bg-gradient-to-br from-[#073b66] via-[#071b35] to-[#0a1428] p-7 sm:p-9 border border-cyan-500/30 shadow-2xl shadow-cyan-950/40 flex justify-between gap-3">
