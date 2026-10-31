@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Navbar } from './components/Navbar.tsx';
 import { UsersManagement } from './components/UsersManagement.tsx';
 import { VehicleProfiles } from './components/VehicleProfiles.tsx';
+import { GpsProtocolManagement } from './components/GpsProtocolManagement.tsx';
 import { CanDashboard } from './components/CanDashboard.tsx';
 import { TripMap } from './components/TripMap.tsx';
 import { TodayGpsRoute } from './components/TodayGpsRoute.tsx';
@@ -253,10 +254,11 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
         <div className="mb-3 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm flex justify-between gap-2"><span>لوحة تحكم: {roleLabel}</span><span>{displayName}</span></div>
         {role !== 'user' && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-700 bg-[#092442] px-4 py-3 text-white">
           <span className="font-bold text-sm">مرحباً، {displayName} — {roleLabel}</span>
-          <div className="flex flex-wrap gap-2"><button type="button" onClick={()=>setCurrentTab('users')} className="rounded-xl border border-cyan-500 bg-blue-700 px-4 py-2 text-sm font-bold">إدارة المستخدمين والأجهزة</button><button type="button" onClick={()=>setCurrentTab('vehicle-profiles')} className="rounded-xl border border-teal-400 bg-teal-700 px-4 py-2 text-sm font-bold">بيانات المركبات وIMEI</button></div>
+          <div className="flex flex-wrap gap-2"><button type="button" onClick={()=>setCurrentTab('users')} className="rounded-xl border border-cyan-500 bg-blue-700 px-4 py-2 text-sm font-bold">إدارة المستخدمين والأجهزة</button><button type="button" onClick={()=>setCurrentTab('vehicle-profiles')} className="rounded-xl border border-teal-400 bg-teal-700 px-4 py-2 text-sm font-bold">بيانات المركبات وIMEI</button>{role==='admin'&&<button type="button" onClick={()=>setCurrentTab('gps-protocols')} className="rounded-xl border border-sky-400 bg-sky-800 px-4 py-2 text-sm font-bold">أنواع أجهزة GPS والبروتوكولات</button>}</div>
         </div>}
         {currentTab === 'users' && role !== 'user' && <UsersManagement />}
         {currentTab === 'vehicle-profiles' && role !== 'user' && <VehicleProfiles />}
+        {currentTab === 'gps-protocols' && role === 'admin' && <GpsProtocolManagement />}
                 {currentTab === 'dashboard' && (
           <section className="zf-fleet-hero" aria-label={isAr ? 'لوحة حالة الأسطول' : 'Fleet status'}>
             <div className="zf-fleet-hero-title">
