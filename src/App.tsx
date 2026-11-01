@@ -251,6 +251,26 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
           </div>
         </div>
         <div className="mb-3 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm flex justify-between gap-2"><span>لوحة تحكم: {roleLabel}</span><span>{displayName}</span></div>
+        <div className="mb-4 rounded-2xl bg-gradient-to-l from-[#0c385b] to-[#07192d] border border-cyan-500/40 p-4 text-white" dir="rtl">
+          <div className="flex gap-3 justify-between items-center flex-wrap">
+            <div><h2 className="font-black text-lg">{role==='admin'?'مركز قيادة النظام':role==='company_admin'?'لوحة أسطول الشركة':'لوحة مركباتي'}</h2><p className="text-xs text-slate-300 mt-1">مرحباً {displayName} · {devices.length} مركبة مسموحة</p></div>
+            {role!=='user'&&<button type="button" onClick={()=>setCurrentTab('users')} className="rounded-xl bg-sky-700 px-4 py-2 font-bold text-sm">إدارة {role==='admin'?'النظام والشركات':'السائقين والأجهزة'}</button>}
+          </div>
+          <div className="mt-4 grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
+            <aside className="bg-[#06172b] border border-cyan-800/60 p-3 rounded-2xl max-h-[340px] overflow-y-auto" aria-label="قائمة السيارات">
+              <h3 className="text-sm font-bold mb-3 text-cyan-300">🚘 السيارات المتاحة</h3>
+              {devices.length===0&&<p className="text-xs text-amber-200">لا توجد سيارات مخصصة لهذا الحساب.</p>}
+              {devices.map(d=><button key={d.imei} type="button" onClick={()=>{setSelectedImei(d.imei);setCurrentTab('dashboard');}} className={`w-full text-right p-3 rounded-xl border mb-2 transition-colors ${selectedImei===d.imei?'border-cyan-300 bg-sky-700/50':'border-sky-900 bg-[#0b2946] hover:bg-sky-800/50'}`}>
+                <span className="block font-bold text-sm">{d.name||d.imei}</span>
+                <small className="text-slate-300 block mt-1" dir="ltr">{d.imei}</small>
+                <small className={d.connected?'text-emerald-300':'text-slate-400'}>{d.connected?'● متصل':'● غير متصل'}</small>
+              </button>)}
+            </aside>
+            <div className="flex items-center justify-center min-h-[110px] rounded-2xl bg-[#071b30] border border-sky-900 p-4">
+              {selectedDevice?<div className="w-full flex justify-between gap-3 items-center flex-wrap"><div><b>{selectedDevice.name||selectedDevice.imei}</b><p className="text-xs text-slate-300 mt-2">اختر السيارة من القائمة لعرض بيانات GPS وCAN والسرعة والرحلات إن توفرت.</p></div><button type="button" onClick={()=>setCurrentTab('dashboard')} className="rounded-xl bg-gradient-to-l from-cyan-500 to-blue-700 px-4 py-3 font-bold text-sm">عرض البيانات الحية</button></div>:<p className="text-slate-400 text-sm">اختر سيارة للبدء</p>}
+            </div>
+          </div>
+        </div>
         {role !== 'user' && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-700 bg-[#092442] px-4 py-3 text-white">
           <span className="font-bold text-sm">مرحباً، {displayName} — {roleLabel}</span>
           <div className="flex flex-wrap gap-2"><button type="button" onClick={()=>setCurrentTab('users')} className="rounded-xl border border-cyan-500 bg-blue-700 px-4 py-2 text-sm font-bold">إدارة المستخدمين والأجهزة</button><button type="button" onClick={()=>setCurrentTab('vehicle-profiles')} className="rounded-xl border border-teal-400 bg-teal-700 px-4 py-2 text-sm font-bold">بيانات المركبات وIMEI</button></div>
