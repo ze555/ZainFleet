@@ -561,6 +561,43 @@ app.put('/api/admin/vehicle-profiles/:imei',(req:Request,res:Response)=>{
   res.status(507).json({error:'تعذر حفظ البيانات في التخزين الدائم'});
  }
 });
+// Protocol registry. Traccar is an external protocol gateway, NOT an embedded JS decoder.
+// Registering a device does not open a TCP/UDP listener or enable an unconfigured port.
+type GpsProtocol = 'teltonika'|'gt06'|'gps103'|'queclink'|'ruptela'|'suntech'|'topflytech'|'other';
+type GpsRegistration = {imei:string;protocol:GpsProtocol;model:string;transport:'tcp'|'udp'|'http';gateway:'native'|'traccar';createdAt:string};
+const GPS_REGISTRATIONS_PATH=path.join(DATA_DIR,'fleet_gps_protocol_registry.json');
+const gpsRegistrations=loadJson<Record<string,GpsRegistration>>(GPS_REGISTRATIONS_PATH,{});
+const GPS_PROTOCOLS:Record<GpsProtocol,{label:string;defaultTransport:'tcp'|'udp'|'http';port:number|null}> = {
+ teltonika:{label:'Teltonika (FMB/FMC)',defaultTransport:'tcp',port:TCP_PORT},
+ gt06:{label:'GT06 / Concox',defaultTransport:'tcp',port:null},
+ gps103:{label:'Coban GPS103',defaultTransport:'tcp',port:null},
+ queclink:{label:'Queclink',defaultTransport:'tcp',port:null},
+ ruptela:{label:'Ruptela',defaultTransport:'tcp',port:null},
+ suntech:{label:'Suntech',defaultTransport:'tcp',port:null},
+ topflytech:{label:'TopFlyTech',defaultTransport:'tcp',port:null},
+ other:{label:'Other Traccar protocol (requires setup)',defaultTransport:'tcp',port:null}
+};
+app.get('/api/admin/gps-protocols',(req:Request,res:Response)=>{
+ if(!managerScope(req)){res.sendStatus(403);return;}
+ res.setHeader('Cache-Control','no-store');
+ res.json({protocols:Object.entries(GPS_PROTOCOLS).map(([id,p])=>({id,...p,listenerActive:id==='teltonika'&&tcpListenerReady})),
+  registrations:Object.values(gpsRegistrations).filter(x=>profileScope(req,x.imei)),
+  note:'Non-Teltonika listeners must be deployed separately in Traccar with publicly exposed ports.'});
+});
+app.post('/api/admin/gps-protocols/register',(req:Request,res:Response)=>{
+ if(sessionIdentity(req)?.role!=='admin'){res.sendStatus(403);return;}
+ const imei=String(req.body?.imei||'').trim();
+ const protocol=String(req.body?.protocol||'') as GpsProtocol;
+ const model=String(req.body?.model||'').trim();
+ if(!/^[0-9]{15}$/.test(imei)||!Object.prototype.hasOwnProperty.call(GPS_PROTOCOLS,protocol)||model.length>100){
+  res.status(400).json({error:'IMEI من 15 رقماً، ونوع بروتوكول صالح، وموديل مختصر مطلوب'});return;
+ }
+ const entry:GpsRegistration={imei,protocol,model,transport:GPS_PROTOCOLS[protocol].defaultTransport,
+ gateway:protocol==='teltonika'?'native':'traccar',createdAt:gpsRegistrations[imei]?.createdAt||new Date().toISOString()};
+ const previous=gpsRegistrations[imei];gpsRegistrations[imei]=entry;
+ try{saveJson(GPS_REGISTRATIONS_PATH,gpsRegistrations);res.status(201).json({success:true,registration:entry,listenerActive:protocol==='teltonika'&&tcpListenerReady});}
+ catch{if(previous)gpsRegistrations[imei]=previous;else delete gpsRegistrations[imei];res.status(507).json({error:'فشل حفظ بيانات البروتوكول'});}
+});
 // Company CRUD and vehicle assignment: available only to the global administrator.
 app.get('/api/admin/companies',(req:Request,res:Response)=>{
  if(sessionIdentity(req)?.role!=='admin'){res.sendStatus(403);return;}
