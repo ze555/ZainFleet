@@ -582,3 +582,56 @@
  .zf-ref-header{height:auto;min-height:130px}
  .zf-ref-map .leaflet-container{height:280px!important;min-height:280px!important}
 }
+
+/* ZainFleet Atelier: calm premium automotive cockpit, no data or routing changes */
+.zf-reference-shell{--zf-bg:#091725;--zf-surface:#12283a;--zf-accent:#70d5ce;--zf-gold:#e5b96e;background:radial-gradient(ellipse at 68% 10%,#1c394b 0%,#091725 55%,#07111c 100%)!important;color:#edf4f4!important}
+.zf-ref-header{background:linear-gradient(105deg,#183747,#0d2233 53%,#071624)!important;border-bottom:1px solid #44616d!important;height:126px!important;min-height:126px!important}
+.zf-ref-header h1{font-size:clamp(22px,2.7vw,38px);color:#f0f4ef!important;letter-spacing:0}
+.zf-ref-header p{color:#a9c4c8!important;font-weight:500!important}
+.zf-ref-satellite,.zf-ref-header h1 svg{color:#75d7ce!important}
+.zf-ref-shell{gap:18px!important;padding:18px!important}
+.zf-ref-menu{background:linear-gradient(160deg,#172e3c,#0b1c2b)!important;border:1px solid #365361!important;border-radius:20px!important;padding:18px 10px!important}
+.zf-ref-menu button{border-radius:12px!important;margin-bottom:5px;transition:background .18s,color .18s}
+.zf-ref-menu button.active{background:linear-gradient(90deg,#23605f,#1d4c58)!important;color:#f2fff8!important;box-shadow:inset 3px 0 #83dfcb!important}
+.zf-ref-menu button:hover{background:#244151!important}
+.zf-ref-title{color:#f4f4ef!important;font-size:18px!important}
+.zf-ref-title span{color:#e5b96e!important}
+.zf-ref-workspace{display:flex!important;flex-direction:column;gap:16px!important}
+.zf-ref-stats{width:100%;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:13px!important}
+.zf-ref-stats article{background:linear-gradient(145deg,#1a3544,#132a3b)!important;border:1px solid #3b5864!important;border-radius:18px!important;padding:16px 19px!important;box-shadow:0 12px 26px #0002!important}
+.zf-ref-stats article small{font-size:12px!important;color:#b2cbd0!important}.zf-ref-stats article b{color:#f3f6ee!important}
+.zf-ref-top-grid{display:grid!important;grid-template-columns:1.25fr 1fr!important;width:100%;gap:16px!important;margin-top:0!important}
+.zf-ref-top-side{display:grid!important;grid-template-columns:1fr!important;grid-template-rows:1fr 1fr!important}
+.zf-ref-panel{background:linear-gradient(145deg,#122e3e,#0b1f30)!important;border:1px solid #355561!important;border-radius:19px!important;box-shadow:0 10px 28px #0003!important}
+.zf-ref-panel>header{background:#18374799!important;color:#e9f3ef!important;border-bottom:1px solid #355561!important;padding:14px 18px!important}
+.zf-ref-panel>header span{color:#80d7c8!important}
+.zf-ref-bottom-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;width:100%;gap:16px!important;margin-top:0!important}
+.zf-ref-bottom-summary{width:100%!important;margin-top:0!important}
+.zf-ref-summary-stats{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.zf-art-cluster{width:100%;background:radial-gradient(ellipse at 50% 110%,#204b50 0%,transparent 60%),linear-gradient(135deg,#102d3c,#071b2a 70%);border:1px solid #49656a;border-radius:24px;padding:21px 24px 16px;box-shadow:inset 0 1px #d6f8e81b,0 20px 50px #0004;overflow:hidden}
+.zf-art-cluster-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.zf-art-eyebrow{font-size:10px;letter-spacing:3px;color:#79cfc4;font-weight:800}
+.zf-art-cluster-title h2{font-size:22px;font-weight:900;color:#f5f6f1;margin-top:5px}
+.zf-art-cluster-title p{font-size:12px;color:#9dbbc2;margin-top:5px}
+.zf-art-online,.zf-art-offline{border-radius:99px;padding:8px 12px;font-size:11px;white-space:nowrap;border:1px solid #3e6e67;background:#17473e;color:#9ef1ce}
+.zf-art-offline{background:#3c2d33;border-color:#74505b;color:#e6b5b5}
+.zf-art-dials{display:flex;justify-content:space-around;gap:20px;align-items:center;padding:14px 4px 5px;direction:ltr}
+.zf-art-dial{--ring:#65d3c7;--sweep:0%;width:min(29%,205px);aspect-ratio:1;border-radius:50%;background:conic-gradient(from 220deg,var(--ring) 0 var(--sweep),#2c4855 var(--sweep) 78%,transparent 78% 100%);padding:9px;position:relative;filter:drop-shadow(0 0 12px #3cbbb822)}
+.zf-art-dial:before{content:"";position:absolute;inset:8px;border-radius:50%;background:#071a28;border:1px solid #41606a;box-shadow:inset 0 0 30px #000b}
+.zf-art-dial:after{content:"";position:absolute;inset:18px;border-radius:50%;border:1px dashed #365966;pointer-events:none}
+.zf-art-rpm{--ring:#e9b971}.zf-art-fuel{--ring:#8dc8f0}
+.zf-art-dial-inner{position:absolute;inset:20%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;z-index:1;direction:rtl}
+.zf-art-dial-inner span{font-size:clamp(9px,1vw,13px);color:#a9c4c9;white-space:nowrap}
+.zf-art-dial-inner strong{font-size:clamp(26px,3.6vw,53px);line-height:1.2;color:#f6f9f3;font-weight:800;font-variant-numeric:tabular-nums}
+.zf-art-dial-inner small{font-size:11px;color:#7dcfc6;letter-spacing:1px}
+.zf-art-ticks{position:absolute;inset:auto 10% 11%;display:flex;justify-content:space-between;font-size:10px;color:#9fbac2}
+.zf-art-cluster-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid #33535b;padding-top:12px;color:#a5c4c6;font-size:11px}
+.zf-art-cluster-footer button{color:#92e4d5;background:#194447;padding:8px 12px;border:1px solid #397d79;border-radius:9px}
+.zf-reference-shell .zf-ref-panel button,.zf-reference-shell .zf-ref-map-footer button{background:#20535b!important;border-color:#467b7c!important}
+.zf-reference-shell .zf-ref-panel button:hover{background:#2b6a70!important}
+.zf-command-login{background:radial-gradient(ellipse at 70% 5%,#1d5151 0%,transparent 52%),linear-gradient(135deg,#071827,#173344)!important}
+.zf-command-login .zf-mobile-login-card{background:linear-gradient(145deg,#163444,#0c2231)!important;border:1px solid #4a7374!important}
+.zf-command-login .zf-mobile-login-submit{background:linear-gradient(110deg,#236d6c,#3f9a8e)!important}
+@media(max-width:1150px){.zf-ref-top-grid{grid-template-columns:1fr!important}.zf-ref-top-side{grid-template-columns:1fr 1fr!important;grid-template-rows:auto!important}}
+@media(max-width:760px){.zf-ref-shell{padding:9px!important}.zf-ref-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}.zf-ref-top-side,.zf-ref-bottom-grid{grid-template-columns:1fr!important}.zf-art-cluster{padding:16px 11px}.zf-art-dials{gap:5px}.zf-art-dial{width:32%}.zf-art-dial-inner span{font-size:9px}.zf-art-dial-inner strong{font-size:27px}.zf-art-dial-inner small{font-size:8px}.zf-art-ticks{font-size:8px}.zf-ref-header{height:auto!important;min-height:115px!important}}
+@media(prefers-reduced-motion:reduce){.zf-ref-menu button{transition:none}}
