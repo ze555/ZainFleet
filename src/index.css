@@ -521,3 +521,64 @@
 .zf-reference-shell footer{background:#091c2e!important;border-color:#24465d!important;color:#a3c5df!important}
 @media(max-width:1100px){.zf-ref-shell{grid-template-columns:175px minmax(0,1fr)}.zf-ref-top-grid{grid-template-columns:1fr}.zf-ref-top-side{grid-template-columns:1fr 1fr;grid-template-rows:auto}.zf-ref-header{grid-template-columns:1fr 3fr}.zf-ref-satellite{display:none}}
 @media(max-width:760px){.zf-ref-shell{display:flex;flex-direction:column}.zf-ref-menu{position:static;display:flex;overflow-x:auto;max-width:100%;padding:5px}.zf-ref-menu button{white-space:nowrap;width:auto;flex-shrink:0}.zf-ref-menu button span{display:none}.zf-ref-header{height:auto;min-height:130px;grid-template-columns:1fr;padding:15px}.zf-ref-trucks{display:none}.zf-ref-top-side,.zf-ref-bottom-grid{grid-template-columns:1fr}.zf-ref-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.zf-ref-title{height:auto;padding:8px}.zf-ref-map-footer{flex-wrap:wrap}}
+
+
+/* Reference image visual fidelity pass: 1648px dark fleet console */
+.zf-reference-shell{
+  --zf-ink:#071827;--zf-panel:#0a1e30;--zf-panel-hi:#132c44;
+  --zf-line:#2b5277;--zf-blue:#398ad3;--zf-muted:#b2c7da;
+  background:radial-gradient(ellipse at 60% 32%,#173e5a 0%,#0c2438 47%,#061827 100%)!important;
+  color:#f3f7ff!important;
+}
+.zf-reference-page{font-family:Tahoma,"Segoe UI",Arial,sans-serif!important;overflow:hidden}
+.zf-ref-header{
+  min-height:146px;height:146px;
+  background:radial-gradient(ellipse at 18% 105%,#f1a97d55 0%,transparent 35%),linear-gradient(90deg,#20344a 0%,#0a1c30 53%,#071a2b 100%)!important;
+  border-bottom:2px solid #306da4;box-shadow:0 5px 20px #030d1d80;
+}
+.zf-ref-trucks{background:linear-gradient(135deg,#42586c88,#11293d77);position:relative;border:1px solid #57748a66;overflow:hidden}
+.zf-ref-trucks:before{content:"";position:absolute;inset:auto -10% 0;height:35%;background:repeating-linear-gradient(0deg,transparent 0 13px,#d2dce422 14px 15px);transform:perspective(90px) rotateX(34deg)}
+.zf-ref-trucks svg{width:100px;height:74px;filter:drop-shadow(0 6px 8px #000a)}
+.zf-ref-header h1{letter-spacing:-.7px;text-shadow:0 2px 10px #0009}
+.zf-ref-header h1 svg{color:#e7f5ff;filter:drop-shadow(0 0 8px #64b6ec88)}
+.zf-ref-header p{color:#d9e7f6!important}
+.zf-ref-satellite svg{filter:drop-shadow(0 0 15px #2ccfff)}
+.zf-ref-shell{grid-template-columns:205px minmax(0,1fr);gap:10px;padding:10px 12px 22px}
+.zf-ref-menu{background:linear-gradient(155deg,#172c43,#071725 82%)!important;border:1px solid #3c648b!important;box-shadow:inset 0 1px #b6d9ff18,0 8px 30px #0005}
+.zf-ref-menu button{padding:12px 9px;min-height:40px;font-size:12px}
+.zf-ref-menu button.active{background:linear-gradient(90deg,#294d7c,#193c65)!important;box-shadow:inset 0 1px #c3e1ff33}
+.zf-ref-workspace{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(390px,1fr);grid-template-areas:"title title" "map stats" "map side" "bottom bottom" "summary summary";gap:10px;align-content:start}
+.zf-ref-title{grid-area:title;height:28px;padding:0 12px;line-height:28px}
+.zf-ref-stats{grid-area:stats;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;direction:rtl}
+.zf-ref-stats article{padding:12px 9px;min-height:78px;border-radius:12px;background:linear-gradient(140deg,#1a3048,#14263b)!important;box-shadow:inset 0 1px #ffffff16,0 5px 15px #0003}
+.zf-ref-stats article small{font-size:10px;white-space:normal}.zf-ref-stats article b{font-size:25px}.zf-ref-stats article>span{font-size:17px;left:8px;top:14px;opacity:.85}
+.zf-ref-top-grid{display:contents}
+.zf-ref-map{grid-area:map;min-height:322px}
+.zf-ref-map .leaflet-container{height:320px!important;min-height:320px!important}
+.zf-ref-top-side{grid-area:side;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr;gap:10px}
+.zf-ref-top-side .zf-ref-panel{min-height:220px}
+.zf-ref-panel{background:linear-gradient(155deg,#10293e,#071a2c)!important;border:1px solid #315f89!important;border-radius:13px!important;box-shadow:inset 0 1px #b7d8ff14,0 8px 20px #0003}
+.zf-ref-panel>header{background:linear-gradient(90deg,#10283e,#0c2033)!important;border-bottom:1px solid #315b7c!important;min-height:39px;align-items:center}
+.zf-ref-no-chart{min-height:155px}
+.zf-ref-fleet-health{min-height:165px}.zf-ref-ring{width:105px;height:105px;box-shadow:0 0 16px #38d87a26}
+.zf-ref-ring:before{inset:18px}.zf-ref-fleet-health p{font-size:11px}
+.zf-ref-bottom-grid{grid-area:bottom;margin-top:0;gap:10px}
+.zf-ref-bottom-summary{grid-area:summary;margin-top:0}
+.zf-ref-summary-stats{grid-area:auto;grid-template-columns:repeat(4,minmax(0,1fr))}
+.zf-ref-bottom-grid .zf-ref-panel{min-height:158px}
+.zf-ref-feed{min-height:112px}
+.zf-ref-feed button{background:linear-gradient(100deg,#1c3b57,#173e61)!important;border-color:#406d96!important}
+.zf-reference-shell .zf-ref-map-footer{background:#0c2338}
+.zf-reference-shell .zf-ref-panel button:hover,.zf-ref-menu button:hover{filter:brightness(1.18)}
+@media(max-width:1350px){
+ .zf-ref-workspace{grid-template-columns:minmax(0,1fr);grid-template-areas:"title" "stats" "map" "side" "bottom" "summary"}
+ .zf-ref-top-side{grid-template-columns:1fr 1fr}
+}
+@media(max-width:760px){
+ .zf-ref-shell{display:flex;flex-direction:column}
+ .zf-ref-workspace{display:grid;grid-template-columns:minmax(0,1fr);grid-template-areas:"title" "stats" "map" "side" "bottom" "summary"}
+ .zf-ref-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .zf-ref-top-side{grid-template-columns:1fr}
+ .zf-ref-header{height:auto;min-height:130px}
+ .zf-ref-map .leaflet-container{height:280px!important;min-height:280px!important}
+}
