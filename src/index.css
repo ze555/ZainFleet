@@ -399,3 +399,32 @@
 .zf-real-gauge svg{filter:drop-shadow(0 0 14px #0fa7ff36)}
 .zf-real-gauge-amber svg{filter:drop-shadow(0 0 14px #ffa02f33)}
 @media(prefers-reduced-motion:reduce){.zf-gauge-needle-sweep{transition:none!important}}
+
+
+/* Reference-matched neon vehicle status card — scoped to dashboard only. */
+.zf-fleet-shell .zf-reference-vehicle-card {
+ position:relative; overflow:hidden; isolation:isolate;
+ background:linear-gradient(145deg,#092442 0%,#06172d 55%,#061d39 100%)!important;
+ border:1px solid #148de3!important; border-radius:28px!important;
+ box-shadow:0 0 0 1px #17bfff1a,0 22px 65px #0008,inset 0 1px #5bcaff35!important;
+ padding:clamp(18px,2.2vw,32px)!important;color:#eaf6ff;
+}
+.zf-reference-vehicle-card::before{content:"";position:absolute;top:0;left:0;right:0;height:160px;pointer-events:none;z-index:-1;background:radial-gradient(ellipse at 27% 0%,#0979ca4d,transparent 62%),linear-gradient(90deg,#061b3400,#0b34552b)}
+.zf-reference-vehicle-card > div:first-child{padding:10px 4px 25px;border-bottom:1px solid #2485b45e;gap:22px}
+.zf-reference-vehicle-card > div:first-child > div:first-child > div:first-child{background:linear-gradient(145deg,#dff4ff,#a9cbe6)!important;border:1px solid #55c9ff!important;border-radius:20px!important;color:#0899ef!important;box-shadow:0 0 28px #0ca8ff24!important}
+.zf-reference-vehicle-card h1{color:#fff!important;font-size:clamp(20px,2.2vw,32px)!important;text-shadow:0 2px 18px #4ac5ff20}
+.zf-reference-vehicle-card .text-slate-500,.zf-reference-vehicle-card .text-slate-400{color:#90bddd!important}
+.zf-reference-vehicle-card .text-slate-700,.zf-reference-vehicle-card .text-slate-600,.zf-reference-vehicle-card .text-slate-800,.zf-reference-vehicle-card .text-slate-900{color:#f1f9ff!important}
+.zf-reference-vehicle-card .bg-emerald-50{background:#003e2a!important;color:#39ff9b!important;border-color:#09d47a!important;box-shadow:0 0 18px #00ee7730}
+.zf-reference-vehicle-card > div:first-child button{background:#0b3557;color:#78dcff;border:1px solid #177bb6;border-radius:13px;padding:10px 14px}
+.zf-reference-vehicle-card > div:nth-child(2){border-top:0!important;margin-top:0!important;padding-top:24px!important;gap:16px}
+.zf-reference-vehicle-card > div:nth-child(2) > div{min-height:165px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;border:1px solid #168fd0!important;border-radius:23px!important;background:radial-gradient(ellipse at 50% -35%,#167bb94f,transparent 70%),linear-gradient(155deg,#082f52,#04172c)!important;box-shadow:inset 0 1px #6ce2ff36,0 12px 28px #0004!important}
+.zf-reference-vehicle-card > div:nth-child(2) > div > div:first-child{width:54px!important;height:54px!important;border-radius:17px!important;background:#05395d!important;color:#34caff!important;border:1px solid #13aaf0;box-shadow:0 0 20px #0ba8ff3d}
+.zf-reference-vehicle-card > div:nth-child(2) > div:nth-child(2) > div:first-child{color:#21ff9d!important;background:#03442e!important;border-color:#0bcf7e;box-shadow:0 0 20px #00e87a36}
+.zf-reference-vehicle-card > div:nth-child(2) .text-xl,.zf-reference-vehicle-card > div:nth-child(2) .text-sm{color:#f5fbff!important;font-size:clamp(19px,2.1vw,31px)!important;font-weight:900}
+.zf-reference-vehicle-card > div:nth-child(2) > div:nth-child(2) > span:last-child{color:#2bff9c!important}
+.zf-reference-vehicle-card > div:nth-child(3){position:relative;margin-top:22px!important;padding:25px!important;border:1px solid #1689c9!important;border-radius:23px!important;background:radial-gradient(ellipse at 45% 115%,#0b80c044,transparent 65%),repeating-linear-gradient(35deg,transparent 0 49px,#0d65951c 50px 51px),linear-gradient(135deg,#0a3558,#061c36)!important;box-shadow:inset 0 1px #4cd6ff2e}
+.zf-reference-vehicle-card > div:nth-child(3) p{font-size:clamp(13px,1.4vw,20px)!important;color:white!important}
+.zf-reference-vehicle-card > div:nth-child(3) button{background:#063c66!important;color:#55d5ff!important;border:1px solid #18a8fa!important;border-radius:14px!important;padding:12px 18px!important;box-shadow:0 0 20px #00aaff25}
+.zf-reference-vehicle-card > div:nth-child(3) button:hover{background:#07598e!important;box-shadow:0 0 25px #00baff55}
+@media(max-width:700px){.zf-reference-vehicle-card > div:nth-child(2){grid-template-columns:1fr!important}.zf-reference-vehicle-card > div:nth-child(2) > div{min-height:112px;gap:4px}.zf-reference-vehicle-card > div:nth-child(3){padding:16px!important;flex-wrap:wrap}.zf-reference-vehicle-card > div:first-child{flex-wrap:wrap}}
