@@ -144,11 +144,20 @@ class PersistentTelemetryRepository {
   }
 
   store(imei: string, record: AvlRecord, receivedAt: string): void {
-    const snapshot: TelemetrySnapshot = { imei, record, receivedAt };
-    this.latest.set(imei, snapshot);
+    this.storeBatch(imei, [record], receivedAt);
+  }
 
+  // Persist the complete AVL packet in one write, rather than rewriting
+  // up to 10,000 historical records once for every record in the packet.
+  // This remains synchronous: ACK is sent only after persistence completes.
+  storeBatch(imei: string, records: AvlRecord[], receivedAt: string): void {
+    if (records.length === 0) return;
     const list = this.history.get(imei) || [];
-    list.push(snapshot);
+    for (const record of records) {
+      const snapshot: TelemetrySnapshot = { imei, record, receivedAt };
+      list.push(snapshot);
+      this.latest.set(imei, snapshot);
+    }
     if (list.length > this.MAX_HISTORY) {
       list.splice(0, list.length - this.MAX_HISTORY);
     }
@@ -319,11 +328,9 @@ const tcpServer = net.createServer((socket) => {
         lastAvlPacketAt = seenIso;
         if (imei) {
           let latestGpsTime = '';
+          telemetryRepo.storeBatch(imei, decoded.records, seenIso);
           for (const rec of decoded.records) {
-            telemetryRepo.store(imei, rec, seenIso);
-            if (rec.timestamp) {
-              latestGpsTime = rec.timestamp;
-            }
+            if (rec.timestamp) latestGpsTime = rec.timestamp;
           }
           deviceRepo.incrementRecords(imei, decoded.records.length);
           deviceRepo.upsert(imei, seenIso, true, latestGpsTime || undefined, true);
