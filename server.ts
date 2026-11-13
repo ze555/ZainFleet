@@ -239,6 +239,12 @@ const tcpServer = net.createServer((socket) => {
     console.log(
       `[TCP RAW IN] ${remote} (IMEI=${imei || 'pending'}): ${chunk.length} bytes (hex: ${chunk.toString('hex').slice(0, 48)}${chunk.length > 24 ? '...' : ''})`
     );
+    // FMB140 can send 0xFF as a TCP keepalive between AVL frames.
+    // Ignore it only when no AVL frame is being assembled.
+    if (handshakeDone && buffer.length === 0 && chunk.length === 1 && chunk[0] === 0xff) {
+      console.log(`[TCP] FMB140 keepalive from ${imei}`);
+      return;
+    }
     buffer = Buffer.concat([buffer, chunk]);
 
     try {
