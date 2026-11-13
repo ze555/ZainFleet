@@ -195,7 +195,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
   return (
     <div
       dir={isAr ? 'rtl' : 'ltr'}
-      className="zf-fleet-shell min-h-screen flex flex-col font-sans pb-16 lg:pb-0"
+      className="zf-fleet-shell zf-reference-shell min-h-screen flex flex-col font-sans pb-16 lg:pb-0"
     >
       {/* Top Navbar */}
       <Navbar
@@ -225,127 +225,61 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
       />
 
       {/* Main Container */}
-      <main className="zf-page zf-fleet-page flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8">
+      <main className="zf-page zf-fleet-page zf-reference-page flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8">
         <div className="zf-login-toolbar"><span>FMB140 • ADMIN CONSOLE</span><button type="button" onClick={onLogout}><LogOut size={15} /> تسجيل الخروج</button></div>
-        {/* Compact connection overview, shared across dashboard views */}
-        <div className="zf-panel zf-soft-glow zf-fleet-overview mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-5">
-          <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-blue-50 p-2.5 text-blue-700"><Radio className="h-5 w-5" /></div>
-            <div>
-              <div className="text-sm font-bold text-slate-900">{isAr ? 'مراقبة الأسطول المباشرة' : 'Fleet Live Monitor'}</div>
-              <div className="text-xs text-slate-500">{isAr ? 'تحديث تلقائي كل ثانيتين' : 'Automatically refreshed every 2 seconds'}</div>
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-            <span className={`rounded-full px-3 py-1.5 ${serverHealthy ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-              {serverHealthy ? (isAr ? 'الخادم متصل' : 'Server online') : (isAr ? 'الخادم غير متصل' : 'Server offline')}
-            </span>
-            <span className={`rounded-full px-3 py-1.5 ${selectedDevice?.connected ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-600'}`}>
-              {deviceStatusLabel}
-            </span>
-            <button onClick={() => { checkHealth(); fetchDevices(); if (selectedImei) fetchTelemetry(selectedImei); }}
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700 hover:bg-slate-50"
-              title={isAr ? 'تحديث الآن' : 'Refresh now'}>
-              <RotateCw className="h-3.5 w-3.5" /> {isAr ? 'تحديث' : 'Refresh'}
-            </button>
-          </div>
-        </div>
-        <div className="mb-3 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm flex justify-between gap-2"><span>لوحة تحكم: {roleLabel}</span><span>{displayName}</span></div>
-        <div className="mb-4 rounded-2xl bg-gradient-to-l from-[#0c385b] to-[#07192d] border border-cyan-500/40 p-4 text-white" dir="rtl">
-          <div className="flex gap-3 justify-between items-center flex-wrap">
-            <div><h2 className="font-black text-lg">{role==='admin'?'مركز قيادة النظام':role==='company_admin'?'لوحة أسطول الشركة':'لوحة مركباتي'}</h2><p className="text-xs text-slate-300 mt-1">مرحباً {displayName} · {devices.length} مركبة مسموحة</p></div>
-            {role!=='user'&&<button type="button" onClick={()=>setCurrentTab('users')} className="rounded-xl bg-sky-700 px-4 py-2 font-bold text-sm">إدارة {role==='admin'?'النظام والشركات':'السائقين والأجهزة'}</button>}
-          </div>
-          <div className="mt-4 grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
-            <aside className="bg-[#06172b] border border-cyan-800/60 p-3 rounded-2xl max-h-[340px] overflow-y-auto" aria-label="قائمة السيارات">
-              <h3 className="text-sm font-bold mb-3 text-cyan-300">🚘 السيارات المتاحة</h3>
-              {devices.length===0&&<p className="text-xs text-amber-200">لا توجد سيارات مخصصة لهذا الحساب.</p>}
-              {devices.map(d=><button key={d.imei} type="button" onClick={()=>{setSelectedImei(d.imei);setCurrentTab('dashboard');}} className={`w-full text-right p-3 rounded-xl border mb-2 transition-colors ${selectedImei===d.imei?'border-cyan-300 bg-sky-700/50':'border-sky-900 bg-[#0b2946] hover:bg-sky-800/50'}`}>
-                <span className="block font-bold text-sm">{d.name||d.imei}</span>
-                <small className="text-slate-300 block mt-1" dir="ltr">{d.imei}</small>
-                <small className={d.connected?'text-emerald-300':'text-slate-400'}>{d.connected?'● متصل':'● غير متصل'}</small>
-              </button>)}
-            </aside>
-            <div className="flex items-center justify-center min-h-[110px] rounded-2xl bg-[#071b30] border border-sky-900 p-4">
-              {selectedDevice?<div className="w-full flex justify-between gap-3 items-center flex-wrap"><div><b>{selectedDevice.name||selectedDevice.imei}</b><p className="text-xs text-slate-300 mt-2">اختر السيارة من القائمة لعرض بيانات GPS وCAN والسرعة والرحلات إن توفرت.</p></div><button type="button" onClick={()=>setCurrentTab('dashboard')} className="rounded-xl bg-gradient-to-l from-cyan-500 to-blue-700 px-4 py-3 font-bold text-sm">عرض البيانات الحية</button></div>:<p className="text-slate-400 text-sm">اختر سيارة للبدء</p>}
-            </div>
-          </div>
-        </div>
-        {role !== 'user' && <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sky-700 bg-[#092442] px-4 py-3 text-white">
-          <span className="font-bold text-sm">مرحباً، {displayName} — {roleLabel}</span>
-          <div className="flex flex-wrap gap-2"><button type="button" onClick={()=>setCurrentTab('users')} className="rounded-xl border border-cyan-500 bg-blue-700 px-4 py-2 text-sm font-bold">إدارة المستخدمين والأجهزة</button><button type="button" onClick={()=>setCurrentTab('vehicle-profiles')} className="rounded-xl border border-teal-400 bg-teal-700 px-4 py-2 text-sm font-bold">بيانات المركبات وIMEI</button></div>
-        </div>}
-        {currentTab === 'users' && role !== 'user' && <UsersManagement />}
-        {currentTab === 'vehicle-profiles' && role !== 'user' && <VehicleProfiles />}
-                {currentTab === 'dashboard' && (
-          <section className="zf-fleet-hero" aria-label={isAr ? 'لوحة حالة الأسطول' : 'Fleet status'}>
-            <div className="zf-fleet-hero-title">
-              <div>
-                <p className="zf-fleet-eyebrow">FMB140 • LIVE FLEET COMMAND</p>
-                <h1>{isAr ? 'مركز تتبع وتشخيص المركبات' : 'Vehicle Tracking & Diagnostics'}</h1>
-                <p>{isAr ? 'مراقبة مباشرة، بيانات CAN الحقيقية، والتشخيص الوقائي' : 'Live monitoring, actual CAN telemetry & preventive diagnostics'}</p>
-              </div>
-              <div className="zf-fleet-status">
-                <span className={`zf-fleet-led ${selectedDevice?.connected ? 'is-online' : ''}`} />
-                {deviceStatusLabel}
-              </div>
-            </div>
-            <div className="zf-fleet-stats">
-              <div className="zf-fleet-stat"><span>{isAr ? 'حالة الخادم' : 'Server'}</span><b>{serverHealthy ? (isAr ? 'يعمل' : 'Online') : (isAr ? 'متوقف' : 'Offline')}</b><small>HTTP / TCP</small></div>
-              <div className="zf-fleet-stat"><span>{isAr ? 'المركبات المتصلة' : 'Connected'}</span><b>{devices.filter(d => d.connected).length}<em> / {devices.length}</em></b><small>{isAr ? 'مركبة' : 'Vehicles'}</small></div>
-              <div className="zf-fleet-stat"><span>{isAr ? 'الجهاز المختار' : 'Selected vehicle'}</span><b className="zf-fleet-stat-name">{selectedDevice ? vehicleName : '—'}</b><small dir="ltr">{selectedDevice?.imei || 'FMB140'}</small></div>
-              <div className="zf-fleet-stat"><span>{isAr ? 'آخر بيانات' : 'Last data'}</span><b className="zf-fleet-stat-date">{telemetry?.receivedAt ? new Date(telemetry.receivedAt).toLocaleTimeString(isAr ? 'ar-LY' : 'en-US') : '—'}</b><small>{isAr ? 'تحديث كل ثانيتين' : 'Every 2 seconds'}</small></div>
-              <button className="zf-fleet-stat zf-fleet-stat-action" onClick={() => { checkHealth(); fetchDevices(); if (selectedImei) fetchTelemetry(selectedImei); }}>
-                <span>{isAr ? 'تحديث البيانات' : 'Refresh telemetry'}</span><RotateCw size={25} /><small>{isAr ? 'فحص الآن' : 'Check now'}</small>
-              </button>
-            </div>
-            <div className="zf-fleet-tools" role="navigation" aria-label={isAr ? 'أقسام النظام' : 'Dashboard sections'}>
-              {[
-                ['dashboard', isAr ? 'الرئيسية' : 'Overview'],
-                ['map', isAr ? 'التتبع المباشر' : 'Live map'],
-                ['sensors', isAr ? 'بيانات CAN' : 'CAN data'],
-                ['diagnostics', isAr ? 'التشخيص' : 'Diagnostics'],
-                ['alerts', isAr ? 'التنبيهات' : 'Alerts'],
-              ].map(([tab, label]) => (
-                <button key={tab} className={`zf-fleet-tab ${currentTab === tab ? 'active' : ''}`} onClick={() => setCurrentTab(tab)}>{label}</button>
-              ))}
-            </div>
-          </section>
-        )}
 
-        {currentTab === 'dashboard' && (
-          <section className="zf-command-layout" aria-label="ملخص قيادة الأسطول">
-            <div className="zf-command-main">
-              <div className="zf-command-heading">
-                <div><span className="zf-command-kicker">ZAINFLEET / FLEET COMMAND</span><h2>نظرة شاملة على الأسطول</h2><p>بيانات حقيقية من الأجهزة المتصلة بالخادم، تتحدث تلقائياً</p></div>
-                <span className="zf-command-live"><Radio size={14}/> مراقبة مباشرة</span>
+        <div className="zf-ref-header">
+          <div className="zf-ref-trucks" aria-hidden="true"><Car size={85}/><span>GPS • CAN • FLEET</span></div>
+          <div><h1>نظام تتبع وإدارة الأسطول <Car size={34}/></h1><p>تتبع فوري　•　إدارة العمليات　•　الصيانة　•　قراءة الأعطال　•　لوحات تحكم ذكية</p></div>
+          <div className="zf-ref-satellite"><Radio size={52}/></div>
+        </div>
+        <div className="zf-ref-shell">
+          <aside className="zf-ref-menu" aria-label="قائمة النظام">
+            {([
+              ['dashboard','الرئيسية','⌂'],['map','تتبع المركبات','◎'],['vehicle-profiles','إدارة الأسطول','▣'],
+              ['vehicle','الصيانة','⚒'],['diagnostics','قراءة الأعطال (OBD)','⚙'],['trips','التقارير والتحليلات','▥'],
+              ['users','المستخدمون والصلاحيات','♟'],['alerts','التنبيهات','♧'],['sensors','الإعدادات والقراءات','⚙']
+            ] as const).filter(([tab])=>(tab!=='users'&&tab!=='vehicle-profiles')||role!=='user').map(([tab,label,glyph])=>
+              <button type="button" key={tab} className={currentTab===tab?'active':''} onClick={()=>setCurrentTab(tab)}><span>{glyph}</span>{label}</button>
+            )}
+            <button type="button" onClick={onLogout}><span>⇥</span>تسجيل الخروج</button>
+          </aside>
+          <div className="zf-ref-workspace">
+            <div className="zf-ref-title"><span>♛</span> لوحة التحكم - {roleLabel}</div>
+            {currentTab==='dashboard' && <>
+              <div className="zf-ref-stats">
+                <article><span>🚚</span><small>إجمالي المركبات</small><b>{devices.length}</b></article>
+                <article><span className="green">●</span><small>المركبات النشطة</small><b>{devices.filter(d=>d.connected).length}</b></article>
+                <article><span>🔧</span><small>في الصيانة</small><b>—</b></article>
+                <article><span className="red">⚠</span><small>لديها أعطال</small><b>—</b></article>
               </div>
-              <div className="zf-command-kpis">
-                <article><span>إجمالي المركبات</span><strong>{devices.length}</strong><small>المركبات المخصصة لحسابك</small></article>
-                <article><span>المركبات المتصلة</span><strong>{devices.filter(d=>d.connected).length}</strong><small>اتصال TCP نشط</small></article>
-                <article><span>غير المتصلة</span><strong>{devices.filter(d=>!d.connected).length}</strong><small>تحتاج متابعة</small></article>
-                <article><span>تنبيهات المركبة</span><strong>{unreadAlertsCount}</strong><small>للمركبة المختارة</small></article>
-              </div>
-              <div className="zf-command-map-card">
-                <div className="zf-command-card-heading"><div><b>خريطة التتبع المباشر</b><small>عرض موقع المركبة المختارة حسب آخر إحداثيات فعلية</small></div><button type="button" onClick={()=>setCurrentTab('map')}>فتح الخريطة ←</button></div>
-                <div className="zf-command-map-content">
-                  {selectedDevice ? <TripMap device={selectedDevice} latestTelemetry={telemetry} lang={lang}/> : <div className="zf-command-empty">لا توجد مركبات مرتبطة بالحساب حالياً</div>}
+              <div className="zf-ref-top-grid">
+                <section className="zf-ref-panel zf-ref-map"><header>تتبع المركبات المباشر <span>GPS LIVE</span></header>
+                  {selectedDevice?<TripMap device={selectedDevice} latestTelemetry={telemetry} lang={lang}/>:<div className="zf-ref-empty">لا توجد مركبات مرتبطة بهذا الحساب</div>}
+                  <div className="zf-ref-map-footer"><span>{selectedDevice?.name||selectedDevice?.imei||'اختر مركبة'}</span><span>{deviceStatusLabel}</span><button type="button" onClick={()=>setCurrentTab('map')}>عرض الخريطة</button></div>
+                </section>
+                <div className="zf-ref-top-side">
+                  <section className="zf-ref-panel"><header>استهلاك الوقود (أسبوعي)</header><div className="zf-ref-no-chart"><span>⛽</span>تظهر إحصائيات الوقود عند توفر بيانات تاريخية موثوقة</div></section>
+                  <section className="zf-ref-panel"><header>حالة الأسطول</header><div className="zf-ref-fleet-health">
+                    <div className="zf-ref-ring" style={{'--pct':devices.length?((devices.filter(d=>d.connected).length/devices.length)*100)+'%':'0%'} as React.CSSProperties}><strong>{devices.length?Math.round(devices.filter(d=>d.connected).length/devices.length*100):0}%</strong><small>متصلة</small></div>
+                    <div><p><i className="green"/> متصلة ({devices.filter(d=>d.connected).length})</p><p><i className="red"/> غير متصلة ({devices.filter(d=>!d.connected).length})</p></div>
+                  </div></section>
                 </div>
               </div>
-              <div className="zf-command-actions">
-                <button type="button" onClick={()=>setCurrentTab('trips')}>سجل الرحلات <span>←</span></button>
-                <button type="button" onClick={()=>setCurrentTab('alerts')}>التنبيهات <span>←</span></button>
-                <button type="button" onClick={()=>setCurrentTab('diagnostics')}>تشخيص الأجهزة <span>←</span></button>
+              <div className="zf-ref-bottom-grid">
+                <section className="zf-ref-panel"><header>تنبيهات فورية <span>⚠</span></header><div className="zf-ref-feed">
+                  <button type="button" onClick={()=>setCurrentTab('alerts')}>{unreadAlertsCount?unreadAlertsCount+' تنبيهات للمركبة المختارة':'لا توجد تنبيهات للمركبة المختارة'}</button>
+                  <button type="button" onClick={()=>setCurrentTab('diagnostics')}>عرض سجل التشخيص ←</button></div></section>
+                <section className="zf-ref-panel"><header>قراءة الأعطال (OBD) <span>⚙</span></header><div className="zf-ref-feed"><p>عرض قراءات التشخيص الفعلية من الجهاز</p><button type="button" onClick={()=>setCurrentTab('diagnostics')}>عرض التفاصيل</button></div></section>
+                <section className="zf-ref-panel"><header>الصيانة <span>🔧</span></header><div className="zf-ref-feed"><p>بيانات الصيانة غير متوفرة من الخادم حالياً</p><button type="button" onClick={()=>setCurrentTab('vehicle')}>عرض حالة المركبة</button></div></section>
               </div>
-            </div>
-            <aside className="zf-command-sidebar">
-              <div className="zf-command-card-heading"><div><b>المركبات</b><small>اختر مركبة للمتابعة</small></div><span>{devices.length}</span></div>
-              <div className="zf-command-vehicle-list">{devices.length===0?<p>لا توجد مركبات بعد</p>:devices.map(d=><button type="button" key={d.imei} className={selectedImei===d.imei?'selected':''} onClick={()=>setSelectedImei(d.imei)}><Car size={18}/><span><b>{customNames[d.imei]||d.name||d.imei}</b><small dir="ltr">{d.imei}</small></span><i className={d.connected?'online':''}/></button>)}</div>
-              <div className="zf-command-side-status"><span>حالة الخادم</span><strong>{serverHealthy?'متصل':'غير متصل'}</strong><small>{deviceStatusLabel}</small></div>
-            </aside>
-          </section>
-        )}
-
+              <div className="zf-ref-panel zf-ref-bottom-summary"><header>لوحة المعلومات (Dashboard)</header><div className="zf-ref-stats zf-ref-summary-stats">
+                <article><small>نسبة الاتصال</small><b>{devices.length?Math.round(devices.filter(d=>d.connected).length/devices.length*100):0}%</b></article>
+                <article><small>آخر تحديث</small><b className="zf-ref-time">{telemetry?.receivedAt?new Date(telemetry.receivedAt).toLocaleTimeString('ar-LY'):'—'}</b></article>
+                <article><small>إجمالي الأجهزة</small><b>{devices.length}</b></article>
+                <article><small>حالة الخادم</small><b className="zf-ref-time">{serverHealthy?'متصل':'غير متصل'}</b></article>
+              </div></div>
+            </>}
         {/* Multi-vehicle Switcher Bar (only when > 1 vehicle exists) */}
         {devices.length > 1 && selectedDevice && (
           <div className="bg-white rounded-2xl border border-slate-200 p-3 mb-4 shadow-xs flex items-center justify-between gap-3">
@@ -382,26 +316,6 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
               <Settings className="w-4 h-4" />
             </button>
           </div>
-        )}
-
-        {/* View 1: Main Customer Dashboard matching Screen 1 in Mockup */}
-        {currentTab === 'dashboard' && (
-          <>
-            {selectedDevice ? (
-              <CanDashboard
-                device={selectedDevice}
-                telemetry={telemetry}
-                isLoading={isLoadingTelemetry}
-                onRefresh={() => selectedImei && fetchTelemetry(selectedImei)}
-                onNavigate={(tab) => setCurrentTab(tab)}
-                vehicleName={vehicleName}
-                onUpdateVehicleName={handleUpdateVehicleName}
-                lang={lang}
-              />
-            ) : (
-              <WaitingForVehicleCard isAr={isAr} onRefresh={fetchDevices} device={selectedDevice || devices[0] || null} lastDataAt={telemetry?.receivedAt || null} />
-            )}
-          </>
         )}
 
         {/* View 2: Trip History Log matching Screen 3 & 4 in Mockup */}
@@ -477,6 +391,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
 
         {/* View 8: Privacy Policy */}
         {currentTab === 'privacy' && <PrivacyPolicy />}
+      </div>
       </main>
 
       {/* Fixed Bottom Navigation for Mobile matching all Mockup screens */}
