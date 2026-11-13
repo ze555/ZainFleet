@@ -391,7 +391,8 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
 
         {/* View 8: Privacy Policy */}
         {currentTab === 'privacy' && <PrivacyPolicy />}
-      </div>
+          </div>
+        </div>
       </main>
 
       {/* Fixed Bottom Navigation for Mobile matching all Mockup screens */}
