@@ -180,6 +180,14 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
     return count;
   }, [telemetry, selectedDevice]);
 
+  const liveMetrics = useMemo(() => telemetry?.record ? decodeCanMetrics(telemetry.record) : null, [telemetry]);
+  const gaugeSpeed = liveMetrics?.speed.displaySpeedKmH ?? null;
+  const gaugeRpm = liveMetrics?.engine.rpm ?? null;
+  const gaugeFuel = liveMetrics?.fuel.levelPercent ?? null;
+  const speedSweep = gaugeSpeed === null ? 0 : Math.max(0, Math.min(100, gaugeSpeed / 220 * 100));
+  const rpmSweep = gaugeRpm === null ? 0 : Math.max(0, Math.min(100, gaugeRpm / 8000 * 100));
+  const fuelSweep = gaugeFuel === null ? 0 : Math.max(0, Math.min(100, gaugeFuel));
+
   // Safe device management delete
   const handleDeleteDevice = async (imei: string) => {
     if (!window.confirm(isAr ? 'هل أنت متأكد من مسح سجلات هذه السيارة؟' : 'Are you sure you want to clear this vehicle data?')) {
@@ -253,6 +261,24 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
                 <article><span>🔧</span><small>في الصيانة</small><b>—</b></article>
                 <article><span className="red">⚠</span><small>لديها أعطال</small><b>—</b></article>
               </div>
+              <section className="zf-art-cluster" aria-label="عدادات المركبة المباشرة">
+                <div className="zf-art-cluster-title"><div><span className="zf-art-eyebrow">LIVE INSTRUMENT CLUSTER</span><h2>قمرة القيادة الذكية</h2><p>{selectedDevice ? vehicleName : 'اختر مركبة لعرض قراءاتها'}</p></div><span className={selectedDevice?.connected?'zf-art-online':'zf-art-offline'}>{selectedDevice?.connected?'● متصلة الآن':'○ غير متصلة'}</span></div>
+                <div className="zf-art-dials">
+                  <div className="zf-art-dial" style={{'--sweep':`${speedSweep}%`} as React.CSSProperties}>
+                    <div className="zf-art-dial-inner"><span>السرعة الحالية</span><strong>{gaugeSpeed === null ? '—' : Math.round(gaugeSpeed)}</strong><small>km/h</small></div>
+                    <div className="zf-art-ticks"><span>0</span><span>110</span><span>220</span></div>
+                  </div>
+                  <div className="zf-art-dial zf-art-rpm" style={{'--sweep':`${rpmSweep}%`} as React.CSSProperties}>
+                    <div className="zf-art-dial-inner"><span>دورات المحرك</span><strong>{gaugeRpm === null ? '—' : (gaugeRpm / 1000).toFixed(1)}</strong><small>RPM × 1000</small></div>
+                    <div className="zf-art-ticks"><span>0</span><span>4</span><span>8</span></div>
+                  </div>
+                  <div className="zf-art-dial zf-art-fuel" style={{'--sweep':`${fuelSweep}%`} as React.CSSProperties}>
+                    <div className="zf-art-dial-inner"><span>مستوى الوقود</span><strong>{gaugeFuel === null ? '—' : Math.round(gaugeFuel)}</strong><small>%</small></div>
+                    <div className="zf-art-ticks"><span>E</span><span>½</span><span>F</span></div>
+                  </div>
+                </div>
+                <div className="zf-art-cluster-footer"><span>◉ بيانات GPS وCAN الفعلية</span><span>{telemetry?.receivedAt ? 'آخر استقبال: '+new Date(telemetry.receivedAt).toLocaleTimeString('ar-LY') : 'بانتظار أول قراءة'}</span><button type="button" onClick={()=>setCurrentTab('vehicle')}>تفاصيل المركبة ←</button></div>
+              </section>
               <div className="zf-ref-top-grid">
                 <section className="zf-ref-panel zf-ref-map"><header>تتبع المركبات المباشر <span>GPS LIVE</span></header>
                   {selectedDevice?<TripMap device={selectedDevice} latestTelemetry={telemetry} lang={lang}/>:<div className="zf-ref-empty">لا توجد مركبات مرتبطة بهذا الحساب</div>}
