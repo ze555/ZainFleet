@@ -444,3 +444,40 @@
 .zf-cockpit-no-gps{background:#09223bd9!important;color:#a8d9fa!important}
 .zf-fleet-shell{background:linear-gradient(180deg,#07182b,#081d31)!important}
 @media(prefers-reduced-motion:reduce){.zf-fleet-tab{transition:none}}
+
+
+/* Fleet command-center dashboard & matching authentication page */
+.zf-command-layout{display:grid;grid-template-columns:minmax(0,1fr) 265px;gap:18px;align-items:start;margin:20px 0;color:#eaf6ff;direction:ltr}
+.zf-command-main,.zf-command-sidebar{direction:rtl;min-width:0}
+.zf-command-heading{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:16px}
+.zf-command-kicker{font-size:10px;letter-spacing:2px;color:#56bfff;font-weight:800}
+.zf-command-heading h2{font-size:24px;font-weight:900;margin:5px 0}
+.zf-command-heading p,.zf-command-card-heading small{color:#8baac5;font-size:12px}
+.zf-command-live{display:inline-flex;align-items:center;gap:7px;background:#0b3b43;color:#5af0c2;padding:9px 13px;border:1px solid #137c75;border-radius:99px;font-size:12px;white-space:nowrap}
+.zf-command-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.zf-command-kpis article,.zf-command-map-card,.zf-command-sidebar,.zf-command-actions button{background:linear-gradient(145deg,#102d49,#071b30);border:1px solid #245679;border-radius:16px;box-shadow:0 8px 28px #0003}
+.zf-command-kpis article{padding:18px 14px;display:flex;flex-direction:column;gap:8px}
+.zf-command-kpis article span{font-size:12px;color:#9ec0d8}.zf-command-kpis article strong{font-size:30px;line-height:1;color:#fff}.zf-command-kpis article small{font-size:10px;color:#72a4c4}
+.zf-command-map-card{overflow:hidden}.zf-command-card-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px}.zf-command-card-heading b{font-size:15px;display:block}.zf-command-card-heading small{display:block;margin-top:5px}
+.zf-command-card-heading button{background:#0e639d;color:white;border-radius:9px;padding:8px 12px;font-size:12px}
+.zf-command-map-content{min-height:300px;padding:8px 12px 14px}.zf-command-map-content .leaflet-container{min-height:290px;border-radius:12px}
+.zf-command-empty{min-height:290px;display:grid;place-items:center;color:#a2c1d8}
+.zf-command-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:15px}
+.zf-command-actions button{padding:17px;color:#d9f3ff;text-align:right;font-weight:800;display:flex;justify-content:space-between}
+.zf-command-actions button:hover,.zf-command-vehicle-list button:hover{border-color:#4bb8f7;background:#16436a}
+.zf-command-sidebar{padding:4px 8px 15px;position:sticky;top:18px}
+.zf-command-sidebar .zf-command-card-heading>span{color:#6bd5ff;font-size:22px;font-weight:900}
+.zf-command-vehicle-list{max-height:430px;overflow:auto;padding:0 7px}.zf-command-vehicle-list>p{color:#a4bcd2;font-size:13px;padding:16px}
+.zf-command-vehicle-list button{display:flex;width:100%;align-items:center;gap:10px;text-align:right;padding:12px 9px;border:1px solid transparent;border-radius:12px;color:#dff4ff;margin-bottom:6px}
+.zf-command-vehicle-list button.selected{background:#104a75;border-color:#2588c5}.zf-command-vehicle-list button>span{min-width:0;flex:1}.zf-command-vehicle-list button b{display:block;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.zf-command-vehicle-list button small{display:block;color:#8eafc8;font-size:10px;margin-top:4px}
+.zf-command-vehicle-list i{height:8px;width:8px;border-radius:50%;background:#77899a;flex-shrink:0}.zf-command-vehicle-list i.online{background:#39e8a6;box-shadow:0 0 9px #39e8a6}
+.zf-command-side-status{margin:14px 8px 0;padding:14px;border-radius:12px;background:#06192b;border:1px solid #214a67;display:flex;flex-direction:column;gap:7px}.zf-command-side-status span,.zf-command-side-status small{font-size:11px;color:#91b6d2}.zf-command-side-status strong{font-size:16px;color:#65e5b7}
+.zf-command-login{background:radial-gradient(circle at 12% 14%,#135f934d,transparent 35%),linear-gradient(145deg,#051423,#0b2945 70%,#061a30)!important}
+.zf-command-login .zf-mobile-login-card{background:linear-gradient(145deg,#102d49,#071a2e)!important;border:1px solid #3278a5!important;box-shadow:0 24px 70px #0008!important}
+.zf-command-login .zf-mobile-card-heading h2,.zf-command-login .zf-mobile-card-heading p,.zf-command-login .zf-mobile-login-form label{color:#e7f6ff!important}
+.zf-command-login .zf-mobile-input{background:#061a30!important;border:1px solid #356180!important;color:#fff!important}
+.zf-command-login .zf-mobile-input input{background:transparent!important;color:#fff!important}
+.zf-command-login .zf-mobile-login-submit{background:linear-gradient(110deg,#1163a0,#1b9de0)!important;box-shadow:0 8px 25px #168bd744!important}
+.zf-command-login .zf-mobile-visual{background:linear-gradient(145deg,#092a48,#06172b)!important;border-color:#246b99!important}
+@media(max-width:1100px){.zf-command-layout{grid-template-columns:minmax(0,1fr)}.zf-command-sidebar{position:static}.zf-command-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:580px){.zf-command-heading{align-items:flex-start;flex-direction:column}.zf-command-heading h2{font-size:20px}.zf-command-kpis{gap:8px}.zf-command-kpis article{padding:12px}.zf-command-actions{grid-template-columns:1fr}.zf-command-map-content{min-height:250px}}
