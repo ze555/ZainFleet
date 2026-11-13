@@ -1,4 +1,5 @@
 import net from 'node:net';
+import { initPostgres, persistAvlBatch, pool as postgresPool } from './src/db/postgres.js';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -187,6 +188,10 @@ class PersistentTelemetryRepository {
 const deviceRepo = new PersistentDeviceRepository();
 const telemetryRepo = new PersistentTelemetryRepository();
 
+// PostgreSQL is the durable primary ingest store when DATABASE_URL is set.
+// Startup fails on schema/connectivity errors rather than silently losing records.
+void initPostgres().catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); });
+
 // --- Teltonika TCP Server (raw TCP socket) ---
 // Separate internal listeners: FMB140 TCP on 5000, web/API on 8080.
 // Railway PORT can be 5000 for the TCP proxy; HTTP_PORT controls the website.
@@ -227,6 +232,7 @@ const tcpServer = net.createServer((socket) => {
   let imei: string | null = null;
   let buffer = Buffer.alloc(0);
   let handshakeDone = false;
+  let persistenceQueue: Promise<void> = Promise.resolve();
 
   socket.setTimeout(TCP_IDLE_TIMEOUT_MS);
 
@@ -330,22 +336,35 @@ const tcpServer = net.createServer((socket) => {
         }
 
         const seenIso = new Date().toISOString();
-        lastAvlPacketAt = seenIso;
-        if (imei) {
-          let latestGpsTime = '';
-          telemetryRepo.storeBatch(imei, decoded.records, seenIso);
-          for (const rec of decoded.records) {
-            if (rec.timestamp) latestGpsTime = rec.timestamp;
+        const packetImei = imei;
+        const records = decoded.records;
+        // Serialize writes and ACKs per TCP session; acknowledge only after durable insert.
+        persistenceQueue = persistenceQueue.then(async () => {
+          if (packetImei && postgresPool) {
+            await persistAvlBatch(packetImei, records, seenIso);
           }
-          deviceRepo.incrementRecords(imei, decoded.records.length);
-          deviceRepo.upsert(imei, seenIso, true, latestGpsTime || undefined, true);
-        }
-
-        // Send 4-byte big-endian ACK
-        const ack = Buffer.from(createAvlAcknowledgement(decoded.records.length));
-        socket.write(ack, (err) => {
-          if (err) console.error(`[TCP] Failed to write ACK to ${imei}:`, err);
-          else console.log(`[TCP] PACKET ACK sent to ${imei}: ${decoded.records.length} records (0x${ack.toString('hex')})`);
+          lastAvlPacketAt = seenIso;
+          if (packetImei) {
+            let latestGpsTime = '';
+            // Keep legacy API reads working during the PostgreSQL migration.
+            telemetryRepo.storeBatch(packetImei, records, seenIso);
+            for (const rec of records) {
+              if (rec.timestamp) latestGpsTime = rec.timestamp;
+            }
+            deviceRepo.incrementRecords(packetImei, records.length);
+            deviceRepo.upsert(packetImei, seenIso, true, latestGpsTime || undefined, true);
+          }
+          const ack = Buffer.from(createAvlAcknowledgement(records.length));
+          if (!socket.destroyed) {
+            socket.write(ack, err => {
+              if (err) console.error('[TCP] ACK failed:', err);
+              else console.log(`[TCP] PACKET ACK sent to ${packetImei}: ${records.length} records`);
+            });
+          }
+        }).catch(err => {
+          recordTcpFailure('PACKET_DECODE_FAILED', 'Persistence failed: ' + String(err));
+          console.error('[TCP] Database persistence failed; no ACK sent:', err);
+          socket.destroy();
         });
       }
     } catch (err) {
