@@ -313,6 +313,39 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
           </section>
         )}
 
+        {currentTab === 'dashboard' && (
+          <section className="zf-command-layout" aria-label="ملخص قيادة الأسطول">
+            <div className="zf-command-main">
+              <div className="zf-command-heading">
+                <div><span className="zf-command-kicker">ZAINFLEET / FLEET COMMAND</span><h2>نظرة شاملة على الأسطول</h2><p>بيانات حقيقية من الأجهزة المتصلة بالخادم، تتحدث تلقائياً</p></div>
+                <span className="zf-command-live"><Radio size={14}/> مراقبة مباشرة</span>
+              </div>
+              <div className="zf-command-kpis">
+                <article><span>إجمالي المركبات</span><strong>{devices.length}</strong><small>المركبات المخصصة لحسابك</small></article>
+                <article><span>المركبات المتصلة</span><strong>{devices.filter(d=>d.connected).length}</strong><small>اتصال TCP نشط</small></article>
+                <article><span>غير المتصلة</span><strong>{devices.filter(d=>!d.connected).length}</strong><small>تحتاج متابعة</small></article>
+                <article><span>تنبيهات المركبة</span><strong>{unreadAlertsCount}</strong><small>للمركبة المختارة</small></article>
+              </div>
+              <div className="zf-command-map-card">
+                <div className="zf-command-card-heading"><div><b>خريطة التتبع المباشر</b><small>عرض موقع المركبة المختارة حسب آخر إحداثيات فعلية</small></div><button type="button" onClick={()=>setCurrentTab('map')}>فتح الخريطة ←</button></div>
+                <div className="zf-command-map-content">
+                  {selectedDevice ? <TripMap device={selectedDevice} latestTelemetry={telemetry} lang={lang}/> : <div className="zf-command-empty">لا توجد مركبات مرتبطة بالحساب حالياً</div>}
+                </div>
+              </div>
+              <div className="zf-command-actions">
+                <button type="button" onClick={()=>setCurrentTab('trips')}>سجل الرحلات <span>←</span></button>
+                <button type="button" onClick={()=>setCurrentTab('alerts')}>التنبيهات <span>←</span></button>
+                <button type="button" onClick={()=>setCurrentTab('diagnostics')}>تشخيص الأجهزة <span>←</span></button>
+              </div>
+            </div>
+            <aside className="zf-command-sidebar">
+              <div className="zf-command-card-heading"><div><b>المركبات</b><small>اختر مركبة للمتابعة</small></div><span>{devices.length}</span></div>
+              <div className="zf-command-vehicle-list">{devices.length===0?<p>لا توجد مركبات بعد</p>:devices.map(d=><button type="button" key={d.imei} className={selectedImei===d.imei?'selected':''} onClick={()=>setSelectedImei(d.imei)}><Car size={18}/><span><b>{customNames[d.imei]||d.name||d.imei}</b><small dir="ltr">{d.imei}</small></span><i className={d.connected?'online':''}/></button>)}</div>
+              <div className="zf-command-side-status"><span>حالة الخادم</span><strong>{serverHealthy?'متصل':'غير متصل'}</strong><small>{deviceStatusLabel}</small></div>
+            </aside>
+          </section>
+        )}
+
         {/* Multi-vehicle Switcher Bar (only when > 1 vehicle exists) */}
         {devices.length > 1 && selectedDevice && (
           <div className="bg-white rounded-2xl border border-slate-200 p-3 mb-4 shadow-xs flex items-center justify-between gap-3">
@@ -740,7 +773,7 @@ export const App: React.FC = () => {
   if (auth === 'checking') return <div className="zf-auth-loading" dir="rtl"><ShieldCheck size={35} /> جاري التحقق من الجلسة...</div>;
   if (auth === 'logged-in') return <DashboardApp onLogout={logout} role={account.role} displayName={account.displayName} />;
   return (
-    <main className="zf-mobile-login" dir="rtl">
+    <main className="zf-mobile-login zf-command-login" dir="rtl">
       <div className="zf-mobile-login-glow zf-glow-a" aria-hidden="true" />
       <div className="zf-mobile-login-glow zf-glow-b" aria-hidden="true" />
       <div className="zf-mobile-login-shell">
@@ -753,7 +786,7 @@ export const App: React.FC = () => {
           <div className="zf-mobile-vehicle"><Car size={86} strokeWidth={1.15}/><div className="zf-mobile-light zf-light-left"/><div className="zf-mobile-light zf-light-right"/></div>
           <span className="zf-mobile-orbit zf-mobile-orbit-one" aria-hidden="true" />
           <span className="zf-mobile-orbit zf-mobile-orbit-two" aria-hidden="true" />
-          <div className="zf-mobile-visual-text"><span><Radio size={14}/> LIVE GPS · CAN DATA</span><h1>سيارتك تحت سيطرتك.</h1><p>تتبع ذكي، تشخيص مباشر، وراحة بال في كل رحلة</p></div>
+          <div className="zf-mobile-visual-text"><span><Radio size={14}/> LIVE GPS · CAN DATA</span><h1>التحكم الكامل بأسطولك.</h1><p>مركز قيادة متكامل للتتبع المباشر، تشخيص المركبات وإدارة الأسطول</p></div>
         </section>
         <section className="zf-mobile-login-card">
           <div className="zf-mobile-card-heading"><span className="zf-mobile-welcome">مرحباً بعودتك <span aria-hidden="true">✦</span></span><h2>تسجيل الدخول</h2><p>ادخل إلى لوحة تحكم مركباتك بأمان</p></div>
