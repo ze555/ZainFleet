@@ -227,7 +227,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
       </section>
 
       {/* 1. Main Vehicle Card (بطاقة المركبة الرئيسية) matching Screen 1 in Mockup */}
-      <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm transition-all">
+      <div className="zf-reference-vehicle-card bg-white rounded-3xl border border-slate-200 p-5 shadow-sm transition-all">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             {/* Vehicle Avatar / Illustration */}
@@ -382,7 +382,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             </span>
             <div className="flex items-baseline justify-center gap-0.5 mt-0.5">
               <span className="text-xl sm:text-2xl font-extrabold font-mono text-slate-900">
-                {record?.speed ?? 0}
+                {record?.speed ?? "—"}
               </span>
               <span className="text-[10px] font-bold text-slate-500">
                 {isAr ? 'كم/س' : 'km/h'}
@@ -409,13 +409,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
                 metrics?.ignition.isOn ? 'text-emerald-700' : 'text-slate-600'
               }`}
             >
-              {metrics?.ignition.isOn
-                ? isAr
-                  ? 'يعمل'
-                  : 'ON'
-                : isAr
-                ? 'متوقف'
-                : 'OFF'}
+              {!metrics?.ignition.verified ? '—' : metrics.ignition.isOn ? (isAr ? 'يعمل' : 'ON') : (isAr ? 'متوقف' : 'OFF')}
             </span>
           </div>
 
@@ -429,7 +423,7 @@ export const CanDashboard: React.FC<CanDashboardProps> = ({
             </span>
             <div className="flex items-baseline justify-center gap-0.5 mt-0.5">
               <span className="text-xl sm:text-2xl font-extrabold font-mono text-slate-900">
-                {metrics?.fuel.levelPercent !== null ? `${metrics?.fuel.levelPercent}%` : '---'}
+                {fuelPercentage == null ? '—' : `${fuelPercentage.toFixed(0)}%`}
               </span>
             </div>
           </div>
