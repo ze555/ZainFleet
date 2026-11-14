@@ -12,6 +12,7 @@ import { CanSensorsLog } from './components/CanSensorsLog.tsx';
 import { DiagnosticView } from './components/DiagnosticView.tsx';
 import { PrivacyPolicy } from './components/PrivacyPolicy.tsx';
 import { BottomNav } from './components/BottomNav.tsx';
+import { InstrumentCluster } from './components/InstrumentCluster.tsx';
 import { MobileDrawer } from './components/MobileDrawer.tsx';
 import { DeviceInfo, TelemetrySnapshot } from './types/fleet.ts';
 import { decodeCanMetrics, generateVehicleAlerts } from './utils/canBusDecoder.ts';
@@ -274,12 +275,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
                 </section>
                 <section className="zf-pixel-panel zf-pixel-gauges">
                   <header><span>العداد الرسمي للسيارة</span><Car size={19}/></header>
-                  <div className="zf-pixel-gauge-deck">
-                    <div className="zf-pixel-gauge zf-pixel-small" style={{'--sweep':`${rpmSweep}%`} as React.CSSProperties}><div className="zf-pixel-gauge-content"><small>RPM</small><b>{gaugeRpm===null?'—':(gaugeRpm/1000).toFixed(1)}</b><em>×1000</em></div></div>
-                    <div className="zf-pixel-gauge zf-pixel-speed" style={{'--sweep':`${speedSweep}%`} as React.CSSProperties}><div className="zf-pixel-gauge-content"><small>20　40　60　80　120</small><b>{gaugeSpeed===null?'—':Math.round(gaugeSpeed)}</b><em>كم/س</em></div></div>
-                    <div className="zf-pixel-gauge zf-pixel-small zf-pixel-fuel" style={{'--sweep':`${fuelSweep}%`} as React.CSSProperties}><div className="zf-pixel-gauge-content"><small>FUEL</small><b>{gaugeFuel===null?'—':Math.round(gaugeFuel)+'%'}</b><em>E　　F</em></div></div>
-                  </div>
-                  <div className="zf-pixel-odo"><span>ODO　{liveMetrics?.odometer.totalKm==null?'—':Math.round(liveMetrics.odometer.totalKm).toLocaleString()+' كم'}</span><span>Trip　{liveMetrics?.odometer.tripKm==null?'—':liveMetrics.odometer.tripKm.toFixed(1)+' كم'}</span></div>
+                  <InstrumentCluster speed={gaugeSpeed} rpm={gaugeRpm} fuel={gaugeFuel} temperature={liveMetrics?.engine.coolantTempC ?? null} odometer={liveMetrics?.odometer.totalKm ?? null} trip={liveMetrics?.odometer.tripKm ?? null} connected={Boolean(selectedDevice?.connected)} />
                 </section>
                 <section className="zf-pixel-panel zf-pixel-car">
                   <header><span>{vehicleName}</span><b className={selectedDevice?.connected?'zf-pixel-live':'zf-pixel-muted'}>{selectedDevice?.connected?'متصلة':'غير متصلة'}</b></header>
