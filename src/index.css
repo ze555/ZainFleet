@@ -957,3 +957,27 @@
 .zf-imei-item button{padding:8px 11px;font-size:12px}
 .zf-imei-empty{text-align:center;padding:18px;color:#b2cbe0}
 @media(max-width:420px){.zf-imei-item{align-items:flex-start;flex-direction:column}.zf-imei-summary button{font-size:11px}.zf-imei-summary button strong{font-size:20px}}
+
+
+/* ZainFleet account profile, mobile-first */
+.zf-profile-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(1,9,22,.82);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(5px)}
+.zf-profile-dialog{position:relative;width:min(100%,520px);max-height:90dvh;overflow-y:auto;border:1px solid #28567c;border-radius:24px;background:#081c31;box-shadow:0 24px 90px #0009;padding:22px;color:#eaf5ff}
+.zf-profile-close{display:block;margin:0 0 12px auto;color:#a8c8e4;font-size:13px}
+.zf-account-profile{color:#eaf5ff;text-align:right;max-width:580px;margin:0 auto;padding:12px}
+.zf-profile-heading{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.zf-profile-heading h2{font-size:23px;font-weight:800;margin:0}
+.zf-profile-heading p{font-size:13px;color:#94b6d4;margin:4px 0}
+.zf-profile-avatar{width:58px;height:58px;display:grid;place-items:center;border-radius:18px;background:#103c61;color:#39caff}
+.zf-profile-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:22px}
+.zf-profile-details>div{background:#102a44;border:1px solid #275071;border-radius:14px;padding:13px;min-width:0;overflow-wrap:anywhere}
+.zf-profile-details small{display:block;color:#9cbed8;font-size:12px;margin-bottom:6px}
+.zf-profile-details strong{font-size:14px}
+.zf-profile-form{display:flex;flex-direction:column;gap:12px}
+.zf-profile-form h3{display:flex;gap:8px;align-items:center;font-weight:750;font-size:17px;margin-bottom:5px}
+.zf-profile-form label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#bcd6ed}
+.zf-profile-form input{width:100%;background:#0b233b;color:white;border:1px solid #386184;border-radius:12px;padding:13px;outline:none}
+.zf-profile-form input:focus{border-color:#29c6ff}
+.zf-profile-form button[type=submit]{border:1px solid #1a9de3;border-radius:12px;padding:14px;background:linear-gradient(130deg,#007bb8,#094d8e);font-weight:800;color:white}
+.zf-profile-form button:disabled{opacity:.6}
+.zf-profile-message{font-size:13px;color:#fbc88d}
+@media(max-width:430px){.zf-profile-dialog{padding:12px}.zf-account-profile{padding:6px}.zf-profile-details{grid-template-columns:1fr 1fr}}
