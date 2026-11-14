@@ -32,6 +32,7 @@ import {
 
 const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin'|'employee'|'user'; displayName: string}> = ({onLogout,role,displayName}) => {
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
+  const [profileOpen,setProfileOpen]=useState(false);
   const roleLabel = role==='admin'?'المدير العام':role==='company_admin'?'مدير الشركة':role==='employee'?'موظف الشركة':'مستخدم عادي';
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
@@ -188,6 +189,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
   const gaugeSpeed = liveMetrics?.speed.displaySpeedKmH ?? null;
   const gaugeRpm = liveMetrics?.engine.rpm ?? null;
   const gaugeFuel = liveMetrics?.fuel.levelPercent ?? null;
+  const fuelLiters = liveMetrics?.fuel.levelLiters ?? null;
   const speedSweep = gaugeSpeed === null ? 0 : Math.max(0, Math.min(100, gaugeSpeed / 220 * 100));
   const rpmSweep = gaugeRpm === null ? 0 : Math.max(0, Math.min(100, gaugeRpm / 8000 * 100));
   const fuelSweep = gaugeFuel === null ? 0 : Math.max(0, Math.min(100, gaugeFuel));
@@ -247,7 +249,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
           <div className="zf-mobile-top-actions">{(role==='admin'||role==='company_admin')&&<button type="button" onClick={()=>setCurrentTab('access-control')} aria-label="إدارة المستخدمين" title="إدارة المستخدمين"><Users size={19}/></button>}
             <button type="button" className={currentTab === 'map' ? 'active' : ''} onClick={() => setCurrentTab('map')} aria-label={isAr ? 'التتبع المباشر' : 'Live map'} title={isAr ? 'التتبع المباشر' : 'Live map'}><Radio size={19} /></button>
             <button type="button" className={currentTab === 'alerts' ? 'active zf-mobile-alert-btn' : 'zf-mobile-alert-btn'} onClick={() => setCurrentTab('alerts')} aria-label={isAr ? 'التنبيهات' : 'Alerts'} title={isAr ? 'التنبيهات' : 'Alerts'}><Bell size={19} />{unreadAlertsCount > 0 && <i>{unreadAlertsCount > 99 ? '99+' : unreadAlertsCount}</i>}</button>
-            <button type="button" onClick={() => setIsDrawerOpen(true)} aria-label={isAr ? 'القائمة' : 'Menu'} title={isAr ? 'القائمة' : 'Menu'}><Settings size={19} /></button>
+            <button type="button" onClick={() => setProfileOpen(true)} aria-label="الملف الشخصي" title="الملف الشخصي"><Settings size={19} /></button>
             <button type="button" className="zf-mobile-logout" onClick={onLogout} title={isAr ? 'تسجيل الخروج' : 'Log out'}><LogOut size={17} /><span>{isAr ? 'خروج' : 'Logout'}</span></button>
           </div>
         </header>
@@ -256,7 +258,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
         <div className="zf-pixel-topbar">
           <div className="zf-pixel-brand"><Car size={46}/><strong>نظام تتبع المركبات</strong><small>Vehicle Tracking System</small></div>
           <nav aria-label="التنقل الرئيسي">{([['dashboard','الرئيسية','⌂'],['map','التتبع المباشر','◎'],['vehicle-profiles','المركبات','▣'],['alerts','التنبيهات','♧'],['diagnostics','الأعطال','⚒'],['trips','التقارير','▤'],['users','المستخدمون','♙'],['sensors','الإعدادات','⚙']] as const).filter(([tab])=>(tab!=='users'&&tab!=='vehicle-profiles')||role!=='user').map(([tab,label,icon])=><button type="button" key={tab} className={currentTab===tab?'active':''} onClick={()=>setCurrentTab(tab)}><b>{icon}</b><span>{label}</span>{tab==='alerts'&&unreadAlertsCount>0&&<i>{unreadAlertsCount}</i>}</button>)}</nav>
-          <div className="zf-pixel-account"><span>{displayName||roleLabel}</span><button type="button" onClick={onLogout} title="تسجيل الخروج"><LogOut size={18}/></button></div>
+          <div className="zf-pixel-account"><button type="button" onClick={()=>setProfileOpen(true)} title="الملف الشخصي">{displayName||roleLabel}</button><button type="button" onClick={onLogout} title="تسجيل الخروج"><LogOut size={18}/></button></div>
         </div>
         <div className="zf-ref-shell">
           <aside className="zf-ref-menu zf-pixel-sidebar" aria-label="لوحات التحكم">
@@ -303,7 +305,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
                 </section>
                 <section className="zf-pixel-panel zf-pixel-health">
                   <header><span>حالة السيارة العامة</span><b className={selectedDevice?.connected?'zf-pixel-live':'zf-pixel-muted'}>{selectedDevice?.connected?'● متصلة':'○ غير متصلة'}</b></header>
-                  <div className="zf-pixel-metrics"><article><span>⚡</span><small>البطارية</small><b>{liveMetrics?.electrical.vehicleVoltageV==null?'—':liveMetrics.electrical.vehicleVoltageV.toFixed(1)+' V'}</b></article><article><span>♨</span><small>حرارة المحرك</small><b>{liveMetrics?.engine.coolantTempC==null?'—':liveMetrics.engine.coolantTempC+'°C'}</b></article><article><span>⛽</span><small>الوقود</small><b>{gaugeFuel===null?'—':Math.round(gaugeFuel)+'%'}</b></article><article><span>⚙</span><small>المحرك</small><b>{liveMetrics?.ignition.verified?(liveMetrics.ignition.isOn?'يعمل':'متوقف'):'غير متاح'}</b></article></div>
+                  <div className="zf-pixel-metrics"><article><span>⚡</span><small>البطارية</small><b>{liveMetrics?.electrical.vehicleVoltageV==null?'—':liveMetrics.electrical.vehicleVoltageV.toFixed(1)+' V'}</b></article><article><span>♨</span><small>حرارة المحرك</small><b>{liveMetrics?.engine.coolantTempC==null?'—':liveMetrics.engine.coolantTempC+'°C'}</b></article><article><span>⛽</span><small>الوقود</small><b>{gaugeFuel!==null?Math.round(gaugeFuel)+'%':fuelLiters!==null?fuelLiters.toFixed(1)+' لتر':'غير متاح'}</b></article><article><span>⚙</span><small>المحرك</small><b>{liveMetrics?.ignition.verified?(liveMetrics.ignition.isOn?'يعمل':'متوقف'):'غير متاح'}</b></article></div>
                 </section>
                 <section className="zf-pixel-panel zf-pixel-alerts">
                   <header><span>أحدث التنبيهات</span><b className="zf-pixel-warn">♟</b></header>
@@ -421,12 +423,16 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
           <DiagnosticView device={selectedDevice} lang={lang} />
         )}
 
+        {currentTab === 'profile' && <AccountProfile onPasswordChanged={onLogout} />}
+
         {/* View 8: Privacy Policy */}
         {currentTab === 'privacy' && <PrivacyPolicy />}
         {currentTab === 'access-control' && <AccessControl role={role} />}
           </div>
         </div>
       </main>
+
+      {profileOpen && <div className="zf-profile-backdrop" role="presentation" onClick={()=>setProfileOpen(false)}><div className="zf-profile-dialog" role="dialog" aria-modal="true" aria-label="الملف الشخصي" onClick={e=>e.stopPropagation()}><button type="button" className="zf-profile-close" onClick={()=>setProfileOpen(false)}>✕ إغلاق</button><AccountProfile onPasswordChanged={onLogout}/></div></div>}
 
       {/* Fixed Bottom Navigation for Mobile matching all Mockup screens */}
       <BottomNav
@@ -508,6 +514,48 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
       </footer>
     </div>
   );
+};
+
+const AccountProfile: React.FC<{onPasswordChanged:()=>void}> = ({onPasswordChanged}) => {
+  const [profile,setProfile]=useState<{username:string;displayName:string;role:string;companyName?:string|null;email?:string;phone?:string}|null>(null);
+  const [current,setCurrent]=useState('');
+  const [next,setNext]=useState('');
+  const [confirm,setConfirm]=useState('');
+  const [message,setMessage]=useState('');
+  const [busy,setBusy]=useState(false);
+  useEffect(()=>{let active=true;fetch('/api/auth/profile',{credentials:'same-origin'}).then(r=>{if(!r.ok)throw Error('تعذر تحميل الملف الشخصي');return r.json()}).then(d=>{if(active)setProfile(d)}).catch(()=>{if(active)setMessage('تعذر تحميل بيانات الحساب')});return()=>{active=false}},[]);
+  const submit=async(e:React.FormEvent<HTMLFormElement>)=>{
+    e.preventDefault();setMessage('');
+    if(next.length<10){setMessage('كلمة المرور يجب أن تحتوي على 10 أحرف على الأقل');return;}
+    if(next!==confirm){setMessage('تأكيد كلمة المرور غير مطابق');return;}
+    setBusy(true);
+    try{
+      const r=await fetch('/api/auth/change-password',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({currentPassword:current,newPassword:next})});
+      const d=await r.json();
+      if(!r.ok){setMessage(d.error||'فشل تغيير كلمة المرور');return;}
+      setCurrent('');setNext('');setConfirm('');setMessage('تم الحفظ. يرجى تسجيل الدخول مجدداً.');
+      onPasswordChanged();
+    }catch{setMessage('تعذر الاتصال بالخادم');}finally{setBusy(false);}
+  };
+  return <section className="zf-account-profile" dir="rtl">
+    <div className="zf-profile-heading"><div className="zf-profile-avatar"><Users size={30}/></div><div><h2>الملف الشخصي</h2><p>بيانات الحساب وأمان تسجيل الدخول</p></div></div>
+    <div className="zf-profile-details">
+      <div><small>الاسم</small><strong>{profile?.displayName||'جارٍ التحميل...'}</strong></div>
+      <div><small>اسم المستخدم</small><strong dir="auto">{profile?.username||'—'}</strong></div>
+      <div><small>الصلاحية</small><strong>{profile?.role==='admin'?'مدير النظام':profile?.role==='company_admin'?'مدير شركة':profile?.role==='employee'?'موظف':'مستخدم'}</strong></div>
+      {profile?.companyName&&<div><small>الشركة</small><strong>{profile.companyName}</strong></div>}
+      {profile?.email&&<div><small>البريد الإلكتروني</small><strong dir="auto">{profile.email}</strong></div>}
+      {profile?.phone&&<div><small>الهاتف</small><strong dir="auto">{profile.phone}</strong></div>}
+    </div>
+    <form className="zf-profile-form" onSubmit={submit}>
+      <h3><LockKeyhole size={19}/> تغيير كلمة المرور</h3>
+      <label>كلمة المرور الحالية<input type="password" autoComplete="current-password" required value={current} onChange={e=>setCurrent(e.target.value)}/></label>
+      <label>كلمة المرور الجديدة<input type="password" autoComplete="new-password" minLength={10} maxLength={128} required value={next} onChange={e=>setNext(e.target.value)}/></label>
+      <label>تأكيد كلمة المرور<input type="password" autoComplete="new-password" required value={confirm} onChange={e=>setConfirm(e.target.value)}/></label>
+      {message&&<p role="status" className="zf-profile-message">{message}</p>}
+      <button type="submit" disabled={busy}>{busy?'جارٍ الحفظ...':'حفظ كلمة المرور'}</button>
+    </form>
+  </section>;
 };
 
 interface WaitingProps {
