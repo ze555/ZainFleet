@@ -234,6 +234,19 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
 
       {/* Main Container */}
       <main className="zf-page zf-fleet-page zf-reference-page flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8">
+        {/* Compact mobile top navigation, separate from the desktop toolbar. */}
+        <header className="zf-mobile-topnav" dir={isAr ? 'rtl' : 'ltr'}>
+          <button type="button" className="zf-mobile-brand" onClick={() => setCurrentTab('dashboard')} aria-label={isAr ? 'الرئيسية' : 'Home'}>
+            <Car size={22} />
+            <span><strong>ZainFleet</strong><small>{isAr ? 'تتبع المركبات' : 'Fleet tracking'}</small></span>
+          </button>
+          <div className="zf-mobile-top-actions">
+            <button type="button" className={currentTab === 'map' ? 'active' : ''} onClick={() => setCurrentTab('map')} aria-label={isAr ? 'التتبع المباشر' : 'Live map'} title={isAr ? 'التتبع المباشر' : 'Live map'}><Radio size={19} /></button>
+            <button type="button" className={currentTab === 'alerts' ? 'active zf-mobile-alert-btn' : 'zf-mobile-alert-btn'} onClick={() => setCurrentTab('alerts')} aria-label={isAr ? 'التنبيهات' : 'Alerts'} title={isAr ? 'التنبيهات' : 'Alerts'}><span className="zf-mobile-bell">♧</span>{unreadAlertsCount > 0 && <i>{unreadAlertsCount > 99 ? '99+' : unreadAlertsCount}</i>}</button>
+            <button type="button" onClick={() => setIsDrawerOpen(true)} aria-label={isAr ? 'القائمة' : 'Menu'} title={isAr ? 'القائمة' : 'Menu'}><Settings size={19} /></button>
+            <button type="button" className="zf-mobile-logout" onClick={onLogout} title={isAr ? 'تسجيل الخروج' : 'Log out'}><LogOut size={17} /><span>{isAr ? 'خروج' : 'Logout'}</span></button>
+          </div>
+        </header>
         <div className="zf-login-toolbar"><span>FMB140 • ADMIN CONSOLE</span><button type="button" onClick={onLogout}><LogOut size={15} /> تسجيل الخروج</button></div>
 
         <div className="zf-pixel-topbar">
