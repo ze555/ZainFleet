@@ -424,10 +424,10 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 // Tenant-aware authorization. Tracker TCP ingestion stays independent of browser sessions.
-type FleetRole = 'admin' | 'company_admin' | 'user';
+type FleetRole = 'admin' | 'company_admin' | 'employee' | 'user';
 type CompanySector = 'rental'|'logistics'|'school'|'general';
 type FleetCompany = {id:string;name:string;enabled:boolean;sector?:CompanySector};
-type FleetUser = {username:string;displayName:string;salt:string;hash:string;devices:string[];enabled:boolean;role?:'company_admin'|'user';companyId?:string|null;phone?:string;email?:string;vehicleType?:string;plateNumber?:string};
+type FleetUser = {username:string;displayName:string;salt:string;hash:string;devices:string[];enabled:boolean;role?:'company_admin'|'employee'|'user';companyId?:string|null;phone?:string;email?:string;vehicleType?:string;plateNumber?:string};
 const USERS_PATH = path.join(DATA_DIR,'fleet_users.json');
 const COMPANIES_PATH = path.join(DATA_DIR,'fleet_companies.json');
 const ASSIGNMENTS_PATH = path.join(DATA_DIR,'fleet_device_companies.json');
@@ -475,7 +475,7 @@ function fleetAccess(req:Request,imei:string):boolean {
   return identity.role==='company_admin'||user.devices.includes(imei);
  }
  // Backward-compatible legacy users with pre-existing device grants.
- return identity.role==='user'&&user.devices.includes(imei)&&!deviceCompanies[imei];
+ return (identity.role==='user'||identity.role==='employee')&&user.devices.includes(imei)&&!deviceCompanies[imei];
 }
 function visibleDevices(req:Request):DeviceInfo[]{return deviceRepo.getAll().filter(d=>fleetAccess(req,d.imei));}
 function managerScope(req:Request):{user:string;role:FleetRole;companyId:string|null}|null {
@@ -659,17 +659,19 @@ app.post('/api/admin/users',(req:Request,res:Response)=>{
  const email=typeof req.body?.email==='string'?req.body.email.trim():'';
  const vehicleType=typeof req.body?.vehicleType==='string'?req.body.vehicleType.trim():'';
  const plateNumber=typeof req.body?.plateNumber==='string'?req.body.plateNumber.trim():'';
- const role=req.body?.role==='company_admin'?'company_admin':'user';
+ const role=req.body?.role==='company_admin'?'company_admin':req.body?.role==='employee'?'employee':'user';
  const companyId=actor.role==='admin'?(role==='company_admin'?req.body?.companyId:null):actor.companyId;
- if((actor.role==='admin'&&role==='user'&&req.body?.companyId)||
+ if((actor.role==='admin'&&role!=='company_admin'&&req.body?.companyId)||
+    (actor.role==='company_admin'&&role!=='employee')||
     (role==='company_admin'&&actor.role!=='admin')||
     (companyId!==null&&!fleetCompanies.some(c=>c.id===companyId&&c.enabled))||
     typeof username!=='string'||!/^[a-zA-Z0-9_.-]{3,40}$/.test(username)||
     username.toLowerCase()===AUTH_USER.toLowerCase()||fleetUsers.some(u=>u.username.toLowerCase()===username.toLowerCase())||
+    (!!email&&fleetUsers.some(u=>u.email?.toLowerCase()===email.toLowerCase()))||
     typeof displayName!=='string'||!displayName.trim()||displayName.length>100||
     typeof password!=='string'||password.length<10||password.length>256||
     phone.length>35||email.length>150||(email!==''&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))||vehicleType.length>100||plateNumber.length>40||
-    !Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(companyId ? deviceCompanies[id]!==companyId : !!deviceCompanies[id]))){
+    !Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(companyId ? deviceCompanies[id]!==companyId : !!deviceCompanies[id]))||devices.some((id:string)=>fleetUsers.some(u=>u.enabled&&u.devices.includes(id)))){
    res.status(400).json({error:'تحقق من الشركة والدور وكلمة المرور والأجهزة التابعة للشركة'});return;
  }
  const salt=crypto.randomBytes(16).toString('hex');
@@ -683,9 +685,9 @@ app.put('/api/admin/users/:username',(req:Request,res:Response)=>{
  if(!user||(actor.role==='admin' ? (!!user.companyId&&user.role!=='company_admin') : (user.companyId!==actor.companyId||user.role==='company_admin'))){res.sendStatus(404);return;}
  const companyId=actor.role==='admin'?user.role==='company_admin'?user.companyId:null:actor.companyId;
  const role=actor.role==='admin'&&['user','company_admin'].includes(req.body?.role)?req.body.role:user.role||'user';
- if((companyId&&!fleetCompanies.some(c=>c.id===companyId))||!['user','company_admin'].includes(role)||(actor.role==='admin'&&role!==user.role)){res.sendStatus(400);return;}
+ if((companyId&&!fleetCompanies.some(c=>c.id===companyId))||!['user','employee','company_admin'].includes(role)||(actor.role==='admin'&&role!==user.role)){res.sendStatus(400);return;}
  const devices=req.body?.devices;
- if(!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(companyId ? deviceCompanies[id]!==companyId : !!deviceCompanies[id]))){res.sendStatus(400);return;}
+ if(!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(companyId ? deviceCompanies[id]!==companyId : !!deviceCompanies[id])||fleetUsers.some(u=>u.username!==user.username&&u.enabled&&u.devices.includes(id)))){res.status(409).json({error:'IMEI مخصص لمستخدم آخر'});return;}
  const previous={...user};
  user.companyId=companyId;user.role=role;user.devices=[...new Set<string>(devices)];
  if(typeof req.body?.displayName==='string' && req.body.displayName.trim() && req.body.displayName.length<=100)user.displayName=req.body.displayName.trim();
