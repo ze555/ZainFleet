@@ -190,7 +190,7 @@ const telemetryRepo = new PersistentTelemetryRepository();
 
 // PostgreSQL is the durable primary ingest store when DATABASE_URL is set.
 // Startup fails on schema/connectivity errors rather than silently losing records.
-void initPostgres().catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); });
+const postgresReady=initPostgres().then(loadIdentityState).catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); throw err; });
 
 // --- Teltonika TCP Server (raw TCP socket) ---
 // Separate internal listeners: FMB140 TCP on 5000, web/API on 8080.
@@ -440,9 +440,41 @@ function saveJson(filename:string,value:unknown) {
   fs.writeFileSync(temp,JSON.stringify(value,null,2),{encoding:'utf8',mode:0o600});
   fs.renameSync(temp,filename);
 }
-const saveFleetUsers=()=>saveJson(USERS_PATH,fleetUsers);
-const saveCompanies=()=>saveJson(COMPANIES_PATH,fleetCompanies);
-const saveAssignments=()=>saveJson(ASSIGNMENTS_PATH,deviceCompanies);
+let adminFromDatabase:{username:string;salt:string;hash:string}|null=null;
+async function persistIdentityState(){
+ if(!postgresPool){throw new Error('DATABASE_URL required for user management');}
+ await postgresPool.query(`INSERT INTO fleet_identity_state(id,users,companies,assignments,updated_at)
+ VALUES(1,$1::jsonb,$2::jsonb,$3::jsonb,now())
+ ON CONFLICT(id) DO UPDATE SET users=EXCLUDED.users,companies=EXCLUDED.companies,assignments=EXCLUDED.assignments,updated_at=now()`,[JSON.stringify(fleetUsers),JSON.stringify(fleetCompanies),JSON.stringify(deviceCompanies)]);
+}
+async function loadIdentityState(){
+ if(!postgresPool) return;
+ const {rows}=await postgresPool.query('SELECT users,companies,assignments FROM fleet_identity_state WHERE id=1');
+ if(rows.length){
+  fleetUsers=rows[0].users;
+  fleetCompanies=rows[0].companies;
+  deviceCompanies=rows[0].assignments;
+ }else{
+  // One-time import of existing users, companies and assignments.
+  await persistIdentityState();
+ }
+ const admins=await postgresPool.query('SELECT username,salt,password_hash FROM fleet_system_admin WHERE username=$1',['Admin']);
+ if(admins.rows.length){
+  adminFromDatabase={username:admins.rows[0].username,salt:admins.rows[0].salt,hash:admins.rows[0].password_hash};
+ }else{
+  const salt=crypto.randomBytes(16).toString('hex');
+  const password=process.env.ADMIN_PASSWORD||'123456';
+  const hash=fleetPasswordHash(password,salt);
+  await postgresPool.query('INSERT INTO fleet_system_admin(username,salt,password_hash) VALUES($1,$2,$3) ON CONFLICT(username) DO NOTHING',['Admin',salt,hash]);
+  const saved=await postgresPool.query('SELECT username,salt,password_hash FROM fleet_system_admin WHERE username=$1',['Admin']);
+  adminFromDatabase={username:saved.rows[0].username,salt:saved.rows[0].salt,hash:saved.rows[0].password_hash};
+  console.warn('[Security] Admin initialized; change the initial password immediately.');
+ }
+ console.log('[Postgres] Users, companies and assignments loaded from PostgreSQL');
+}
+const saveFleetUsers=()=>persistIdentityState();
+const saveCompanies=()=>persistIdentityState();
+const saveAssignments=()=>persistIdentityState();
 function fleetPasswordHash(pass:string,salt:string):string {return crypto.scryptSync(pass,salt,64).toString('hex');}
 function sessionIdentity(req:Request):{user:string;role:FleetRole;companyId:string|null}|null {
  const cookie=(req.headers.cookie||'').split(';').map(c=>c.trim()).find(c=>c.startsWith('zf_session='));
@@ -514,7 +546,7 @@ app.post('/api/auth/login', (req: Request, res: Response) => {
   const managed = fleetUsers.find(u => u.username === user && u.enabled);
   const adminActual = crypto.createHash('sha256').update(pass).digest();
   const adminExpected = crypto.createHash('sha256').update(AUTH_PASSWORD).digest();
-  const adminOk = isAdmin && crypto.timingSafeEqual(adminActual, adminExpected);
+  const adminOk = isAdmin && (adminFromDatabase ? crypto.timingSafeEqual(Buffer.from(fleetPasswordHash(pass,adminFromDatabase.salt),'hex'),Buffer.from(adminFromDatabase.hash,'hex')) : crypto.timingSafeEqual(adminActual, adminExpected));
   const managedOk = !isAdmin && !!managed && /^[a-f0-9]{128}$/.test(managed.hash) &&
     crypto.timingSafeEqual(Buffer.from(fleetPasswordHash(pass, managed.salt), 'hex'), Buffer.from(managed.hash, 'hex'));
   if (!adminOk && !managedOk) {
@@ -566,7 +598,7 @@ app.get('/api/admin/vehicle-profiles',(req:Request,res:Response)=>{
  res.setHeader('Cache-Control','no-store');
  res.json({vehicles:deviceRepo.getAll().filter(d=>profileScope(req,d.imei)).map(d=>({imei:d.imei,connected:d.connected,profile:vehicleProfiles[d.imei]||null})),role:actor.role});
 });
-app.put('/api/admin/vehicle-profiles/:imei',(req:Request,res:Response)=>{
+app.put('/api/admin/vehicle-profiles/:imei',async (req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const imei=String(req.params.imei);
  if(!/^[0-9]{15}$/.test(imei)){res.status(400).json({error:'IMEI يجب أن يحتوي على 15 رقماً'});return;}
@@ -597,16 +629,16 @@ app.get('/api/admin/companies',(req:Request,res:Response)=>{
  if(sessionIdentity(req)?.role!=='admin'){res.sendStatus(403);return;}
  res.json({companies:fleetCompanies,assignments:deviceCompanies,devices:deviceRepo.getAll()});
 });
-app.post('/api/admin/companies',(req:Request,res:Response)=>{
+app.post('/api/admin/companies',async (req:Request,res:Response)=>{
  if(sessionIdentity(req)?.role!=='admin'){res.sendStatus(403);return;}
  const name=typeof req.body?.name==='string'?req.body.name.trim():'';
  if(name.length<2||name.length>100){res.status(400).json({error:'اسم الشركة غير صالح'});return;}
  const sector:CompanySector=['rental','logistics','school','general'].includes(req.body?.sector)?req.body.sector:'general';
  const company={id:crypto.randomUUID(),name,enabled:true,sector};
  fleetCompanies.push(company);
- try{saveCompanies();res.status(201).json(company);}catch{fleetCompanies.pop();res.sendStatus(507);}
+ try{await saveCompanies();res.status(201).json(company);}catch{fleetCompanies.pop();res.sendStatus(507);}
 });
-app.put('/api/admin/companies/:id',(req:Request,res:Response)=>{
+app.put('/api/admin/companies/:id',async (req:Request,res:Response)=>{
  if(sessionIdentity(req)?.role!=='admin'){res.sendStatus(403);return;}
  const c=fleetCompanies.find(c=>c.id===req.params.id);
  if(!c){res.sendStatus(404);return;}
@@ -614,9 +646,9 @@ app.put('/api/admin/companies/:id',(req:Request,res:Response)=>{
  if(typeof req.body?.name==='string'&&req.body.name.trim().length>=2&&req.body.name.length<=100)c.name=req.body.name.trim();
  if(typeof req.body?.enabled==='boolean')c.enabled=req.body.enabled;
  if(['rental','logistics','school','general'].includes(req.body?.sector))c.sector=req.body.sector;
- try{saveCompanies();res.json(c);}catch{Object.assign(c,before);res.sendStatus(507);}
+ try{await saveCompanies();res.json(c);}catch{Object.assign(c,before);res.sendStatus(507);}
 });
-app.put('/api/admin/devices/:imei/company',(req:Request,res:Response)=>{
+app.put('/api/admin/devices/:imei/company',async (req:Request,res:Response)=>{
  if(sessionIdentity(req)?.role!=='admin'){res.sendStatus(403);return;}
  const imei=String(req.params.imei),companyId=req.body?.companyId;
  if(!deviceRepo.get(imei)||!(companyId===null||typeof companyId==='string'&&fleetCompanies.some(c=>c.id===companyId))){res.sendStatus(400);return;}
@@ -626,12 +658,12 @@ app.put('/api/admin/devices/:imei/company',(req:Request,res:Response)=>{
   // Moving an IMEI to another company immediately revokes all previous user grants.
   const previousUsers=fleetUsers.map(u=>({...u,devices:[...u.devices]}));
   for(const user of fleetUsers)if(user.devices.includes(imei)&&user.companyId!==companyId)user.devices=user.devices.filter(id=>id!==imei);
-  try{saveAssignments();saveFleetUsers();res.json({success:true});}
+  try{await saveAssignments();await saveFleetUsers();res.json({success:true});}
   catch(e){fleetUsers=previousUsers;throw e;}
- }catch{if(before===undefined)delete deviceCompanies[imei];else deviceCompanies[imei]=before;try{saveAssignments();}catch{}res.sendStatus(507);}
+ }catch{if(before===undefined)delete deviceCompanies[imei];else deviceCompanies[imei]=before;try{await saveAssignments();}catch{}res.sendStatus(507);}
 });
 // Explicit IMEI -> user grants. Manager may only grant vehicles in own company.
-app.put('/api/admin/users/:username/devices',(req:Request,res:Response)=>{
+app.put('/api/admin/users/:username/devices',async (req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const target=fleetUsers.find(u=>u.username===req.params.username);
  if(!target||(actor.role==='admin' ? (target.companyId!==null && target.companyId!==undefined) : (target.companyId!==actor.companyId||target.role==='company_admin'))){res.sendStatus(404);return;}
@@ -640,7 +672,7 @@ app.put('/api/admin/users/:username/devices',(req:Request,res:Response)=>{
   res.status(400).json({error:'كل IMEI يجب أن يكون مسجلاً ويتبع شركة المستخدم'});return;
  }
  const old=[...target.devices];target.devices=[...new Set<string>(devices)];
- try{saveFleetUsers();res.json({success:true,username:target.username,devices:target.devices});}
+ try{await saveFleetUsers();res.json({success:true,username:target.username,devices:target.devices});}
  catch{target.devices=old;res.sendStatus(507);}
 });
 // Shared manager operations, scoped to their own company on every request.
@@ -652,7 +684,7 @@ app.get('/api/admin/users',(req:Request,res:Response)=>{
  res.setHeader('Cache-Control','no-store');
  res.json({admin:{username:AUTH_USER,displayName:'محمد زين'},users,devices:allowed,companies:actor.role==='admin'?fleetCompanies:fleetCompanies.filter(c=>c.id===actor.companyId),role:actor.role,companyId:actor.companyId});
 });
-app.post('/api/admin/users',(req:Request,res:Response)=>{
+app.post('/api/admin/users',async (req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const {username,displayName,password,devices}=req.body||{};
  const phone=typeof req.body?.phone==='string'?req.body.phone.trim():'';
@@ -677,9 +709,9 @@ app.post('/api/admin/users',(req:Request,res:Response)=>{
  const salt=crypto.randomBytes(16).toString('hex');
  const user:FleetUser={username,displayName:displayName.trim(),salt,hash:fleetPasswordHash(password,salt),devices:[...new Set<string>(devices)],enabled:true,role,companyId,phone,email,vehicleType,plateNumber};
  fleetUsers.push(user);
- try{saveFleetUsers();res.status(201).json({success:true});}catch{fleetUsers.pop();res.sendStatus(507);}
+ try{await saveFleetUsers();res.status(201).json({success:true});}catch{fleetUsers.pop();res.sendStatus(507);}
 });
-app.put('/api/admin/users/:username',(req:Request,res:Response)=>{
+app.put('/api/admin/users/:username',async (req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const user=fleetUsers.find(u=>u.username===req.params.username);
  if(!user||(actor.role==='admin' ? (!!user.companyId&&user.role!=='company_admin') : (user.companyId!==actor.companyId||user.role==='company_admin'))){res.sendStatus(404);return;}
@@ -696,11 +728,11 @@ app.put('/api/admin/users/:username',(req:Request,res:Response)=>{
  if(typeof req.body?.email==='string'&&req.body.email.length<=150&&(!req.body.email||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.body.email)))user.email=req.body.email.trim();
  if(typeof req.body?.vehicleType==='string'&&req.body.vehicleType.length<=100)user.vehicleType=req.body.vehicleType.trim();
  if(typeof req.body?.plateNumber==='string'&&req.body.plateNumber.length<=40)user.plateNumber=req.body.plateNumber.trim();
- try{saveFleetUsers();res.json({success:true});}catch{Object.assign(user,previous);res.sendStatus(507);}
+ try{await saveFleetUsers();res.json({success:true});}catch{Object.assign(user,previous);res.sendStatus(507);}
 });
 // Managers can reset passwords only for accounts they are authorized to manage.
 // Passwords are never returned by APIs; saving a reset invalidates the previous password.
-app.put('/api/admin/users/:username/password',(req:Request,res:Response)=>{
+app.put('/api/admin/users/:username/password',async (req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const user=fleetUsers.find(u=>u.username===req.params.username);
  if(!user || (actor.role==='admin' ? (!!user.companyId && user.role!=='company_admin') : (user.companyId!==actor.companyId || user.role==='company_admin'))){res.sendStatus(404);return;}
@@ -708,11 +740,11 @@ app.put('/api/admin/users/:username/password',(req:Request,res:Response)=>{
  if(typeof password!=='string'||password.length<10||password.length>256){res.status(400).json({error:'كلمة المرور يجب أن تتكون من 10 أحرف على الأقل'});return;}
  const oldSalt=user.salt,oldHash=user.hash;
  user.salt=crypto.randomBytes(16).toString('hex');user.hash=fleetPasswordHash(password,user.salt);
- try{saveFleetUsers();res.setHeader('Cache-Control','no-store');res.json({success:true});}
+ try{await saveFleetUsers();res.setHeader('Cache-Control','no-store');res.json({success:true});}
  catch{user.salt=oldSalt;user.hash=oldHash;res.status(507).json({error:'تعذر حفظ كلمة المرور'});}
 });
 // Company managers may remove ONLY their own ordinary users; tracker ownership is never deleted.
-app.delete('/api/admin/users/:username',(req:Request,res:Response)=>{
+app.delete('/api/admin/users/:username',async (req:Request,res:Response)=>{
  const actor=managerScope(req);
  if(!actor){res.sendStatus(403);return;}
  const index=fleetUsers.findIndex(u=>u.username===req.params.username);
@@ -722,7 +754,7 @@ app.delete('/api/admin/users/:username',(req:Request,res:Response)=>{
    res.status(403).json({error:'لا يمكنك حذف هذا الحساب'});return;
  }
  fleetUsers.splice(index,1);
- try {saveFleetUsers();res.json({success:true});}
+ try {await saveFleetUsers();res.json({success:true});}
  catch {fleetUsers.splice(index,0,target);res.status(507).json({error:'تعذر حفظ الحذف'});}
 });
 // Every vehicle endpoint is tenant-scoped, including diagnostics and destructive actions.
@@ -925,6 +957,7 @@ app.delete('/api/devices/:imei', (req: Request, res: Response) => {
 const isProd = process.env.NODE_ENV === 'production';
 
 async function startServer() {
+  await postgresReady;
   if (!isProd) {
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
