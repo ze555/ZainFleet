@@ -17,6 +17,7 @@ import { DeviceInfo, TelemetrySnapshot } from './types/fleet.ts';
 import { decodeCanMetrics, generateVehicleAlerts } from './utils/canBusDecoder.ts';
 import {
   Car,
+  Bell,
   RotateCw,
   Server,
   ChevronDown,
@@ -242,7 +243,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
           </button>
           <div className="zf-mobile-top-actions">
             <button type="button" className={currentTab === 'map' ? 'active' : ''} onClick={() => setCurrentTab('map')} aria-label={isAr ? 'التتبع المباشر' : 'Live map'} title={isAr ? 'التتبع المباشر' : 'Live map'}><Radio size={19} /></button>
-            <button type="button" className={currentTab === 'alerts' ? 'active zf-mobile-alert-btn' : 'zf-mobile-alert-btn'} onClick={() => setCurrentTab('alerts')} aria-label={isAr ? 'التنبيهات' : 'Alerts'} title={isAr ? 'التنبيهات' : 'Alerts'}><span className="zf-mobile-bell">♧</span>{unreadAlertsCount > 0 && <i>{unreadAlertsCount > 99 ? '99+' : unreadAlertsCount}</i>}</button>
+            <button type="button" className={currentTab === 'alerts' ? 'active zf-mobile-alert-btn' : 'zf-mobile-alert-btn'} onClick={() => setCurrentTab('alerts')} aria-label={isAr ? 'التنبيهات' : 'Alerts'} title={isAr ? 'التنبيهات' : 'Alerts'}><Bell size={19} />{unreadAlertsCount > 0 && <i>{unreadAlertsCount > 99 ? '99+' : unreadAlertsCount}</i>}</button>
             <button type="button" onClick={() => setIsDrawerOpen(true)} aria-label={isAr ? 'القائمة' : 'Menu'} title={isAr ? 'القائمة' : 'Menu'}><Settings size={19} /></button>
             <button type="button" className="zf-mobile-logout" onClick={onLogout} title={isAr ? 'تسجيل الخروج' : 'Log out'}><LogOut size={17} /><span>{isAr ? 'خروج' : 'Logout'}</span></button>
           </div>
