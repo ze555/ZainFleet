@@ -911,3 +911,31 @@
 .zf-zain-features span{display:flex;flex-direction:column;align-items:center;gap:6px;color:#dceafa;font-size:15px;font-weight:700}
 .zf-zain-features span+span{border-right:1px solid #6f9dc3}
 @media(max-width:600px){.zf-zain-login-layout{padding:32px 15px 30px}.zf-zain-login-panel{border-radius:29px;padding:22px 18px}.zf-zain-brand-line strong{font-size:66px}.zf-zain-brand-pin{width:61px;height:74px}.zf-zain-brand p{font-size:19px}.zf-zain-field{min-height:57px}.zf-zain-field input{font-size:16px}.zf-zain-options{font-size:13px}.zf-zain-submit{min-height:60px}.zf-zain-features span{font-size:11px}.zf-zain-skyline{width:70%;bottom:8%}.zf-zain-car{opacity:.5;bottom:10%}}
+
+
+/* Fleet multi-tenant access control dashboard */
+.zf-access{direction:rtl;color:#e9f4ff;max-width:1120px;margin:0 auto;padding:16px 10px 105px;display:grid;gap:18px}
+.zf-access-title{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.zf-access-title h2,.zf-access-card h3{display:flex;align-items:center;gap:10px;font-weight:800}
+.zf-access-title h2{font-size:clamp(20px,4vw,30px);margin:0}
+.zf-access-title p{color:#9bb8d5;font-size:13px;margin:7px 0}
+.zf-access-title button,.zf-access-card button{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:11px;padding:11px 16px;background:linear-gradient(130deg,#0095ef,#005cc6);color:white;font-weight:800;cursor:pointer}
+.zf-access button:disabled{opacity:.5;cursor:wait}
+.zf-access-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.zf-access-stats div{border:1px solid #1e5685;background:#071d35;border-radius:15px;padding:15px;display:flex;flex-direction:column;gap:5px;text-align:center}
+.zf-access-stats strong{font-size:27px;color:#42d1ff}
+.zf-access-stats span{font-size:12px;color:#a9c6de}
+.zf-access-card{border:1px solid #215e8c;border-radius:18px;background:linear-gradient(150deg,#102d49,#06192c);padding:18px;box-shadow:0 8px 28px #0003}
+.zf-access-card h3{font-size:18px;margin:0 0 15px}
+.zf-access-card form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.zf-access-card input,.zf-access-card select{width:100%;min-width:0;padding:12px 13px;background:#071a2c;border:1px solid #37698e;border-radius:10px;color:#eaf6ff;font-size:14px;outline:0}
+.zf-access-card input:focus,.zf-access-card select:focus{border-color:#23d0ff}
+.zf-access-card input::placeholder{color:#9fb8cc}
+.zf-access-card form button{min-height:44px}
+.zf-access-users{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.zf-access-users article{display:flex;flex-direction:column;gap:5px;padding:13px;border:1px solid #285779;border-radius:12px;background:#071a2d;overflow-wrap:anywhere}
+.zf-access-users article strong{color:#fff}
+.zf-access-users article span{color:#4bd5ff}
+.zf-access-users article small{color:#a8c1d7}
+.zf-access-message{padding:12px;border:1px solid #4385ac;border-radius:10px;background:#082b42;color:#c9efff}
+@media(max-width:650px){.zf-access-card form{grid-template-columns:1fr}.zf-access-title{align-items:flex-start}.zf-access-title button{padding:9px}.zf-access-stats strong{font-size:21px}.zf-access-card{padding:13px}}
