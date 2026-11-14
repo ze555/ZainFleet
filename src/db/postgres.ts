@@ -9,9 +9,10 @@ export const pool = process.env.DATABASE_URL ? new Pool({
 
 export async function initPostgres() {
   if (!pool) {
-    console.warn('[Postgres] DATABASE_URL missing; JSON compatibility mode');
-    return;
+    throw new Error('DATABASE_URL is missing in ZainFleet service Variables. Set it to the Postgres service reference before deployment.');
   }
+  const connected = await pool.query('SELECT current_database() AS database_name, current_schema() AS schema_name');
+  console.log('[Postgres] Connected database:', connected.rows[0].database_name, 'schema:', connected.rows[0].schema_name);
   await pool.query(`
     CREATE TABLE IF NOT EXISTS fleet_identity_state (
       id integer PRIMARY KEY CHECK (id=1),
@@ -45,7 +46,8 @@ export async function initPostgres() {
     CREATE INDEX IF NOT EXISTS idx_tracker_imei_gps_time
       ON tracker_telemetry (imei, gps_time DESC);
   `);
-  console.log('[Postgres] Schema initialized');
+  const tables = await pool.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('fleet_identity_state','fleet_system_admin','tracker_devices','tracker_telemetry') ORDER BY table_name");
+  console.log('[Postgres] Schema initialized; verified tables:', tables.rows.map(row => row.table_name).join(', '));
 }
 
 export async function persistAvlBatch(imei: string, records: AvlRecord[], receivedAt: string) {
