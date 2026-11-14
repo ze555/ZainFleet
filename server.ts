@@ -489,9 +489,9 @@ function sessionIdentity(req:Request):{user:string;role:FleetRole;companyId:stri
  try{
   const data=JSON.parse(Buffer.from(payload,'base64url').toString('utf8'));
   if(typeof data.expires!=='number'||data.expires<Date.now())return null;
-  if(data.user===AUTH_USER&&data.role==='admin')return {user:AUTH_USER,role:'admin',companyId:null};
+  if(data.user===AUTH_USER&&data.role==='admin') { if(!adminFromDatabase || data.passwordVersion!==adminFromDatabase.hash) return null; return {user:AUTH_USER,role:'admin',companyId:null}; }
   const managed=fleetUsers.find(u=>u.username===data.user&&u.enabled);
-  if(!managed||data.role!==(managed.role||'user'))return null;
+  if(!managed||data.role!==(managed.role||'user')||data.passwordVersion!==managed.hash)return null;
   if(managed.companyId && !fleetCompanies.some(c=>c.id===managed.companyId&&c.enabled))return null;
   return {user:managed.username,role:managed.role||'user',companyId:managed.companyId||null};
  }catch{return null;}
@@ -521,7 +521,8 @@ const AUTH_SECRET = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('
 const AUTH_TTL_MS = 8 * 60 * 60 * 1000;
 const failedLogins = new Map<string, { count: number; until: number }>();
 function makeToken(username = AUTH_USER, role: FleetRole = 'admin') {
-  const payload = Buffer.from(JSON.stringify({ user: username, role, expires: Date.now() + AUTH_TTL_MS })).toString('base64url');
+  const passwordVersion = role === 'admin' ? adminFromDatabase?.hash : fleetUsers.find(u=>u.username===username)?.hash;
+  const payload = Buffer.from(JSON.stringify({ user: username, role, passwordVersion, expires: Date.now() + AUTH_TTL_MS })).toString('base64url');
   const mac = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('base64url');
   return payload + '.' + mac;
 }
@@ -567,6 +568,53 @@ app.get('/api/auth/session', (req: Request, res: Response) => {
 app.post('/api/auth/logout', (_req: Request, res: Response) => {
   res.setHeader('Set-Cookie', sessionCookie('', 0));
   res.json({ authenticated: false });
+});
+// Account profile and self-service password change; no extra database tables needed.
+app.get('/api/auth/profile', (req: Request, res: Response) => {
+  res.setHeader('Cache-Control','no-store');
+  const actor=sessionIdentity(req);
+  if(!actor){res.status(401).json({error:'يجب تسجيل الدخول'});return;}
+  if(actor.role==='admin'){res.json({username:actor.user,displayName:'مدير النظام',role:actor.role,companyName:null,email:'',phone:''});return;}
+  const user=fleetUsers.find(u=>u.username===actor.user&&u.enabled);
+  if(!user){res.sendStatus(404);return;}
+  res.json({username:user.username,displayName:user.displayName,role:actor.role,companyName:fleetCompanies.find(c=>c.id===user.companyId)?.name||null,email:user.email||'',phone:user.phone||'',vehicleType:user.vehicleType||''});
+});
+app.post('/api/auth/change-password', async (req: Request, res: Response) => {
+  res.setHeader('Cache-Control','no-store');
+  const actor=sessionIdentity(req);
+  if(!actor){res.status(401).json({error:'يجب تسجيل الدخول'});return;}
+  const current=req.body?.currentPassword;
+  const next=req.body?.newPassword;
+  if(typeof current!=='string'||typeof next!=='string'||next.length<10||next.length>128||current===next){
+    res.status(400).json({error:'كلمة المرور الجديدة يجب أن تكون مختلفة وبطول 10 إلى 128 حرفاً'});return;
+  }
+  try{
+    if(actor.role==='admin'){
+      if(!adminFromDatabase||!postgresPool){res.sendStatus(503);return;}
+      const expected=Buffer.from(adminFromDatabase.hash,'hex');
+      const actual=Buffer.from(fleetPasswordHash(current,adminFromDatabase.salt),'hex');
+      if(expected.length!==actual.length||!crypto.timingSafeEqual(expected,actual)){res.status(400).json({error:'كلمة المرور الحالية غير صحيحة'});return;}
+      const salt=crypto.randomBytes(16).toString('hex');
+      const hash=fleetPasswordHash(next,salt);
+      await postgresPool.query('UPDATE fleet_system_admin SET salt=$1,password_hash=$2 WHERE username=$3',[salt,hash,adminFromDatabase.username]);
+      adminFromDatabase={...adminFromDatabase,salt,hash};
+    }else{
+      const user=fleetUsers.find(u=>u.username===actor.user&&u.enabled);
+      if(!user){res.sendStatus(404);return;}
+      const expected=Buffer.from(user.hash,'hex');
+      const actual=Buffer.from(fleetPasswordHash(current,user.salt),'hex');
+      if(expected.length!==actual.length||!crypto.timingSafeEqual(expected,actual)){res.status(400).json({error:'كلمة المرور الحالية غير صحيحة'});return;}
+      const salt=crypto.randomBytes(16).toString('hex');
+      const hash=fleetPasswordHash(next,salt);
+      const updated=fleetUsers.map(u=>u.username===user.username?{...u,salt,hash}:u);
+      if(!postgresPool){res.sendStatus(503);return;}
+      await postgresPool.query(`UPDATE fleet_identity_state SET users=$1::jsonb,updated_at=now() WHERE id=1`,[JSON.stringify(updated)]);
+      fleetUsers=updated;
+    }
+    // Existing sessions automatically expire because their passwordVersion no longer matches.
+    res.setHeader('Set-Cookie',sessionCookie('',0));
+    res.json({success:true,message:'تم تغيير كلمة المرور. سجّل الدخول بالكلمة الجديدة.'});
+  }catch(err){console.error('[Auth] Password change failed:',err);res.status(500).json({error:'تعذر حفظ كلمة المرور في قاعدة البيانات'});}
 });
 // Protect API telemetry, diagnostic downloads and mutation routes from unauthenticated browsers.
 app.use('/api', (req: Request, res: Response, next) => {
