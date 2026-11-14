@@ -13,6 +13,19 @@ export async function initPostgres() {
     return;
   }
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS fleet_identity_state (
+      id integer PRIMARY KEY CHECK (id=1),
+      users jsonb NOT NULL DEFAULT '[]'::jsonb,
+      companies jsonb NOT NULL DEFAULT '[]'::jsonb,
+      assignments jsonb NOT NULL DEFAULT '{}'::jsonb,
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE TABLE IF NOT EXISTS fleet_system_admin (
+      username text PRIMARY KEY,
+      salt text NOT NULL,
+      password_hash text NOT NULL,
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
     CREATE TABLE IF NOT EXISTS tracker_devices (
       imei varchar(15) PRIMARY KEY,
       first_seen timestamptz NOT NULL DEFAULT now(),
