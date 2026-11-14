@@ -690,3 +690,59 @@
 .zf-pixel-alerts>button{width:calc(100% - 20px);margin:5px 10px;padding:12px;background:#102b44;border-radius:9px;display:flex;justify-content:space-between;text-align:right;color:#dbe9ff;font-size:12px}.zf-pixel-alerts>button span{color:#8cb9eb}
 @media(max-width:1450px){.zf-pixel-topbar{grid-template-columns:225px minmax(0,1fr) 180px}.zf-reference-shell .zf-ref-shell{grid-template-columns:225px minmax(0,1fr)!important}.zf-pixel-dashboard{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:"map gauges" "car doors" "faults faults" "trip health" "alerts alerts"}.zf-pixel-topbar nav button{min-width:55px;font-size:11px}}
 @media(max-width:950px){.zf-pixel-topbar{grid-template-columns:1fr;min-height:145px;height:auto}.zf-pixel-brand,.zf-pixel-account{display:none}.zf-pixel-topbar nav{overflow-x:auto;min-height:80px}.zf-pixel-topbar nav button{min-width:88px}.zf-reference-shell .zf-ref-shell{display:flex!important;flex-direction:column}.zf-reference-shell .zf-ref-menu.zf-pixel-sidebar{min-height:auto;display:flex!important;flex-direction:row;overflow-x:auto;padding:8px!important}.zf-pixel-sidebar h3,.zf-pixel-side-bottom{display:none!important}.zf-pixel-sidebar button.zf-pixel-role{min-width:190px;min-height:65px!important;margin:0 7px!important}.zf-pixel-dashboard{grid-template-columns:minmax(0,1fr);grid-template-areas:"gauges" "map" "car" "doors" "faults" "trip" "health" "alerts"}}
+
+
+/* ZainFleet mobile navigation: avoid duplicate oversized horizontal menus. */
+@media (max-width: 767px) {
+  .zf-pixel-topbar {
+    display: none !important;
+  }
+  .zf-reference-shell .zf-ref-menu.zf-pixel-sidebar {
+    display: none !important;
+  }
+  .zf-login-toolbar {
+    max-width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+  .zf-page.zf-fleet-page {
+    padding: 10px 10px calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+    min-width: 0;
+    overflow-x: clip;
+  }
+  .zf-reference-shell .zf-ref-shell,
+  .zf-reference-shell .zf-ref-workspace {
+    min-width: 0;
+    width: 100%;
+  }
+  .zf-premium-bottom-nav {
+    padding-bottom: calc(7px + env(safe-area-inset-bottom, 0px));
+    background: rgba(6, 22, 45, 0.96);
+    border-top: 1px solid rgba(68, 180, 255, 0.22);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+  }
+  .zf-premium-bottom-inner {
+    width: 100%;
+    max-width: 520px;
+    gap: 2px;
+  }
+  .zf-premium-bottom-inner > button {
+    min-width: 0;
+    flex: 1 1 0;
+    padding: 8px 2px !important;
+    min-height: 56px;
+    border-radius: 12px;
+    color: #a9c9e8 !important;
+  }
+  .zf-premium-bottom-inner > button:has(.stroke-\\[2\\.5\\]) {
+    color: #39c8ff !important;
+  }
+  .zf-premium-bottom-inner > button span:last-child {
+    white-space: nowrap;
+    font-size: 11px;
+  }
+}
+@media (max-width: 360px) {
+  .zf-premium-bottom-inner > button span:last-child { font-size: 10px; }
+}
