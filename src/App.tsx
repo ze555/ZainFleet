@@ -1,3 +1,4 @@
+import { AccessControl } from './components/AccessControl.tsx';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Navbar } from './components/Navbar.tsx';
 import { UsersManagement } from './components/UsersManagement.tsx';
@@ -18,6 +19,7 @@ import { DeviceInfo, TelemetrySnapshot } from './types/fleet.ts';
 import { decodeCanMetrics, generateVehicleAlerts } from './utils/canBusDecoder.ts';
 import {
   Car,
+  Users,
   Bell,
   RotateCw,
   Server,
@@ -28,9 +30,9 @@ import {
   LockKeyhole, Eye, EyeOff, LogIn, ShieldCheck, Wifi, LogOut,
 } from 'lucide-react';
 
-const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin'|'user'; displayName: string}> = ({onLogout,role,displayName}) => {
+const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin'|'employee'|'user'; displayName: string}> = ({onLogout,role,displayName}) => {
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
-  const roleLabel = role==='admin'?'المدير العام':role==='company_admin'?'مدير الشركة':'مستخدم عادي';
+  const roleLabel = role==='admin'?'المدير العام':role==='company_admin'?'مدير الشركة':role==='employee'?'موظف الشركة':'مستخدم عادي';
   const [lang, setLang] = useState<'ar' | 'en'>('ar');
   const [devices, setDevices] = useState<DeviceInfo[]>([]);
   const [selectedImei, setSelectedImei] = useState<string | null>(null);
@@ -242,7 +244,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
             <Car size={22} />
             <span><strong>ZainFleet</strong><small>{isAr ? 'تتبع المركبات' : 'Fleet tracking'}</small></span>
           </button>
-          <div className="zf-mobile-top-actions">
+          <div className="zf-mobile-top-actions">{(role==='admin'||role==='company_admin')&&<button type="button" onClick={()=>setCurrentTab('access-control')} aria-label="إدارة المستخدمين" title="إدارة المستخدمين"><Users size={19}/></button>}
             <button type="button" className={currentTab === 'map' ? 'active' : ''} onClick={() => setCurrentTab('map')} aria-label={isAr ? 'التتبع المباشر' : 'Live map'} title={isAr ? 'التتبع المباشر' : 'Live map'}><Radio size={19} /></button>
             <button type="button" className={currentTab === 'alerts' ? 'active zf-mobile-alert-btn' : 'zf-mobile-alert-btn'} onClick={() => setCurrentTab('alerts')} aria-label={isAr ? 'التنبيهات' : 'Alerts'} title={isAr ? 'التنبيهات' : 'Alerts'}><Bell size={19} />{unreadAlertsCount > 0 && <i>{unreadAlertsCount > 99 ? '99+' : unreadAlertsCount}</i>}</button>
             <button type="button" onClick={() => setIsDrawerOpen(true)} aria-label={isAr ? 'القائمة' : 'Menu'} title={isAr ? 'القائمة' : 'Menu'}><Settings size={19} /></button>
@@ -421,6 +423,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
 
         {/* View 8: Privacy Policy */}
         {currentTab === 'privacy' && <PrivacyPolicy />}
+        {currentTab === 'access-control' && <AccessControl role={role} />}
           </div>
         </div>
       </main>
@@ -682,7 +685,7 @@ const WaitingForVehicleCard: React.FC<WaitingProps> = ({ isAr, onRefresh, device
 // Login gate is mounted before the dashboard, so vehicle API polling starts only after authentication.
 export const App: React.FC = () => {
   const [auth, setAuth] = useState<'checking' | 'guest' | 'logged-in'>('checking');
-  const [account, setAccount] = useState<{role:'admin'|'company_admin'|'user';displayName:string}>({role:'admin',displayName:'محمد زين'});
+  const [account, setAccount] = useState<{role:'admin'|'company_admin'|'employee'|'user';displayName:string}>({role:'admin',displayName:'محمد زين'});
   const [username, setUsername] = useState('Admin');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -692,7 +695,7 @@ export const App: React.FC = () => {
     let active = true;
     fetch('/api/auth/session', { credentials: 'same-origin', cache: 'no-store' })
       .then(async response => response.ok ? response.json() : {authenticated: false})
-      .then(data => { if (active) {setAuth(data.authenticated ? 'logged-in' : 'guest'); if (data.authenticated) setAccount({role:data.role === 'company_admin' ? 'company_admin' : data.role === 'user' ? 'user':'admin',displayName:data.displayName||'محمد زين'}); } })
+      .then(data => { if (active) {setAuth(data.authenticated ? 'logged-in' : 'guest'); if (data.authenticated) setAccount({role:data.role === 'company_admin' ? 'company_admin' : data.role === 'employee' ? 'employee' : data.role === 'user' ? 'user':'admin',displayName:data.displayName||'محمد زين'}); } })
       .catch(() => { if (active) {setAuth('guest');setError('تعذر الاتصال بالخادم. تحقق من تشغيل Railway.');} });
     return () => { active = false; };
   }, []);
