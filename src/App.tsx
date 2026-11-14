@@ -711,7 +711,7 @@ export const App: React.FC = () => {
       });
       const data = await response.json();
       if (!response.ok) { setError(data.error || 'تعذر تسجيل الدخول'); return; }
-      setAccount({role:data.role === 'company_admin'?'company_admin':data.role === 'user'?'user':'admin',displayName:data.displayName||'محمد زين'});setAuth('logged-in'); setPassword('');
+      setAccount({role:data.role === 'company_admin'?'company_admin':data.role === 'employee'?'employee':data.role === 'user'?'user':'admin',displayName:data.displayName||'محمد زين'});setAuth('logged-in'); setPassword('');
     } catch { setError('تعذر الاتصال بالخادم. حاول مرة أخرى.'); }
     finally { setBusy(false); }
   };
