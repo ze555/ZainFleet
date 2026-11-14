@@ -827,3 +827,47 @@
   .zf-mobile-top-actions { gap: 2px; }
   .zf-mobile-top-actions > button { min-width: 30px; }
 }
+
+
+/* 2026-11: full-width analog cluster, override legacy two-column gauge styles. */
+.zf-pixel-gauges .zf-real-cluster {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-width: 0 !important;
+  height: auto !important;
+  padding: 6px !important;
+  margin: 0 !important;
+  overflow: hidden;
+  border-radius: 18px;
+  box-sizing: border-box;
+  background: #020408;
+}
+.zf-pixel-gauges .zf-real-cluster > svg {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+  aspect-ratio: 900 / 390;
+  overflow: visible;
+}
+.zf-pixel-gauges {
+  min-height: 0 !important;
+  height: auto !important;
+  align-self: start;
+}
+@media (max-width: 767px) {
+  .zf-pixel-gauges {
+    min-height: 0 !important;
+    padding-bottom: 6px !important;
+  }
+  .zf-pixel-gauges > header {
+    height: 46px !important;
+    padding: 0 12px !important;
+    font-size: 16px !important;
+  }
+  .zf-pixel-gauges .zf-real-cluster {
+    padding: 2px !important;
+    border-radius: 12px !important;
+  }
+}
