@@ -719,37 +719,34 @@ export const App: React.FC = () => {
   if (auth === 'checking') return <div className="zf-auth-loading" dir="rtl"><ShieldCheck size={35} /> جاري التحقق من الجلسة...</div>;
   if (auth === 'logged-in') return <DashboardApp onLogout={logout} role={account.role} displayName={account.displayName} />;
   return (
-    <main className="zf-mobile-login zf-command-login" dir="rtl">
-      <div className="zf-mobile-login-glow zf-glow-a" aria-hidden="true" />
-      <div className="zf-mobile-login-glow zf-glow-b" aria-hidden="true" />
-      <div className="zf-mobile-login-shell">
-        <header className="zf-mobile-brand">
-          <div className="zf-mobile-brand-symbol"><Car size={29} strokeWidth={2.2}/><span className="zf-mobile-brand-ping"/></div>
-          <div><strong>ZAIN<span>FLEET</span></strong><small>SMART VEHICLE INTELLIGENCE</small></div>
+    <main className="zf-mobile-login zf-zain-login" dir="rtl">
+      <div className="zf-zain-scene" aria-hidden="true">
+        <div className="zf-zain-worldmap" />
+        <div className="zf-zain-route"><span className="zf-zain-pin zf-zain-pin-a">●</span><span className="zf-zain-pin zf-zain-pin-b">●</span></div>
+        <div className="zf-zain-skyline" />
+        <div className="zf-zain-road" />
+        <div className="zf-zain-car"><Car size={126} strokeWidth={1.1}/></div>
+        <div className="zf-zain-satellite">✦</div>
+      </div>
+      <div className="zf-zain-login-layout">
+        <header className="zf-zain-brand">
+          <div className="zf-zain-brand-line"><span className="zf-zain-brand-pin"><Car size={36}/></span><strong>زين</strong></div>
+          <p>نظام تتبع وإدارة المركبات</p>
         </header>
-        <section className="zf-mobile-visual" aria-label="منصة إدارة المركبات">
-          <div className="zf-mobile-grid" aria-hidden="true" />
-          <div className="zf-mobile-vehicle"><Car size={86} strokeWidth={1.15}/><div className="zf-mobile-light zf-light-left"/><div className="zf-mobile-light zf-light-right"/></div>
-          <span className="zf-mobile-orbit zf-mobile-orbit-one" aria-hidden="true" />
-          <span className="zf-mobile-orbit zf-mobile-orbit-two" aria-hidden="true" />
-          <div className="zf-mobile-visual-text"><span><Radio size={14}/> LIVE GPS · CAN DATA</span><h1>التحكم الكامل بأسطولك.</h1><p>مركز قيادة متكامل للتتبع المباشر، تشخيص المركبات وإدارة الأسطول</p></div>
-        </section>
-        <section className="zf-mobile-login-card">
-          <div className="zf-mobile-card-heading"><span className="zf-mobile-welcome">مرحباً بعودتك <span aria-hidden="true">✦</span></span><h2>تسجيل الدخول</h2><p>ادخل إلى لوحة تحكم مركباتك بأمان</p></div>
-          <form onSubmit={login} className="zf-mobile-login-form">
-            <label htmlFor="zf-user">اسم المستخدم</label>
-            <div className="zf-mobile-input"><ShieldCheck size={19}/><input id="zf-user" autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)} required placeholder="أدخل اسم المستخدم" /></div>
-            <label htmlFor="zf-password">كلمة المرور</label>
-            <div className="zf-mobile-input"><LockKeyhole size={19}/><input id="zf-password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="أدخل كلمة المرور"/><button type="button" aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'} onClick={()=>setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={20}/> : <Eye size={20}/>}</button></div>
+        <section className="zf-zain-login-panel">
+          <div className="zf-zain-user-icon"><ShieldCheck size={30}/></div>
+          <h1>تسجيل الدخول</h1>
+          <form onSubmit={login} className="zf-zain-form">
+            <div className="zf-zain-field"><input aria-label="البريد الإلكتروني أو اسم المستخدم" id="zf-user" autoComplete="username" value={username} onChange={e=>setUsername(e.target.value)} required placeholder="البريد الإلكتروني" /><span><Bell size={23}/></span></div>
+            <div className="zf-zain-field"><input aria-label="كلمة المرور" id="zf-password" type={showPassword?'text':'password'} autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} required placeholder="كلمة المرور" /><button type="button" aria-label={showPassword?'إخفاء كلمة المرور':'إظهار كلمة المرور'} onClick={()=>setShowPassword(!showPassword)}>{showPassword?<EyeOff size={24}/>:<Eye size={24}/>}</button><span><LockKeyhole size={23}/></span></div>
+            <div className="zf-zain-options"><label><input type="checkbox" defaultChecked /> تذكرني</label><span title="تواصل مع مدير النظام لإعادة تعيين كلمة المرور">نسيت كلمة المرور؟</span></div>
             {error && <p role="alert" className="zf-mobile-login-error">{error}</p>}
-            <button type="submit" className="zf-mobile-login-submit" disabled={busy}>{busy ? 'جارٍ تسجيل الدخول...' : 'الدخول إلى لوحة التحكم'}<LogIn size={19}/></button>
+            <button type="submit" className="zf-zain-submit" disabled={busy}><LogIn size={23}/>{busy?'جارٍ تسجيل الدخول...':'دخول'}</button>
           </form>
-          <p className="zf-mobile-secure"><ShieldCheck size={15}/> اتصال آمن وحسابات بصلاحيات مخصصة</p>
+          <div className="zf-zain-features"><span><Radio size={24}/> تتبع مباشر</span><span><Settings size={24}/> تقارير وإحصائيات</span><span><Car size={24}/> إدارة الأسطول</span></div>
         </section>
-        <footer className="zf-mobile-footer"><span>POWERED BY ZAINFLEET</span><span>© 2026</span></footer>
       </div>
     </main>
-  );
-};
+  );};
 export default App;
 
