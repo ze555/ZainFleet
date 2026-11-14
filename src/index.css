@@ -871,3 +871,43 @@
     border-radius: 12px !important;
   }
 }
+
+
+/* Zain login: responsive recreation of the supplied navy/cyan visual reference */
+.zf-zain-login{position:relative!important;isolation:isolate;display:flex!important;align-items:center;justify-content:center;min-height:100dvh!important;overflow:hidden;background:radial-gradient(ellipse at 88% 7%,#064080 0%,transparent 48%),linear-gradient(135deg,#041326,#00152e 55%,#063a73)!important;color:#fff;font-family:'Cairo',Tahoma,sans-serif}
+.zf-zain-login::before{content:"";position:absolute;inset:-18% -15%;pointer-events:none;border:4px solid transparent;border-left-color:#00aeff;border-bottom-color:#00aeff;border-radius:50%;transform:rotate(-16deg);filter:drop-shadow(0 0 13px #009fff);opacity:.85}
+.zf-zain-login::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 22% 63%,transparent 0%,#00112c22 52%,#00112799 100%);z-index:-1}
+.zf-zain-scene{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1}
+.zf-zain-worldmap{position:absolute;inset:0 0 auto auto;width:70%;height:42%;opacity:.28;background-image:radial-gradient(#058aff 1.7px,transparent 2px);background-size:12px 12px;mask-image:radial-gradient(ellipse,#000 20%,transparent 75%)}
+.zf-zain-route{position:absolute;left:0;top:2%;width:42%;height:42%;border-left:2px solid #098cf9;border-bottom:3px solid #0ac8ff;border-radius:10% 30% 50% 15%;transform:rotate(-18deg);filter:drop-shadow(0 0 9px #04bbff)}
+.zf-zain-pin{position:absolute;display:grid;place-items:center;width:35px;height:45px;border-radius:55% 55% 55% 5%;background:#04b8ff;color:#002a5c;box-shadow:0 0 24px #06b9ff;font-size:13px;transform:rotate(-27deg)}
+.zf-zain-pin-a{top:8%;left:58%}.zf-zain-pin-b{bottom:0;left:12%}
+.zf-zain-skyline{position:absolute;left:0;bottom:14%;width:45%;height:43%;background:linear-gradient(transparent 30%,#020c1d 85%),repeating-linear-gradient(90deg,transparent 0 17px,#031d37 18px 34px,transparent 35px 45px);clip-path:polygon(0 58%,8% 58%,8% 34%,13% 34%,13% 52%,19% 52%,19% 22%,25% 22%,25% 50%,33% 50%,33% 39%,40% 39%,40% 66%,48% 66%,48% 29%,56% 29%,56% 60%,66% 60%,66% 41%,72% 41%,72% 65%,80% 65%,80% 53%,90% 53%,90% 69%,100% 69%,100% 100%,0 100%);filter:drop-shadow(0 0 10px #0473ca)}
+.zf-zain-road{position:absolute;left:-10%;bottom:-9%;width:85%;height:38%;transform:rotate(-14deg);border-top:3px solid #21b9ff;background:repeating-linear-gradient(170deg,#001328 0 30px,#16446d 31px 33px,#001328 34px 80px);box-shadow:0 -16px 35px #008aff44}
+.zf-zain-car{position:absolute;left:4%;bottom:22%;color:#d7e9ff;filter:drop-shadow(0 0 8px #08b8ff) drop-shadow(0 20px 12px #000)}
+.zf-zain-satellite{position:absolute;top:5%;right:34%;font-size:64px;color:#d5f2ff;text-shadow:0 0 15px #04b6ff}
+.zf-zain-login-layout{width:min(100%,900px);position:relative;z-index:2;padding:36px 24px 48px;display:flex;flex-direction:column;align-items:center}
+.zf-zain-brand{text-align:center;margin-bottom:22px;text-shadow:0 3px 20px #0008}
+.zf-zain-brand-line{display:flex;align-items:center;justify-content:center;gap:12px}
+.zf-zain-brand-line strong{font-size:clamp(60px,9vw,108px);line-height:1.15;color:#f0f6ff;font-weight:900;letter-spacing:-4px}
+.zf-zain-brand-pin{width:86px;height:104px;display:grid;place-items:center;color:#fff;background:linear-gradient(150deg,#61edff,#007bde 65%,#003c92);clip-path:polygon(50% 100%,7% 43%,6% 25%,20% 6%,50% 0,80% 6%,94% 25%,93% 43%);filter:drop-shadow(0 0 13px #06b8ff)}
+.zf-zain-brand p{font-size:clamp(18px,3vw,30px);font-weight:800;margin:0;padding-bottom:12px;border-bottom:2px solid #05c3ff;box-shadow:0 10px 12px -12px #00c8ff}
+.zf-zain-login-panel{width:min(100%,650px);padding:25px clamp(20px,5vw,54px) 27px;border:3px solid #079fff;border-radius:48px;background:linear-gradient(145deg,#041a36ee,#001126f5);box-shadow:0 0 27px #008dff88,inset 0 1px 14px #0a89d744;text-align:center}
+.zf-zain-user-icon{width:62px;height:62px;display:grid;place-items:center;margin:-7px auto 5px;border:2px solid #09b7ff;border-radius:50%;color:#edf6ff}
+.zf-zain-login-panel h1{font-size:clamp(26px,4vw,38px);font-weight:900;margin:5px 0 22px}
+.zf-zain-form{display:flex;flex-direction:column;gap:17px}
+.zf-zain-field{display:flex;align-items:center;gap:10px;min-height:64px;padding:0 15px;border:2px solid #577eaa;border-radius:14px;background:linear-gradient(90deg,#182f4c,#14263e)}
+.zf-zain-field:focus-within{border-color:#20d4ff;box-shadow:0 0 12px #00c5ff55}
+.zf-zain-field input{flex:1;min-width:0;outline:0!important;border:0!important;background:transparent!important;color:white!important;text-align:right;font-size:20px}
+.zf-zain-field input::placeholder{color:#9aadc7}
+.zf-zain-field span,.zf-zain-field button{flex-shrink:0;color:#e0edff}
+.zf-zain-options{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:16px}
+.zf-zain-options label{display:flex;align-items:center;gap:7px;cursor:pointer}
+.zf-zain-options input{accent-color:#08baff;width:19px;height:19px}
+.zf-zain-options span{color:#34c9f7}
+.zf-zain-submit{display:flex;align-items:center;justify-content:center;gap:13px;min-height:70px;border:2px solid #0cd2ff;border-radius:15px;background:linear-gradient(180deg,#26d5ff,#0067d9 80%);box-shadow:inset 0 2px 6px #ffffff66,0 0 20px #0488f777;color:#fff;font-size:clamp(24px,4vw,34px);font-weight:900;cursor:pointer}
+.zf-zain-submit:disabled{opacity:.6;cursor:wait}
+.zf-zain-features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:29px;gap:6px}
+.zf-zain-features span{display:flex;flex-direction:column;align-items:center;gap:6px;color:#dceafa;font-size:15px;font-weight:700}
+.zf-zain-features span+span{border-right:1px solid #6f9dc3}
+@media(max-width:600px){.zf-zain-login-layout{padding:32px 15px 30px}.zf-zain-login-panel{border-radius:29px;padding:22px 18px}.zf-zain-brand-line strong{font-size:66px}.zf-zain-brand-pin{width:61px;height:74px}.zf-zain-brand p{font-size:19px}.zf-zain-field{min-height:57px}.zf-zain-field input{font-size:16px}.zf-zain-options{font-size:13px}.zf-zain-submit{min-height:60px}.zf-zain-features span{font-size:11px}.zf-zain-skyline{width:70%;bottom:8%}.zf-zain-car{opacity:.5;bottom:10%}}
