@@ -636,7 +636,7 @@ app.put('/api/admin/users/:username/devices',(req:Request,res:Response)=>{
  const target=fleetUsers.find(u=>u.username===req.params.username);
  if(!target||(actor.role==='admin' ? (target.companyId!==null && target.companyId!==undefined) : (target.companyId!==actor.companyId||target.role==='company_admin'))){res.sendStatus(404);return;}
  const devices=req.body?.devices;
- if(!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(target.companyId ? deviceCompanies[id]!==target.companyId : !!deviceCompanies[id]))){
+ if(!Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(target.companyId ? deviceCompanies[id]!==target.companyId : !!deviceCompanies[id])||fleetUsers.some(u=>u.username!==target.username&&u.enabled&&u.devices.includes(id)))){
   res.status(400).json({error:'كل IMEI يجب أن يكون مسجلاً ويتبع شركة المستخدم'});return;
  }
  const old=[...target.devices];target.devices=[...new Set<string>(devices)];
