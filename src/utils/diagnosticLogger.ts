@@ -289,19 +289,22 @@ export class DiagnosticFileManager {
     const id67Raw = ioMap.get(67) || null;
     const id67Volts = id67Raw !== null ? Math.round((Number(id67Raw) / 1000) * 100) / 100 : null;
 
-    // Verify provenance: tracker odometer ID 16 is NOT vehicle CAN data.
-    // Only cataloged CAN/OBD sources count as CAN telemetry.
-    const detectedCanIds = Array.from(ioMap.keys()).filter((id) => {
-      const source = CAN_PARAMETER_CATALOG[id]?.source;
-      return source === 'can_powertrain' || source === 'can_comfort' || source === 'obd';
-    });
+    // CAN bus parameter check
+    const knownCanIds = [16, 24, 30, 31, 32, 33, 36, 81, 82, 83, 85, 86, 87, 88, 89, 90, 100, 101, 102, 103, 104, 105, 132, 160, 242, 252, 256, 282];
+    const detectedCanIds = Array.from(ioMap.keys()).filter((id) => knownCanIds.includes(id));
     const isVehicleCanCommunicating = detectedCanIds.length > 0;
-    const canDiagnosisAr = isVehicleCanCommunicating
-      ? `وصلت عناصر CAN/OBD المعرّفة: [${detectedCanIds.join(', ')}].`
-      : 'حزمة AVL/GPS وصلت، لكن لم تظهر قراءات CAN/OBD مؤكدة. تحقق من توافق السيارة وإعداد CAN لدى FMB140 والتوصيلات وتفعيل عناصر CAN I/O. لا يمكن الجزم بسبب واحد من هذه الحزمة.';
-    const canDiagnosisEn = isVehicleCanCommunicating
-      ? `Cataloged CAN/OBD values received: [${detectedCanIds.join(', ')}].`
-      : 'AVL/GPS data arrived but no verified CAN/OBD values were reported. Check vehicle CAN profile, wiring, ignition and enabled I/O; the packet alone cannot prove the cause.';
+
+    let canDiagnosisAr = '';
+    let canDiagnosisEn = '';
+    if (isVehicleCanCommunicating) {
+      canDiagnosisAr = `تم استقبال ${detectedCanIds.length} عنصر من عناصر CAN/OBD: [${detectedCanIds.join(', ')}].`;
+      canDiagnosisEn = `Received ${detectedCanIds.length} CAN/OBD parameters: [${detectedCanIds.join(', ')}].`;
+    } else {
+      canDiagnosisAr =
+        'تحذير: لا توجد أي قراءات CANbus أو OBD في هذه الحزمة. الأسباب: 1) لم يتم تفعيل قراءات الـ CAN في تبويب CAN Adapter أو OBD في الـ Configurator. 2) سويتش السيارة مطفأ (Ignition OFF). 3) أسلاك CAN High و CAN Low غير متصلة في فيشة الـ OBD بالمركبة.';
+      canDiagnosisEn =
+        'WARNING: No CANbus or OBD readings found in this packet. Root causes: 1) CAN Adapter / OBD I/O elements are disabled in Configurator. 2) Vehicle ignition is OFF. 3) CAN High and CAN Low wires are not tapped into the vehicle OBD-II pins.';
+    }
 
     // DTC codes
     const dtcInfo = metrics?.diagnostic || {
