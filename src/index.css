@@ -981,3 +981,21 @@
 .zf-profile-form button:disabled{opacity:.6}
 .zf-profile-message{font-size:13px;color:#fbc88d}
 @media(max-width:430px){.zf-profile-dialog{padding:12px}.zf-account-profile{padding:6px}.zf-profile-details{grid-template-columns:1fr 1fr}}
+
+/* Unified command centre visual system */
+.zf-fleet-shell{--zf-surface:#142438;--zf-edge:#29445c;--zf-accent:#67e8f9;background:radial-gradient(ellipse at 90% 0,#17344c 0,transparent 45%),#091525!important;color:#eaf5ff;font-family:Cairo,Inter,Arial,sans-serif;color-scheme:dark}
+.zf-fleet-shell :is(section,article,header).rounded-2xl,.zf-fleet-shell :is(section,article).rounded-xl{background:#101e30!important;border-color:var(--zf-edge)!important;border-radius:20px;box-shadow:0 8px 24px #0002}
+.zf-fleet-shell :is(.bg-slate-800,.bg-slate-900){background-color:var(--zf-surface)!important}
+.zf-fleet-shell :is(.border-slate-700,.border-slate-600){border-color:var(--zf-edge)!important}
+.zf-fleet-shell :is(button,input,select,textarea){font-family:inherit}
+.zf-fleet-shell button:not(:disabled){transition:background .18s,border-color .18s,box-shadow .18s}
+.zf-fleet-shell button:not(:disabled):hover{box-shadow:0 0 0 1px #67e8f966}
+.zf-fleet-shell :is(.zf-pixel-dashboard,.zf-access-card,.zf-profile-dialog){border-radius:20px}
+.zf-fleet-shell .leaflet-container{border:1px solid #29445c;border-radius:16px!important}
+.zf-fleet-shell .leaflet-tooltip{background:#102438;color:#eaf5ff;border:1px solid #67e8f9;border-radius:8px;box-shadow:0 3px 12px #0005}
+.zf-fleet-shell .leaflet-tooltip div{color:#eaf5ff!important}
+.zf-command-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.zf-command-metric{background:linear-gradient(145deg,#192b40,#101e30);border:1px solid #29445c;border-radius:16px;padding:16px;min-width:0}
+.zf-command-metric small{color:#b7cada;display:block;font-size:12px}
+.zf-command-metric b{font-size:30px;line-height:1.3;display:block;margin-top:8px}
+@media(max-width:640px){.zf-command-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.zf-command-metric{padding:12px}.zf-command-metric b{font-size:25px}}
