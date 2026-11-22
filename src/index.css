@@ -1003,3 +1003,8 @@
 /* Vehicle detail: instrument cluster is one integrated SVG, not two columns. */
 .zf-fleet-shell .zf-real-cluster{grid-template-columns:minmax(0,1fr);width:100%;box-sizing:border-box;justify-items:stretch;padding:8px;}
 .zf-fleet-shell .zf-real-cluster > svg{display:block;grid-column:1/-1;width:100%;height:auto;max-width:100%;}
+
+@keyframes zf-fault-pulse{0%,100%{box-shadow:0 0 0 2px currentColor}50%{box-shadow:0 0 0 10px transparent}}
+.zf-moving-car.zf-fault-critical>div{color:#ef4444;animation:zf-fault-pulse 1.3s infinite}
+.zf-moving-car.zf-fault-warning>div{color:#f59e0b;animation:zf-fault-pulse 2s infinite}
+@media(prefers-reduced-motion:reduce){.zf-moving-car>div{animation:none!important;outline:2px solid currentColor}}
