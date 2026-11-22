@@ -278,58 +278,52 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
  <select aria-label="اختيار المركبة" className="w-full rounded-xl border border-slate-600 bg-slate-800 p-3 text-white" value={selectedImei||''} onChange={e=>setSelectedImei(e.target.value||null)}><option value="">اختر مركبة</option>{devices.map(d=><option key={d.imei} value={d.imei}>{customNames[d.imei]||d.name||d.imei} — {d.connected?'متصلة':'غير متصلة'}</option>)}</select>
  <nav className="grid grid-cols-3 gap-2 mt-3">{[['dashboard','الرئيسية'],['smart-fleet','الصيانة'],['vehicle','الحالة الفنية'],['map','التتبع'],['alerts','التنبيهات'],['trips','الرحلات'],['fleet-reports','تقارير PDF']].map(([tab,label])=><button key={tab} type="button" onClick={()=>setCurrentTab(tab)} className={'rounded-xl border p-2 text-xs font-bold '+(currentTab===tab?'border-cyan-400 bg-cyan-900 text-white':'border-slate-700 bg-slate-800 text-slate-200')}>{label}</button>)}</nav>
  </section>
-            {currentTab==='dashboard' && <>
+            {currentTab==='dashboard' && <><div style={{background:'#0b1220',padding:12,borderRadius:12}}><div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12,color:'#e2e8f0'}}><strong style={{fontSize:20}}>Fleet Overview | نظرة عامة</strong><small style={{color:'#60a5fa'}}>واجهة 2.1</small></div>
 <section dir="rtl" className="rounded-xl border border-slate-700 bg-[#101827] p-4 mb-5 text-white shadow-lg">
 <div className="flex flex-wrap justify-between items-center gap-3 mb-5"><div><p className="text-xs tracking-widest text-cyan-300">ZAINFLEET AI</p><h2 className="text-2xl font-bold">مركز قيادة الأسطول</h2><p className="text-sm text-slate-400">مراقبة الاتصال والحالة التشغيلية</p></div><span className="rounded-full border border-cyan-800 px-3 py-2 text-xs">{serverHealthy?'الخادم يستجيب':'الخادم غير متاح'}</span></div>
 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{[['المركبات المسجلة',devices.length],['المتصلة',devices.filter(d=>d.connected).length],['غير المتصلة',devices.filter(d=>!d.connected).length],['تنبيهات المركبة المختارة',selectedDevice&&telemetry?.imei===selectedDevice.imei?unreadAlertsCount:'—']].map(([label,value])=><div key={label} className="rounded-lg border border-slate-700 bg-[#1b2637] p-4"><p className="text-xs text-slate-400">{label}</p><strong className="text-3xl text-cyan-300">{value}</strong></div>)}</div>
 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">{[['diagnostics','التشخيص الفني'],['smart-fleet','الصيانة'],['map','التتبع المباشر'],['fleet-reports','تقارير PDF']].map(([tab,label])=><button key={tab} type="button" onClick={()=>setCurrentTab(tab)} className="rounded-xl border border-cyan-900 bg-slate-800 p-3 text-sm text-white">{label}</button>)}</div>
 </section>
-              <div className="zf-pixel-dashboard">
-                <section className="zf-pixel-panel zf-pixel-map">
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(min(100%, 340px),1fr))',gap:14,alignItems:'start'}}>
+<div style={{display:'grid',gap:14,minWidth:0}}><section style={{gridArea:"auto",minWidth:0,background:"#151e2d",border:"1px solid #29364a",borderRadius:10}} className="zf-pixel-panel zf-pixel-map">
                   <header><span>التتبع المباشر</span><b className={selectedDevice?.connected?'zf-pixel-live':'zf-pixel-muted'}>{selectedDevice?.connected?'● مباشر':'○ غير متصل'}</b></header>
                   <div className="zf-pixel-map-content">{selectedDevice?<TripMap device={selectedDevice} latestTelemetry={telemetry?.imei===selectedDevice.imei?telemetry:null} lang={lang}/>:<div className="zf-pixel-empty">لا توجد مركبات مرتبطة بهذا الحساب</div>}</div>
                   <div className="zf-pixel-map-overlay"><span>{vehicleName}</span><strong>{gaugeSpeed===null?'—':Math.round(gaugeSpeed)+' كم/س'}</strong></div>
-                </section>
-                <section className="zf-pixel-panel zf-pixel-gauges">
-                  <header><span>العداد الرسمي للسيارة</span><Car size={19}/></header>
-                  <InstrumentCluster speed={gaugeSpeed} rpm={gaugeRpm} fuel={gaugeFuel} temperature={liveMetrics?.engine.coolantTempC ?? null} odometer={liveMetrics?.odometer.totalKm ?? null} trip={liveMetrics?.odometer.tripKm ?? null} connected={Boolean(selectedDevice?.connected)} />
-                </section>
-                <section className="zf-pixel-panel zf-pixel-car">
-                  <header><span>{vehicleName}</span><b className={selectedDevice?.connected?'zf-pixel-live':'zf-pixel-muted'}>{selectedDevice?.connected?'متصلة':'غير متصلة'}</b></header>
-                  <div className="zf-pixel-car-graphic"><Car size={110} strokeWidth={1.15}/></div>
-                  <div className="zf-pixel-car-facts"><span>رقم الجهاز<strong>{selectedDevice?.imei||'—'}</strong></span><span>حالة GPS<strong>{liveMetrics?.gnss.isFixValid?'متاح':'غير متاح'}</strong></span><span>السرعة<strong>{gaugeSpeed===null?'—':Math.round(gaugeSpeed)+' كم/س'}</strong></span></div>
-                </section>
-                <section className="zf-pixel-panel zf-pixel-doors">
+                </section><section style={{gridArea:"auto",minWidth:0,background:"#151e2d",border:"1px solid #29364a",borderRadius:10}} className="zf-pixel-panel zf-pixel-trip">
+                  <header>معلومات الرحلة الحالية</header>
+                  <div className="zf-pixel-metrics"><article><span>◷</span><small>آخر استقبال</small><b>{telemetry?.receivedAt?new Date(telemetry.receivedAt).toLocaleTimeString('ar-LY'):'—'}</b></article><article><span>⌁</span><small>المسافة</small><b>{liveMetrics?.odometer.tripKm==null?'—':liveMetrics.odometer.tripKm.toFixed(1)+' كم'}</b></article><article><span>◉</span><small>السرعة الحالية</small><b>{gaugeSpeed===null?'—':Math.round(gaugeSpeed)+' كم/س'}</b></article></div>
+                </section><section style={{gridArea:"auto",minWidth:0,background:"#151e2d",border:"1px solid #29364a",borderRadius:10}} className="zf-pixel-panel zf-pixel-doors">
                   <header><span>حالة الأبواب والشبابيك</span><LockKeyhole size={18}/></header>
                   <div className="zf-pixel-doors-body">
                     <div className="zf-pixel-door-list">{[['الباب الأمامي الأيسر',liveMetrics?.comfort.doors.driverOpen],['الباب الأمامي الأيمن',liveMetrics?.comfort.doors.passengerOpen],['الباب الخلفي الأيسر',liveMetrics?.comfort.doors.rearLeftOpen],['الباب الخلفي الأيمن',liveMetrics?.comfort.doors.rearRightOpen],['غطاء المحرك',liveMetrics?.comfort.doors.hoodOpen],['صندوق الأمتعة',liveMetrics?.comfort.doors.trunkOpen]].map(([name,open],i)=><div key={i}><span>{name}</span><b className={!liveMetrics?.comfort.hasDoorData?'unknown':open?'open':'closed'}>{!liveMetrics?.comfort.hasDoorData?'غير متاح':open?'مفتوح':'مغلق'}</b></div>)}</div>
                     <div className="zf-pixel-topcar"><Car size={90} strokeWidth={1.1}/><small>قراءات CAN</small></div>
                     <div className="zf-pixel-window-list"><span>النافذة الأمامية اليسرى <b>غير متاح</b></span><span>النافذة الأمامية اليمنى <b>غير متاح</b></span><span>النافذة الخلفية اليسرى <b>غير متاح</b></span><span>النافذة الخلفية اليمنى <b>غير متاح</b></span></div>
                   </div>
-                </section>
-                <section className="zf-pixel-panel zf-pixel-faults">
+                </section></div>
+<div style={{display:'grid',gap:14,minWidth:0}}><section style={{gridArea:"auto",minWidth:0,background:"#151e2d",border:"1px solid #29364a",borderRadius:10}} className="zf-pixel-panel zf-pixel-gauges">
+                  <header><span>العداد الرسمي للسيارة</span><Car size={19}/></header>
+                  <InstrumentCluster speed={gaugeSpeed} rpm={gaugeRpm} fuel={gaugeFuel} temperature={liveMetrics?.engine.coolantTempC ?? null} odometer={liveMetrics?.odometer.totalKm ?? null} trip={liveMetrics?.odometer.tripKm ?? null} connected={Boolean(selectedDevice?.connected)} />
+                </section><section style={{gridArea:"auto",minWidth:0,background:"#151e2d",border:"1px solid #29364a",borderRadius:10}} className="zf-pixel-panel zf-pixel-health">
+                  <header><span>حالة السيارة العامة</span><b className={selectedDevice?.connected?'zf-pixel-live':'zf-pixel-muted'}>{selectedDevice?.connected?'● متصلة':'○ غير متصلة'}</b></header>
+                  <div className="zf-pixel-metrics"><article><span>⚡</span><small>البطارية</small><b>{liveMetrics?.electrical.vehicleVoltageV==null?'—':liveMetrics.electrical.vehicleVoltageV.toFixed(1)+' V'}</b></article><article><span>♨</span><small>حرارة المحرك</small><b>{liveMetrics?.engine.coolantTempC==null?'—':liveMetrics.engine.coolantTempC+'°C'}</b></article><article><span>⛽</span><small>الوقود</small><b>{gaugeFuel!==null?Math.round(gaugeFuel)+'%':fuelLiters!==null?fuelLiters.toFixed(1)+' لتر':'غير متاح'}</b></article><article><span>⚙</span><small>المحرك</small><b>{liveMetrics?.ignition.verified?(liveMetrics.ignition.isOn?'يعمل':'متوقف'):'غير متاح'}</b></article></div>
+                </section><section style={{gridArea:"auto",minWidth:0,background:"#151e2d",border:"1px solid #29364a",borderRadius:10}} className="zf-pixel-panel zf-pixel-faults">
                   <header><span>أخطاء السيارة (OBD)</span><b className="zf-pixel-warn">⚠</b></header>
                   <div className="zf-pixel-fault-list">{liveMetrics?.diagnostic.dtcCodes?.length?liveMetrics.diagnostic.dtcCodes.slice(0,3).map((fault,i)=><button type="button" key={i} onClick={()=>setCurrentTab('diagnostics')}><b>{fault.code}</b><span>{fault.descriptionAr}</span></button>):<p>لا توجد رموز أعطال مؤكدة من الجهاز</p>}</div>
                   <button className="zf-pixel-action" type="button" onClick={()=>setCurrentTab('diagnostics')}>⚒ تفاصيل الأخطاء والصيانة</button>
-                </section>
-                <section className="zf-pixel-panel zf-pixel-trip">
-                  <header>معلومات الرحلة الحالية</header>
-                  <div className="zf-pixel-metrics"><article><span>◷</span><small>آخر استقبال</small><b>{telemetry?.receivedAt?new Date(telemetry.receivedAt).toLocaleTimeString('ar-LY'):'—'}</b></article><article><span>⌁</span><small>المسافة</small><b>{liveMetrics?.odometer.tripKm==null?'—':liveMetrics.odometer.tripKm.toFixed(1)+' كم'}</b></article><article><span>◉</span><small>السرعة الحالية</small><b>{gaugeSpeed===null?'—':Math.round(gaugeSpeed)+' كم/س'}</b></article></div>
-                </section>
-                <section className="zf-pixel-panel zf-pixel-health">
-                  <header><span>حالة السيارة العامة</span><b className={selectedDevice?.connected?'zf-pixel-live':'zf-pixel-muted'}>{selectedDevice?.connected?'● متصلة':'○ غير متصلة'}</b></header>
-                  <div className="zf-pixel-metrics"><article><span>⚡</span><small>البطارية</small><b>{liveMetrics?.electrical.vehicleVoltageV==null?'—':liveMetrics.electrical.vehicleVoltageV.toFixed(1)+' V'}</b></article><article><span>♨</span><small>حرارة المحرك</small><b>{liveMetrics?.engine.coolantTempC==null?'—':liveMetrics.engine.coolantTempC+'°C'}</b></article><article><span>⛽</span><small>الوقود</small><b>{gaugeFuel!==null?Math.round(gaugeFuel)+'%':fuelLiters!==null?fuelLiters.toFixed(1)+' لتر':'غير متاح'}</b></article><article><span>⚙</span><small>المحرك</small><b>{liveMetrics?.ignition.verified?(liveMetrics.ignition.isOn?'يعمل':'متوقف'):'غير متاح'}</b></article></div>
-                </section>
-                <section className="zf-pixel-panel zf-pixel-alerts">
+                </section><section style={{gridArea:"auto",minWidth:0,background:"#151e2d",border:"1px solid #29364a",borderRadius:10}} className="zf-pixel-panel zf-pixel-alerts">
                   <header><span>أحدث التنبيهات</span><b className="zf-pixel-warn">♟</b></header>
                   <button type="button" onClick={()=>setCurrentTab('alerts')}>{unreadAlertsCount?unreadAlertsCount+' تنبيهات للمركبة المحددة':'لا توجد تنبيهات حالياً'} <span>‹</span></button>
                   <button type="button" onClick={()=>setCurrentTab('alerts')}>عرض سجل التنبيهات <span>‹</span></button>
-                </section>
-              </div>
+                </section><section style={{gridArea:"auto",minWidth:0,background:"#151e2d",border:"1px solid #29364a",borderRadius:10}} className="zf-pixel-panel zf-pixel-car">
+                  <header><span>{vehicleName}</span><b className={selectedDevice?.connected?'zf-pixel-live':'zf-pixel-muted'}>{selectedDevice?.connected?'متصلة':'غير متصلة'}</b></header>
+                  <div className="zf-pixel-car-graphic"><Car size={110} strokeWidth={1.15}/></div>
+                  <div className="zf-pixel-car-facts"><span>رقم الجهاز<strong>{selectedDevice?.imei||'—'}</strong></span><span>حالة GPS<strong>{liveMetrics?.gnss.isFixValid?'متاح':'غير متاح'}</strong></span><span>السرعة<strong>{gaugeSpeed===null?'—':Math.round(gaugeSpeed)+' كم/س'}</strong></span></div>
+                </section></div>
+</div>
 <section dir="rtl" className="mt-4 rounded-xl border border-slate-700 bg-[#101827] p-4 text-slate-100">
 <div className="flex flex-wrap items-center justify-between gap-3 mb-4"><div><h2 className="text-lg font-bold">جدول المركبات المباشر</h2><p className="text-xs text-slate-400">اختر مركبة لتحديث الخريطة والعدادات أعلاه</p></div><button type="button" onClick={fetchDevices} className="rounded-lg bg-blue-700 px-3 py-2 text-sm">تحديث</button></div>
 <div className="grid gap-4 xl:grid-cols-[2fr_1fr]"><div className="overflow-x-auto"><table className="w-full text-sm text-right"><thead className="bg-slate-800 text-slate-300"><tr>{['المركبة','IMEI','الاتصال','آخر ظهور','التتبع'].map(h=><th key={h} className="p-3 whitespace-nowrap">{h}</th>)}</tr></thead><tbody>{devices.map(d=><tr key={d.imei} className={'border-b border-slate-700 '+(selectedImei===d.imei?'bg-blue-950':'')}><td className="p-3"><button type="button" onClick={()=>setSelectedImei(d.imei)} className="text-cyan-300 font-bold">{customNames[d.imei]||d.name||d.imei}</button></td><td className="p-3 font-mono">{d.imei}</td><td className={'p-3 '+(d.connected?'text-emerald-400':'text-slate-400')}>{d.connected?'● متصلة':'○ غير متصلة'}</td><td className="p-3 whitespace-nowrap">{d.lastSeen?new Date(d.lastSeen).toLocaleString('ar-LY'):'—'}</td><td className="p-3"><button type="button" className="rounded bg-blue-700 px-2 py-1" onClick={()=>{setSelectedImei(d.imei);setCurrentTab('map')}}>الخريطة</button></td></tr>)}</tbody></table>{!devices.length&&<p className="p-4 text-slate-400">لا توجد مركبات متاحة</p>}</div><aside className="rounded-lg border border-slate-700 bg-slate-900 p-4"><h3 className="font-bold mb-4">حالة الاتصال بالأسطول</h3>{[['متصلة',devices.filter(d=>d.connected).length,'bg-emerald-500'],['غير متصلة',devices.filter(d=>!d.connected).length,'bg-slate-500']].map(([label,count,color])=><div key={label} className="mb-4"><div className="flex justify-between text-sm"><span>{label}</span><b>{count}</b></div><div className="mt-2 h-2 rounded bg-slate-700"><div className={'h-2 rounded '+color} style={{width:devices.length?Number(count)/devices.length*100+'%':'0%'}}/></div></div>)}<button type="button" onClick={()=>setCurrentTab('alerts')} className="text-cyan-300 text-sm">عرض التنبيهات ←</button></aside></div></section>
-            </>}
+            </div></>}
         {/* Multi-vehicle Switcher Bar (only when > 1 vehicle exists) */}
         {devices.length > 1 && selectedDevice && (
           <div className="bg-white rounded-2xl border border-slate-200 p-3 mb-4 shadow-xs flex items-center justify-between gap-3">
