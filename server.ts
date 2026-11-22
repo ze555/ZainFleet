@@ -889,7 +889,7 @@ app.get('/api/smart-fleet/:imei', async (req: Request,res: Response) => {
  try {
  const [plans,orders,events]=await Promise.all([
  postgresPool.query('SELECT * FROM fleet_maintenance_plans WHERE imei=$1 ORDER BY due_at NULLS LAST LIMIT 200',[imei]),
- postgresPool.query('SELECT w.*, COALESCE((SELECT SUM(p.quantity*p.unit_cost) FROM fleet_work_order_parts p WHERE p.work_order_id=w.id),0) AS parts_cost, COALESCE((SELECT jsonb_agg(jsonb_build_object('id',p.id::text,'part_name',p.part_name,'quantity',p.quantity,'unit_cost',p.unit_cost) ORDER BY p.id) FROM fleet_work_order_parts p WHERE p.work_order_id=w.id),'[]'::jsonb) AS parts FROM fleet_work_orders w WHERE imei=$1 ORDER BY opened_at DESC LIMIT 200',[imei]),
+ postgresPool.query(`SELECT w.*, COALESCE((SELECT SUM(p.quantity*p.unit_cost) FROM fleet_work_order_parts p WHERE p.work_order_id=w.id),0) AS parts_cost, COALESCE((SELECT jsonb_agg(jsonb_build_object('id',p.id::text,'part_name',p.part_name,'quantity',p.quantity,'unit_cost',p.unit_cost) ORDER BY p.id) FROM fleet_work_order_parts p WHERE p.work_order_id=w.id),'[]'::jsonb) AS parts FROM fleet_work_orders w WHERE imei=$1 ORDER BY opened_at DESC LIMIT 200`,[imei]),
  postgresPool.query('SELECT * FROM fleet_diagnostic_events WHERE imei=$1 ORDER BY observed_at DESC LIMIT 200',[imei])
  ]);
  res.setHeader('Cache-Control','no-store');
