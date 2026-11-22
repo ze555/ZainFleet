@@ -1106,11 +1106,16 @@ app.post('/api/diagnostics/clear', (_req: Request, res: Response) => {
 });
 
 // Telemetry History endpoint
-app.get('/api/devices/:imei/history', (req: Request, res: Response) => {
-  const imei = String(req.params.imei);
-  const limit = Math.min(5000, parseInt(String(req.query.limit || '1000'), 10));
-  const history = telemetryRepo.getHistory(imei, limit);
-  res.json(history);
+app.get('/api/devices/:imei/history', async (req: Request, res: Response) => {
+ const imei=String(req.params.imei);
+ if(!fleetAccess(req,imei)){res.sendStatus(403);return;}
+ const limit=Math.max(1,Math.min(5000,Number.parseInt(String(req.query.limit||'1000'),10)||1000));
+ const from=req.query.from?new Date(String(req.query.from)):null,to=req.query.to?new Date(String(req.query.to)):null;
+ if((from&&!Number.isFinite(from.getTime()))||(to&&!Number.isFinite(to.getTime()))||(from&&to&&from>to)){res.sendStatus(400);return;}
+ try{
+ if(postgresPool){const q=await postgresPool.query('SELECT record,received_at FROM tracker_telemetry WHERE imei=$1 AND ($2::timestamptz IS NULL OR gps_time >= $2) AND ($3::timestamptz IS NULL OR gps_time <= $3) ORDER BY gps_time DESC LIMIT $4',[imei,from?.toISOString()||null,to?.toISOString()||null,limit]);res.json(q.rows.map(r=>({imei,record:r.record,receivedAt:new Date(r.received_at).toISOString()})));return;}
+ res.json(telemetryRepo.getHistory(imei,limit).filter(r=>(!from||new Date(r.record.timestamp)>=from)&&(!to||new Date(r.record.timestamp)<=to)));
+ }catch(e){console.error('[History]',e);res.sendStatus(503);}
 });
 
 // Trips endpoint: Segments recorded history into discrete vehicle trips
