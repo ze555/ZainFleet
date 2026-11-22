@@ -889,7 +889,7 @@ app.get('/api/smart-fleet/:imei', async (req: Request,res: Response) => {
  try {
  const [plans,orders,events]=await Promise.all([
  postgresPool.query('SELECT * FROM fleet_maintenance_plans WHERE imei=$1 ORDER BY due_at NULLS LAST LIMIT 200',[imei]),
- postgresPool.query('SELECT w.*, COALESCE((SELECT SUM(p.quantity*p.unit_cost) FROM fleet_work_order_parts p WHERE p.work_order_id=w.id),0) AS parts_cost FROM fleet_work_orders w WHERE imei=$1 ORDER BY opened_at DESC LIMIT 200',[imei]),
+ postgresPool.query('SELECT w.*, COALESCE((SELECT SUM(p.quantity*p.unit_cost) FROM fleet_work_order_parts p WHERE p.work_order_id=w.id),0) AS parts_cost, COALESCE((SELECT jsonb_agg(jsonb_build_object('id',p.id::text,'part_name',p.part_name,'quantity',p.quantity,'unit_cost',p.unit_cost) ORDER BY p.id) FROM fleet_work_order_parts p WHERE p.work_order_id=w.id),'[]'::jsonb) AS parts FROM fleet_work_orders w WHERE imei=$1 ORDER BY opened_at DESC LIMIT 200',[imei]),
  postgresPool.query('SELECT * FROM fleet_diagnostic_events WHERE imei=$1 ORDER BY observed_at DESC LIMIT 200',[imei])
  ]);
  res.setHeader('Cache-Control','no-store');
@@ -917,6 +917,20 @@ app.post('/api/smart-fleet/:imei/:kind', async (req: Request,res: Response) => {
  }else{res.sendStatus(404);return;}
  res.status(201).json(result.rows[0]);
  }catch(e){console.error('[SmartFleet]',e);res.status(500).json({error:'تعذر الحفظ'});}
+});
+app.post('/api/smart-fleet/:imei/orders/:id/parts',async(req:Request,res:Response)=>{
+ const imei=String(req.params.imei),id=String(req.params.id),b=req.body||{};
+ if(!managerScope(req)||!fleetAccess(req,imei)){res.sendStatus(403);return;}
+ if(!postgresPool){res.sendStatus(503);return;}
+ const name=typeof b.name==='string'?b.name.trim():'';
+ if(!/^\d{1,18}$/.test(id)||!name||name.length>200||typeof b.quantity!=='number'||!Number.isFinite(b.quantity)||b.quantity<=0||b.quantity>999999999||typeof b.unitCost!=='number'||!Number.isFinite(b.unitCost)||b.unitCost<0||b.unitCost>99999999999){res.sendStatus(400);return;}
+ try{const q=await postgresPool.query("INSERT INTO fleet_work_order_parts(work_order_id,part_name,quantity,unit_cost) SELECT id,$3,$4,$5 FROM fleet_work_orders WHERE id=$1 AND imei=$2 AND status IN ('open','in_progress') RETURNING id",[id,imei,name,b.quantity,b.unitCost]);if(!q.rowCount){res.sendStatus(404);return;}res.status(201).json(q.rows[0]);}catch(e){console.error('[SmartFleet]',e);res.sendStatus(500);}
+});
+app.get('/api/smart-fleet/:imei/report',async(req:Request,res:Response)=>{
+ const imei=String(req.params.imei);
+ if(!fleetAccess(req,imei)){res.sendStatus(403);return;}
+ if(!postgresPool){res.sendStatus(503);return;}
+ try{const q=await postgresPool.query("SELECT COUNT(*) AS orders,COUNT(*) FILTER(WHERE status='completed') AS completed,COUNT(*) FILTER(WHERE status IN ('open','in_progress')) AS active,COALESCE(SUM(labor_cost) FILTER(WHERE status <> 'cancelled'),0) AS labor,COALESCE(SUM((SELECT COALESCE(SUM(quantity*unit_cost),0) FROM fleet_work_order_parts p WHERE p.work_order_id=w.id)) FILTER(WHERE status <> 'cancelled'),0) AS parts FROM fleet_work_orders w WHERE imei=$1",[imei]);res.json(q.rows[0]);}catch(e){console.error('[SmartFleet]',e);res.sendStatus(500);}
 });
 app.patch('/api/smart-fleet/:imei/orders/:id', async(req:Request,res:Response)=>{
  const imei=String(req.params.imei),id=String(req.params.id),b=req.body||{};
