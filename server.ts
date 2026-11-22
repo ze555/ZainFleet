@@ -199,6 +199,24 @@ async function restoreRegisteredDevices(){
  if(d.received_at)deviceRepo.upsert(d.imei,new Date(d.received_at).toISOString(),false,new Date(d.gps_time).toISOString(),true);
  }
 }
+const demoProfileNames=["عبدالله يوسف السنوسي","محمد سالم الورفلي","أحمد علي الزوي","خالد فرج المصراتي","محمود مفتاح الترهوني"];
+async function updateDemoProfileNames(){
+ if(!postgresPool)return;
+ const changed:{user:FleetUser;displayName:string;driverName?:string}[]=[];
+ for(let i=0;i<demoProfileNames.length;i++){
+ const username=i===0?'demo.manager':'demo.driver'+i;
+ const old=i===0?'مدير تجريبي':'سائق تجريبي '+i;
+ const user=fleetUsers.find(u=>u.username===username&&u.demo===true&&u.companyId==='zf-demo-company-v1');
+ if(!user||user.displayName!==old)continue;
+ changed.push({user,displayName:user.displayName,driverName:user.driverName});
+ user.displayName=demoProfileNames[i];
+ if(!user.driverName||user.driverName===old)user.driverName=demoProfileNames[i];
+ }
+ if(!changed.length)return;
+ try{await persistIdentityState();console.log('[Demo] Updated fictional profile names: '+changed.length);}
+ catch(e){for(const c of changed){c.user.displayName=c.displayName;c.user.driverName=c.driverName;}throw e;}
+}
+
 async function seedDemoFleet(){
  if(!postgresPool||fleetCompanies.some(c=>c.id==='zf-demo-company-v1'))return;
  const password=process.env.DEMO_FLEET_PASSWORD;
@@ -217,7 +235,7 @@ async function seedDemoFleet(){
  deviceCompanies[imei]=companyId;
  }
  fleetCompanies.push(company);
- fleetUsers.push(make('demo.manager','مدير تجريبي','company_admin',[],0),...ids.map((id,i)=>make('demo.driver'+(i+1),'سائق تجريبي '+(i+1),'employee',[id],i+1)));
+ fleetUsers.push(make('demo.manager',demoProfileNames[0],'company_admin',[],0),...ids.map((id,i)=>make('demo.driver'+(i+1),demoProfileNames[i+1],'employee',[id],i+1)));
  await persistIdentityState();
  console.log('[Demo] Demo company initialized');
 }
@@ -255,7 +273,7 @@ async function enrichDemoFaults(){
  console.log('[Demo] Additional diagnostic events inserted: '+added);
  }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
 }
-const postgresReady=initPostgres().then(loadIdentityState).then(()=>seedDemoFleet().catch(e=>console.error('[Demo] Seed failed',e))).then(()=>enrichDemoFaults().catch(e=>console.error('[Demo] Fault seed failed',e))).then(restoreRegisteredDevices).catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); throw err; });
+const postgresReady=initPostgres().then(loadIdentityState).then(()=>seedDemoFleet().catch(e=>console.error('[Demo] Seed failed',e))).then(()=>updateDemoProfileNames().catch(e=>console.error('[Demo] Profile update failed',e))).then(()=>enrichDemoFaults().catch(e=>console.error('[Demo] Fault seed failed',e))).then(restoreRegisteredDevices).catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); throw err; });
 
 // --- Teltonika TCP Server (raw TCP socket) ---
 // Separate internal listeners: FMB140 TCP on 5000, web/API on 8080.
