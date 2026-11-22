@@ -436,7 +436,7 @@ app.use(express.json());
 type FleetRole = 'admin' | 'company_admin' | 'employee' | 'user';
 type CompanySector = 'rental'|'logistics'|'school'|'general';
 type FleetCompany = {id:string;name:string;enabled:boolean;sector?:CompanySector};
-type FleetUser = {username:string;displayName:string;salt:string;hash:string;devices:string[];enabled:boolean;role?:'company_admin'|'employee'|'user';companyId?:string|null;phone?:string;email?:string;vehicleType?:string;plateNumber?:string};
+type FleetUser = {username:string;displayName:string;salt:string;hash:string;devices:string[];enabled:boolean;role?:'company_admin'|'employee'|'user';companyId?:string|null;phone?:string;email?:string;vehicleType?:string;plateNumber?:string;chassisNumber?:string;driverName?:string;demo?:boolean};
 const USERS_PATH = path.join(DATA_DIR,'fleet_users.json');
 const COMPANIES_PATH = path.join(DATA_DIR,'fleet_companies.json');
 const ASSIGNMENTS_PATH = path.join(DATA_DIR,'fleet_device_companies.json');
@@ -737,7 +737,7 @@ app.get('/api/admin/users',(req:Request,res:Response)=>{
  const actor=managerScope(req);if(!actor){res.sendStatus(403);return;}
  const allowed=visibleDevices(req);
  const users=fleetUsers.filter(u=>actor.role==='admin' ? (!u.companyId || u.role==='company_admin') : (u.companyId===actor.companyId&&u.role!=='company_admin'))
-  .map(({username,displayName,devices,enabled,role,companyId,phone,email,vehicleType,plateNumber})=>({username,displayName,devices,enabled,role:role||'user',companyId:companyId||null,phone:phone||'',email:email||'',vehicleType:vehicleType||'',plateNumber:plateNumber||''}));
+  .map(({username,displayName,devices,enabled,role,companyId,phone,email,vehicleType,plateNumber,chassisNumber,driverName,demo})=>({username,displayName,devices,enabled,role:role||'user',companyId:companyId||null,phone:phone||'',email:email||'',vehicleType:vehicleType||'',plateNumber:plateNumber||'',chassisNumber:chassisNumber||'',driverName:driverName||'',demo:!!demo}));
  res.setHeader('Cache-Control','no-store');
  res.json({admin:{username:AUTH_USER,displayName:'محمد زين'},users,devices:allowed,companies:actor.role==='admin'?fleetCompanies:fleetCompanies.filter(c=>c.id===actor.companyId),role:actor.role,companyId:actor.companyId});
 });
@@ -748,6 +748,8 @@ app.post('/api/admin/users',async (req:Request,res:Response)=>{
  const email=typeof req.body?.email==='string'?req.body.email.trim():'';
  const vehicleType=typeof req.body?.vehicleType==='string'?req.body.vehicleType.trim():'';
  const plateNumber=typeof req.body?.plateNumber==='string'?req.body.plateNumber.trim():'';
+ const chassisNumber=typeof req.body?.chassisNumber==='string'?req.body.chassisNumber.trim():'';
+ const driverName=typeof req.body?.driverName==='string'?req.body.driverName.trim():'';
  const role=req.body?.role==='company_admin'?'company_admin':req.body?.role==='employee'?'employee':'user';
  const companyId=actor.role==='admin'?(role==='company_admin'?req.body?.companyId:null):actor.companyId;
  if((actor.role==='admin'&&role!=='company_admin'&&req.body?.companyId)||
@@ -759,12 +761,12 @@ app.post('/api/admin/users',async (req:Request,res:Response)=>{
     (!!email&&fleetUsers.some(u=>u.email?.toLowerCase()===email.toLowerCase()))||
     typeof displayName!=='string'||!displayName.trim()||displayName.length>100||
     typeof password!=='string'||password.length<10||password.length>256||
-    phone.length>35||email.length>150||(email!==''&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))||vehicleType.length>100||plateNumber.length>40||
+    phone.length>35||email.length>150||(email!==''&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))||vehicleType.length>100||plateNumber.length>40||chassisNumber.length>50||driverName.length>100||
     !Array.isArray(devices)||devices.some(id=>typeof id!=='string'||!/^[0-9]{15}$/.test(id)||!deviceRepo.get(id)||(companyId ? deviceCompanies[id]!==companyId : !!deviceCompanies[id]))||devices.some((id:string)=>fleetUsers.some(u=>u.enabled&&u.devices.includes(id)))){
    res.status(400).json({error:'تحقق من الشركة والدور وكلمة المرور والأجهزة التابعة للشركة'});return;
  }
  const salt=crypto.randomBytes(16).toString('hex');
- const user:FleetUser={username,displayName:displayName.trim(),salt,hash:fleetPasswordHash(password,salt),devices:[...new Set<string>(devices)],enabled:true,role,companyId,phone,email,vehicleType,plateNumber};
+ const user:FleetUser={username,displayName:displayName.trim(),salt,hash:fleetPasswordHash(password,salt),devices:[...new Set<string>(devices)],enabled:true,role,companyId,phone,email,vehicleType,plateNumber,chassisNumber,driverName};
  fleetUsers.push(user);
  try{await saveFleetUsers();res.status(201).json({success:true});}catch{fleetUsers.pop();res.sendStatus(507);}
 });
@@ -785,6 +787,8 @@ app.put('/api/admin/users/:username',async (req:Request,res:Response)=>{
  if(typeof req.body?.email==='string'&&req.body.email.length<=150&&(!req.body.email||/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.body.email)))user.email=req.body.email.trim();
  if(typeof req.body?.vehicleType==='string'&&req.body.vehicleType.length<=100)user.vehicleType=req.body.vehicleType.trim();
  if(typeof req.body?.plateNumber==='string'&&req.body.plateNumber.length<=40)user.plateNumber=req.body.plateNumber.trim();
+ if(typeof req.body?.chassisNumber==='string'&&req.body.chassisNumber.length<=50)user.chassisNumber=req.body.chassisNumber.trim();
+ if(typeof req.body?.driverName==='string'&&req.body.driverName.length<=100)user.driverName=req.body.driverName.trim();
  try{await saveFleetUsers();res.json({success:true});}catch{Object.assign(user,previous);res.sendStatus(507);}
 });
 // Managers can reset passwords only for accounts they are authorized to manage.
