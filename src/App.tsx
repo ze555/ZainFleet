@@ -241,13 +241,12 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
 
       {/* Main Container */}
       <main className="zf-page zf-fleet-page zf-reference-page flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8">
-        <button type="button" className="my-3 rounded-xl bg-cyan-700 px-4 py-3 font-bold text-white" onClick={()=>setCurrentTab(currentTab==='smart-fleet'?'dashboard':'smart-fleet')}>{currentTab==='smart-fleet'?'العودة للوحة القيادة':'ZainFleet AI | الصيانة الذكية'}</button>
 
         {/* Compact mobile top navigation, separate from the desktop toolbar. */}
         <header className="zf-mobile-topnav" dir={isAr ? 'rtl' : 'ltr'}>
           <button type="button" className="zf-mobile-brand" onClick={() => setCurrentTab('dashboard')} aria-label={isAr ? 'الرئيسية' : 'Home'}>
             <Car size={22} />
-            <span><strong>ZainFleet</strong><small>{isAr ? 'تتبع المركبات' : 'Fleet tracking'}</small></span>
+            <span><strong>ZainFleet AI</strong><small>{isAr ? 'إدارة الأسطول الذكية' : 'Smart fleet management'}</small></span>
           </button>
           <div className="zf-mobile-top-actions">{(role==='admin'||role==='company_admin')&&<button type="button" onClick={()=>setCurrentTab('access-control')} aria-label="إدارة المستخدمين" title="إدارة المستخدمين"><Users size={19}/></button>}
             <button type="button" className={currentTab === 'map' ? 'active' : ''} onClick={() => setCurrentTab('map')} aria-label={isAr ? 'التتبع المباشر' : 'Live map'} title={isAr ? 'التتبع المباشر' : 'Live map'}><Radio size={19} /></button>
@@ -260,7 +259,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
 
         <div className="zf-pixel-topbar">
           <div className="zf-pixel-brand"><Car size={46}/><strong>نظام تتبع المركبات</strong><small>Vehicle Tracking System</small></div>
-          <nav aria-label="التنقل الرئيسي">{([['dashboard','الرئيسية','⌂'],['map','التتبع المباشر','◎'],['vehicle-profiles','المركبات','▣'],['alerts','التنبيهات','♧'],['diagnostics','الأعطال','⚒'],['trips','التقارير','▤'],['users','المستخدمون','♙'],['sensors','الإعدادات','⚙']] as const).filter(([tab])=>(tab!=='users'&&tab!=='vehicle-profiles')||role!=='user').map(([tab,label,icon])=><button type="button" key={tab} className={currentTab===tab?'active':''} onClick={()=>setCurrentTab(tab)}><b>{icon}</b><span>{label}</span>{tab==='alerts'&&unreadAlertsCount>0&&<i>{unreadAlertsCount}</i>}</button>)}</nav>
+          <nav aria-label="التنقل الرئيسي">{([['dashboard','الرئيسية','⌂'],['map','التتبع المباشر','◎'],['vehicle-profiles','المركبات','▣'],['alerts','التنبيهات','♧'],['smart-fleet','الصيانة الذكية','⚒'],['diagnostics','الأعطال','⚒'],['trips','التقارير','▤'],['users','المستخدمون','♙'],['sensors','الإعدادات','⚙']] as const).filter(([tab])=>(tab!=='users'&&tab!=='vehicle-profiles')||role!=='user').map(([tab,label,icon])=><button type="button" key={tab} className={currentTab===tab?'active':''} onClick={()=>setCurrentTab(tab)}><b>{icon}</b><span>{label}</span>{tab==='alerts'&&unreadAlertsCount>0&&<i>{unreadAlertsCount}</i>}</button>)}</nav>
           <div className="zf-pixel-account"><button type="button" onClick={()=>setProfileOpen(true)} title="الملف الشخصي">{displayName||roleLabel}</button><button type="button" onClick={onLogout} title="تسجيل الخروج"><LogOut size={18}/></button></div>
         </div>
         <div className="zf-ref-shell">
@@ -273,6 +272,12 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
           </aside>
           <div className="zf-ref-workspace">
             <div className="zf-ref-title"><span>♛</span> لوحة التحكم - {roleLabel}</div>
+ <section className="my-3 rounded-2xl border border-slate-700 bg-slate-900 p-3 text-slate-100" dir="rtl">
+ <div className="flex items-center justify-between gap-2 mb-3"><strong>ZainFleet AI</strong><span className="text-xs text-cyan-300">{devices.length} مركبة مسجلة</span></div>
+ <label className="block text-xs text-slate-400 mb-1">المركبة المختارة</label>
+ <select aria-label="اختيار المركبة" className="w-full rounded-xl border border-slate-600 bg-slate-800 p-3 text-white" value={selectedImei||''} onChange={e=>setSelectedImei(e.target.value||null)}><option value="">اختر مركبة</option>{devices.map(d=><option key={d.imei} value={d.imei}>{customNames[d.imei]||d.name||d.imei} — {d.connected?'متصلة':'غير متصلة'}</option>)}</select>
+ <nav className="grid grid-cols-3 gap-2 mt-3">{[['dashboard','الرئيسية'],['smart-fleet','الصيانة'],['vehicle','الحالة الفنية'],['map','التتبع'],['alerts','التنبيهات'],['trips','الرحلات']].map(([tab,label])=><button key={tab} type="button" onClick={()=>setCurrentTab(tab)} className={'rounded-xl border p-2 text-xs font-bold '+(currentTab===tab?'border-cyan-400 bg-cyan-900 text-white':'border-slate-700 bg-slate-800 text-slate-200')}>{label}</button>)}</nav>
+ </section>
             {currentTab==='dashboard' && <>
               <div className="zf-pixel-dashboard">
                 <section className="zf-pixel-panel zf-pixel-map">
@@ -422,7 +427,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
         )}
 
         {/* View 7: FMB140 Packet & CAN/OBD Diagnostics & Log Downloader */}
-        {currentTab === 'smart-fleet' && (selectedImei ? <SmartFleet key={selectedImei} imei={selectedImei}/> : <p>اختر مركبة أولاً</p>)}
+        {currentTab === 'smart-fleet' && (selectedImei ? <SmartFleet key={selectedImei} imei={selectedImei}/> : <section dir="rtl" className="rounded-2xl border border-slate-700 bg-slate-900 p-5 text-slate-100"><h2 className="text-xl font-bold text-cyan-300">مركز الصيانة والتشخيص</h2><p className="my-3">{devices.length ? 'اختر مركبة من القائمة أعلاه لعرض سجلها.' : 'لا توجد مركبات متاحة لهذا الحساب حالياً. تظهر المركبات المسجلة حتى إذا كانت غير متصلة.'}</p><div className="grid grid-cols-2 gap-3">{['خطط الصيانة','أوامر الإصلاح','الأعطال الفنية','تكاليف الصيانة'].map(t=><div key={t} className="rounded-xl border border-slate-700 bg-slate-800 p-4"><p>{t}</p><strong className="text-2xl text-slate-400">—</strong></div>)}</div><button type="button" onClick={fetchDevices} className="mt-4 rounded-xl bg-cyan-700 px-4 py-3">تحديث قائمة المركبات</button></section>)}
         {currentTab === 'diagnostics' && (
           <DiagnosticView device={selectedDevice} lang={lang} />
         )}
