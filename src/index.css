@@ -1008,3 +1008,10 @@
 .zf-moving-car.zf-fault-critical>div{color:#ef4444;animation:zf-fault-pulse 1.3s infinite}
 .zf-moving-car.zf-fault-warning>div{color:#f59e0b;animation:zf-fault-pulse 2s infinite}
 @media(prefers-reduced-motion:reduce){.zf-moving-car>div{animation:none!important;outline:2px solid currentColor}}
+
+/* Blue operations center */
+.zf-fleet-shell .zf-blue-command{background:radial-gradient(ellipse at 30% 0%,#164c88 0%,#0b2650 38%,#061329 85%);border:1px solid #4178ac;box-shadow:0 0 24px #1679ef25,inset 0 1px 0 #75c6ff44;}
+.zf-blue-command .zf-blue-kpis>div,.zf-blue-command .zf-blue-mapgrid>div:not(.fixed),.zf-blue-command .zf-blue-table{background:linear-gradient(150deg,#123967,#091e3d 65%,#07162c)!important;border:1px solid #356796!important;box-shadow:inset 0 1px 0 #83c9ff22,0 4px 12px #0004;border-radius:9px;}
+.zf-blue-command .zf-blue-kpis>div{padding:12px!important;min-width:0}.zf-blue-command .zf-blue-kpis>div>div:last-child{text-shadow:0 0 14px #38bdf855;}
+.zf-blue-command .zf-blue-table{overflow:hidden}.zf-blue-table thead{background:#153a65;color:#c6e5ff}.zf-blue-table td,.zf-blue-table th{border-bottom:1px solid #28496a}.zf-blue-table tbody tr:nth-child(even){background:#14335966}.zf-blue-table tbody tr:hover{background:#1e4976}.zf-blue-command .leaflet-container{border:1px solid #4b8bc2;box-shadow:0 0 12px #3caaff33}.zf-blue-command button{transition:background .2s,border-color .2s}.zf-blue-command .zf-blue-mapgrid .max-h-\\[740px\\]{scrollbar-color:#356796 #091e3d;}
+@media(min-width:1200px){.zf-blue-command{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.65fr);gap:12px;align-items:start}.zf-blue-command>*{margin-top:0!important;grid-column:1/-1}.zf-blue-command .zf-blue-kpis{grid-column:2;grid-row:5;grid-template-columns:repeat(2,minmax(0,1fr));align-self:start}.zf-blue-command .zf-blue-mapgrid{grid-column:1;grid-row:5;display:block}.zf-blue-command .zf-blue-mapgrid>div+div{margin-top:12px;max-height:240px}.zf-blue-command .zf-blue-table{grid-column:1/-1}}
