@@ -45,8 +45,53 @@ export async function initPostgres() {
     );
     CREATE INDEX IF NOT EXISTS idx_tracker_imei_gps_time
       ON tracker_telemetry (imei, gps_time DESC);
+
+    CREATE TABLE IF NOT EXISTS fleet_maintenance_plans (
+      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      imei varchar(15) NOT NULL REFERENCES tracker_devices(imei),
+      title text NOT NULL,
+      due_at timestamptz,
+      due_odometer_km numeric(14,2) CHECK (due_odometer_km >= 0),
+      due_engine_hours numeric(14,2) CHECK (due_engine_hours >= 0),
+      created_at timestamptz NOT NULL DEFAULT now(),
+      CHECK (due_at IS NOT NULL OR due_odometer_km IS NOT NULL OR due_engine_hours IS NOT NULL)
+    );
+    CREATE TABLE IF NOT EXISTS fleet_work_orders (
+      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      imei varchar(15) NOT NULL REFERENCES tracker_devices(imei),
+      plan_id bigint REFERENCES fleet_maintenance_plans(id),
+      title text NOT NULL,
+      status text NOT NULL DEFAULT 'open' CHECK (status IN ('open','in_progress','completed','cancelled')),
+      technician text,
+      notes text,
+      labor_cost numeric(14,3) NOT NULL DEFAULT 0 CHECK (labor_cost >= 0),
+      currency char(3) NOT NULL DEFAULT 'LYD',
+      opened_at timestamptz NOT NULL DEFAULT now(),
+      completed_at timestamptz
+    );
+    CREATE TABLE IF NOT EXISTS fleet_work_order_parts (
+      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      work_order_id bigint NOT NULL REFERENCES fleet_work_orders(id),
+      part_name text NOT NULL,
+      quantity numeric(12,3) NOT NULL CHECK (quantity > 0),
+      unit_cost numeric(14,3) NOT NULL CHECK (unit_cost >= 0)
+    );
+    CREATE TABLE IF NOT EXISTS fleet_diagnostic_events (
+      id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      imei varchar(15) NOT NULL REFERENCES tracker_devices(imei),
+      observed_at timestamptz NOT NULL,
+      source text NOT NULL CHECK (source IN ('device','manual','rule')),
+      code text,
+      severity text NOT NULL CHECK (severity IN ('info','warning','critical','unknown')),
+      description text NOT NULL,
+      evidence jsonb NOT NULL DEFAULT '{}'::jsonb
+    );
+    CREATE INDEX IF NOT EXISTS idx_fleet_plans_imei ON fleet_maintenance_plans(imei);
+    CREATE INDEX IF NOT EXISTS idx_fleet_orders_imei ON fleet_work_orders(imei,status);
+    CREATE INDEX IF NOT EXISTS idx_fleet_events_imei ON fleet_diagnostic_events(imei,observed_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_fleet_parts_order ON fleet_work_order_parts(work_order_id);
   `);
-  const tables = await pool.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('fleet_identity_state','fleet_system_admin','tracker_devices','tracker_telemetry') ORDER BY table_name");
+  const tables = await pool.query("SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('fleet_identity_state','fleet_system_admin','tracker_devices','tracker_telemetry','fleet_maintenance_plans','fleet_work_orders','fleet_work_order_parts','fleet_diagnostic_events') ORDER BY table_name");
   console.log('[Postgres] Schema initialized; verified tables:', tables.rows.map(row => row.table_name).join(', '));
 }
 
