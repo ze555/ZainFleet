@@ -999,3 +999,7 @@
 .zf-command-metric small{color:#b7cada;display:block;font-size:12px}
 .zf-command-metric b{font-size:30px;line-height:1.3;display:block;margin-top:8px}
 @media(max-width:640px){.zf-command-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.zf-command-metric{padding:12px}.zf-command-metric b{font-size:25px}}
+
+/* Vehicle detail: instrument cluster is one integrated SVG, not two columns. */
+.zf-fleet-shell .zf-real-cluster{grid-template-columns:minmax(0,1fr);width:100%;box-sizing:border-box;justify-items:stretch;padding:8px;}
+.zf-fleet-shell .zf-real-cluster > svg{display:block;grid-column:1/-1;width:100%;height:auto;max-width:100%;}
