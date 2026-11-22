@@ -18,6 +18,26 @@ function printReport(imei:string,data:Data,kind:string){
  ];
  win.opener=null;win.document.open();win.document.write('<!doctype html><html lang="ar" dir="rtl"><head><meta charset="UTF-8"><title>ZainFleet AI - Report</title><style>@page{size:A4;margin:15mm}body{font:14px Arial,sans-serif;color:#12263b}header{border-bottom:3px solid #0891b2;padding:12px 0}h1{margin:0;color:#075985}h2{background:#eaf4f8;padding:8px;font-size:16px}table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border:1px solid #cbd5e1;padding:7px;overflow-wrap:anywhere}th{background:#e2e8f0}tr{break-inside:avoid}thead{display:table-header-group}footer{margin-top:32px;display:flex;justify-content:space-around}button{padding:10px}@media print{button{display:none}}</style></head><body><header><h1>ZainFleet AI</h1><p>منظومة إدارة الأسطول الذكية | تقرير المركبة</p></header><p>IMEI: '+esc(imei)+' | تاريخ الإصدار: '+esc(new Date().toLocaleString('ar-LY'))+'</p><p>التقرير يعرض السجلات المحملة (حتى 200 لكل قسم)، وليس جميع السجلات التاريخية.</p>'+sections.filter(x=>kind==='all'||x[0]===kind).map(x=>'<h2>'+x[1]+'</h2>'+x[2]).join('')+'<footer><span>إعداد التقرير: __________</span><span>الاعتماد: __________</span></footer></body></html>');win.document.close();win.focus();win.print();
 }
+const guidance:Record<string,[string,string]>={
+ P0217:['نقص سائل التبريد أو خلل المروحة أو الثرموستات','إذا كانت الحرارة مرتفعة فعلياً توقف بأمان وأطفئ المحرك؛ لا تفتح غطاء التبريد ساخناً'],
+ P0524:['نقص الزيت أو خلل المضخة أو حساس الضغط','إذا ظهر تحذير ضغط الزيت توقف بأمان وأطفئ المحرك واطلب الفحص'],
+ P0300:['شمعات أو ملفات الإشعال أو الوقود','فحص الاحتراق؛ عند وميض لمبة المحرك أو اهتزاز شديد توقف بأمان'],
+ P0562:['البطارية أو المولد أو التوصيلات','قياس جهد البطارية والشحن تحت ظروف تشغيل مناسبة'],
+ P0087:['فلتر الوقود أو المضخة أو حساس الضغط','فحص ضغط الوقود في الورشة'],
+ P0128:['الثرموستات أو حساس حرارة التبريد','فحص دورة التبريد'],
+ P0700:['خلل مسجل بوحدة ناقل الحركة','قراءة أكواد وحدة ناقل الحركة بجهاز متوافق'],
+ P0101:['حساس الهواء أو تسريب السحب','فحص مجرى الهواء والحساس'],
+ P0130:['حساس الأكسجين أو الأسلاك','فحص الدائرة وقراءات الحساس'],
+ P0420:['المحول الحفاز أو تسريب العادم أو الحساسات','فحص العادم قبل استبدال القطع']
+};
+function DiagnosticReview({data,onOrder,busy}:{data:Data;onOrder:(title:string)=>void;busy:boolean}){
+ const groups=Object.entries(data.events.reduce<Record<string,Row[]>>((a,e)=>{const k=e.code||e.description||'غير محدد';(a[k]??=[]).push(e);return a},{}));
+ const due=data.plans.filter(p=>p.due_at&&Date.parse(p.due_at)<=Date.now()+7*86400000);
+ const active=data.orders.filter(o=>o.status==='open'||o.status==='in_progress');
+ const critical=data.events.filter(e=>e.severity==='critical').length;
+ return <article className="rounded-2xl border border-cyan-800 bg-slate-900 p-4 space-y-4"><h3 className="text-xl font-bold text-cyan-300">مركز التحليل الفني والصيانة الوقائية</h3><p className="text-xs text-slate-400">تحليل قواعد إرشادية للسجلات المحملة، وليس تشخيصاً مؤكداً أو توقعاً إحصائياً. السجلات التاريخية لا تعني أن العطل نشط الآن.</p><div className="grid grid-cols-2 gap-2">{[['سجلات حرجة',critical],['صيانة خلال 7 أيام أو متأخرة',due.length],['أوامر قيد المتابعة',active.length],['رموز متكررة',groups.filter(g=>g[1].length>1).length]].map(([k,v])=><div key={k} className="bg-slate-800 rounded-xl p-3"><small>{k}</small><b className="block text-2xl text-cyan-300">{v}</b></div>)}</div>{due.map(p=><p key={p.id} className="text-amber-300">{p.title} — {p.due_at?.slice(0,10)} (راجع التنفيذ)</p>)}{groups.sort((a,b)=>Number(b[1].some(e=>e.severity==='critical'))-Number(a[1].some(e=>e.severity==='critical'))).map(([k,events])=>{const e=events[0],g=guidance[k];return <div key={k} className="rounded-xl border border-slate-700 p-3 space-y-2"><strong className={events.some(x=>x.severity==='critical')?'text-red-400':'text-amber-300'}>{k} — {e.description}</strong><p>عدد السجلات: {events.length}</p><p>الأسباب المحتملة: {g?.[0]||'تحتاج قراءة فنية متخصصة'}</p><p>الإجراء: {g?.[1]||'فحص المركبة وقراءة وحدة التحكم المناسبة'}</p>{data.canEdit&&<button disabled={busy} className="bg-cyan-800 rounded-lg p-2" onClick={()=>onOrder('فحص '+k+' — '+(e.description||''))}>إنشاء أمر فحص</button>}</div>})}</article>
+}
+
 export function SmartFleet({imei,reportsOnly=false}:{imei:string;reportsOnly?:boolean}){
  const [data,setData]=useState<Data|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,refresh]=useState(0);
  const [kind,setKind]=useState('plans'),[title,setTitle]=useState(''),[date,setDate]=useState(''),[code,setCode]=useState(''),[severity,setSeverity]=useState('unknown');
@@ -32,6 +52,7 @@ export function SmartFleet({imei,reportsOnly=false}:{imei:string;reportsOnly?:bo
  <header className={panel+" border-cyan-700/70"}><h2 className="text-xl font-bold">{reportsOnly?'ZainFleet AI | مركز التقارير':'ZainFleet AI | مركز الصيانة'}</h2><p className="text-slate-400 text-sm">IMEI: {imei} — سجل الصيانة والتشخيص الفني</p><button className={button} onClick={()=>refresh(n=>n+1)}>تحديث</button></header>
  {error&&<p role="alert" className="text-red-400">{error}</p>}
  {!data?<p>جاري تحميل البيانات...</p>:<>
+ {!reportsOnly&&<DiagnosticReview data={data} busy={busy} onOrder={title=>{if(window.confirm('إنشاء أمر فحص لهذا العطل؟'))void save('/orders','POST',{title})}}/>}
  <article className={panel}><h3 className="font-bold text-cyan-300 mb-3">مركز التقارير والطباعة</h3><div className="grid gap-2 sm:grid-cols-2"><select aria-label="نوع التقرير" className={field} value={reportKind} onChange={e=>setReportKind(e.target.value)}><option value="all">تقرير شامل للمركبة</option><option value="plans">جدول الصيانة</option><option value="orders">الإصلاحات والتكاليف</option><option value="parts">قطع الغيار</option><option value="events">الأعطال الفنية</option></select><button type="button" className={button} onClick={()=>printReport(imei,data,reportKind)}>طباعة / حفظ PDF</button></div><p className="text-xs text-slate-400 mt-2">اختر حفظ بصيغة PDF من نافذة الطباعة.</p></article>
  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{[['خطط الصيانة',data.plans.length],['أوامر مفتوحة',data.orders.filter(x=>x.status==='open'||x.status==='in_progress').length],['سجل الأعطال',data.events.length],['تكلفة الأوامر المعروضة',data.orders.reduce((n,x)=>n+Number(x.labor_cost||0)+Number(x.parts_cost||0),0).toFixed(3)+' د.ل']].map(([label,value])=><article key={label} className={panel}><p className="text-slate-400">{label}</p><strong className="text-xl text-cyan-300">{value}</strong></article>)}</div>
  {!reportsOnly&&data.canEdit&&<form className={panel+' space-y-3'} onSubmit={async e=>{e.preventDefault();if(await save('/'+kind,'POST',{title,dueAt:date?new Date(date+'T00:00:00').toISOString():undefined,code,severity})){setTitle('');setCode('')}}}>
