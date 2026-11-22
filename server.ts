@@ -879,6 +879,8 @@ app.use('/api',(req:Request,res:Response,next)=>{
  const who=sessionIdentity(req);if(!who){res.sendStatus(401);return;}
  if(who.role==='admin'){next();return;}
  if(req.path==='/devices'&&req.method==='GET'){next();return;}
+ const smartMatch=req.path.match(/^\/smart-fleet\/([^/]+)(?:\/.*)?$/);
+ if(smartMatch&&req.method==='GET'&&fleetAccess(req,smartMatch[1])){next();return;}
  const match=req.path.match(/^\/devices\/([^/]+)(?:\/.*)?$/);
  if(match&&fleetAccess(req,match[1])){
    if(req.method==='GET'){next();return;}
