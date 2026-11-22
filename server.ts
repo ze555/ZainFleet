@@ -199,7 +199,29 @@ async function restoreRegisteredDevices(){
  if(d.received_at)deviceRepo.upsert(d.imei,new Date(d.received_at).toISOString(),false,new Date(d.gps_time).toISOString(),true);
  }
 }
-const postgresReady=initPostgres().then(loadIdentityState).then(restoreRegisteredDevices).catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); throw err; });
+async function seedDemoFleet(){
+ if(!postgresPool||fleetCompanies.some(c=>c.id==='zf-demo-company-v1'))return;
+ const password=process.env.DEMO_FLEET_PASSWORD;
+ if(!password||password.length<12)return;
+ const ids=['000000000000901','000000000000902','000000000000903','000000000000904'];
+ const existing=await postgresPool.query('SELECT imei FROM tracker_devices WHERE imei=ANY($1::text[])',[ids]);
+ if(existing.rowCount||fleetUsers.some(u=>['demo.manager','demo.driver1','demo.driver2','demo.driver3','demo.driver4'].includes(u.username)))return;
+ const companyId='zf-demo-company-v1';
+ const company:FleetCompany={id:companyId,name:'زين للنقل - تجريبي',enabled:true,sector:'logistics'};
+ const make=(username:string,displayName:string,role:'company_admin'|'employee',devices:string[],i:number):FleetUser=>{const salt=crypto.randomBytes(16).toString('hex');return {username,displayName,role,devices,companyId,enabled:true,salt,hash:fleetPasswordHash(password,salt),demo:true,driverName:displayName,phone:'000000000'+i,chassisNumber:'DEMO-VIN-'+i,vehicleType:['','Toyota Fortuner','Hyundai Sonata','Kia Sportage','Toyota Hilux'][i]};};
+ for(let i=0;i<ids.length;i++){
+ const imei=ids[i],now=Date.now();
+ const records:AvlRecord[]=Array.from({length:12},(_,j)=>({timestamp:new Date(now-(11-j)*60000).toISOString(),timestampMs:now-(11-j)*60000,priority:0,longitude:13.18+i*.025+j*.0005,latitude:32.88-i*.012+j*.0003,altitude:15,angle:90,satellites:10,speed:[42,58,0,35][i],eventIoId:0,ioElements:[{id:115,value:String([910,1080,880,960][i]),byteLength:2},{id:89,value:String([78,12,55,36][i]),byteLength:1},{id:239,value:'1',byteLength:1}]}));
+ await persistAvlBatch(imei,records,new Date(now).toISOString());
+ await postgresPool.query("INSERT INTO fleet_diagnostic_events(imei,observed_at,source,code,severity,description,evidence) VALUES($1,now(),'manual',$2,$3,$4,$5::jsonb)",[imei,['P0128','P0217','P0562','P0101'][i],i===1?'critical':'warning','محاكاة تجريبية - '+['فحص حرارة التبريد','ارتفاع حرارة المحرك','فحص جهد البطارية','فحص تدفق الهواء'][i],JSON.stringify({demo:true})]);
+ deviceCompanies[imei]=companyId;
+ }
+ fleetCompanies.push(company);
+ fleetUsers.push(make('demo.manager','مدير تجريبي','company_admin',[],0),...ids.map((id,i)=>make('demo.driver'+(i+1),'سائق تجريبي '+(i+1),'employee',[id],i+1)));
+ await persistIdentityState();
+ console.log('[Demo] Demo company initialized');
+}
+const postgresReady=initPostgres().then(loadIdentityState).then(()=>seedDemoFleet().catch(e=>console.error('[Demo] Seed failed',e))).then(restoreRegisteredDevices).catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); throw err; });
 
 // --- Teltonika TCP Server (raw TCP socket) ---
 // Separate internal listeners: FMB140 TCP on 5000, web/API on 8080.
@@ -518,7 +540,7 @@ function fleetAccess(req:Request,imei:string):boolean {
  // Backward-compatible legacy users with pre-existing device grants.
  return (identity.role==='user'||identity.role==='employee')&&user.devices.includes(imei)&&!deviceCompanies[imei];
 }
-function visibleDevices(req:Request):DeviceInfo[]{return deviceRepo.getAll().filter(d=>fleetAccess(req,d.imei));}
+function visibleDevices(req:Request):DeviceInfo[]{return deviceRepo.getAll().filter(d=>fleetAccess(req,d.imei)).map(d=>deviceCompanies[d.imei]==='zf-demo-company-v1'?{...d,name:'تجريبي | '+d.imei,connected:false,tcpConnected:false,connectionStatus:'offline'}:d);}
 function managerScope(req:Request):{user:string;role:FleetRole;companyId:string|null}|null {
  const identity=sessionIdentity(req);
  return identity&&(identity.role==='admin'||identity.role==='company_admin')?identity:null;
