@@ -599,7 +599,7 @@ function fleetAccess(req:Request,imei:string):boolean {
  // Backward-compatible legacy users with pre-existing device grants.
  return (identity.role==='user'||identity.role==='employee')&&user.devices.includes(imei)&&!deviceCompanies[imei];
 }
-function visibleDevices(req:Request):DeviceInfo[]{return deviceRepo.getAll().filter(d=>fleetAccess(req,d.imei)).map(d=>deviceCompanies[d.imei]==='zf-demo-company-v1'?{...d,name:'تجريبي | '+d.imei,connected:false,tcpConnected:false,connectionStatus:'offline'}:d);}
+function visibleDevices(req:Request):DeviceInfo[]{return deviceRepo.getAll().filter(d=>fleetAccess(req,d.imei)).map(d=>deviceCompanies[d.imei]==='zf-demo-company-v1'?{...d,name:(fleetUsers.find(u=>u.companyId==='zf-demo-company-v1'&&u.devices.includes(d.imei)&&u.vehicleType)?.vehicleType||d.imei),connected:false,tcpConnected:false,connectionStatus:'offline'}:d);}
 function managerScope(req:Request):{user:string;role:FleetRole;companyId:string|null}|null {
  const identity=sessionIdentity(req);
  return identity&&(identity.role==='admin'||identity.role==='company_admin')?identity:null;
