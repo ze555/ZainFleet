@@ -186,7 +186,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
     return count;
   }, [telemetry, selectedDevice]);
 
-  const liveMetrics = useMemo(() => telemetry?.record ? decodeCanMetrics(telemetry.record) : null, [telemetry]);
+  const liveMetrics = useMemo(() => telemetry?.record && telemetry.imei===selectedImei ? decodeCanMetrics(telemetry.record) : null, [telemetry,selectedImei]);
   const gaugeSpeed = liveMetrics?.speed.displaySpeedKmH ?? null;
   const gaugeRpm = liveMetrics?.engine.rpm ?? null;
   const gaugeFuel = liveMetrics?.fuel.levelPercent ?? null;
@@ -279,15 +279,15 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
  <nav className="grid grid-cols-3 gap-2 mt-3">{[['dashboard','الرئيسية'],['smart-fleet','الصيانة'],['vehicle','الحالة الفنية'],['map','التتبع'],['alerts','التنبيهات'],['trips','الرحلات'],['fleet-reports','تقارير PDF']].map(([tab,label])=><button key={tab} type="button" onClick={()=>setCurrentTab(tab)} className={'rounded-xl border p-2 text-xs font-bold '+(currentTab===tab?'border-cyan-400 bg-cyan-900 text-white':'border-slate-700 bg-slate-800 text-slate-200')}>{label}</button>)}</nav>
  </section>
             {currentTab==='dashboard' && <>
-<section dir="rtl" className="rounded-3xl border border-cyan-800 bg-gradient-to-br from-slate-950 to-slate-800 p-5 mb-5 text-white shadow-lg">
+<section dir="rtl" className="rounded-xl border border-slate-700 bg-[#101827] p-4 mb-5 text-white shadow-lg">
 <div className="flex flex-wrap justify-between items-center gap-3 mb-5"><div><p className="text-xs tracking-widest text-cyan-300">ZAINFLEET AI</p><h2 className="text-2xl font-bold">مركز قيادة الأسطول</h2><p className="text-sm text-slate-400">مراقبة الاتصال والحالة التشغيلية</p></div><span className="rounded-full border border-cyan-800 px-3 py-2 text-xs">{serverHealthy?'الخادم يستجيب':'الخادم غير متاح'}</span></div>
-<div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{[['المركبات المسجلة',devices.length],['المتصلة',devices.filter(d=>d.connected).length],['غير المتصلة',devices.filter(d=>!d.connected).length],['تنبيهات المركبة المختارة',selectedDevice&&telemetry?.imei===selectedDevice.imei?unreadAlertsCount:'—']].map(([label,value])=><div key={label} className="rounded-2xl border border-slate-700 bg-slate-900/70 p-4"><p className="text-xs text-slate-400">{label}</p><strong className="text-3xl text-cyan-300">{value}</strong></div>)}</div>
+<div className="grid grid-cols-2 lg:grid-cols-4 gap-3">{[['المركبات المسجلة',devices.length],['المتصلة',devices.filter(d=>d.connected).length],['غير المتصلة',devices.filter(d=>!d.connected).length],['تنبيهات المركبة المختارة',selectedDevice&&telemetry?.imei===selectedDevice.imei?unreadAlertsCount:'—']].map(([label,value])=><div key={label} className="rounded-lg border border-slate-700 bg-[#1b2637] p-4"><p className="text-xs text-slate-400">{label}</p><strong className="text-3xl text-cyan-300">{value}</strong></div>)}</div>
 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4">{[['diagnostics','التشخيص الفني'],['smart-fleet','الصيانة'],['map','التتبع المباشر'],['fleet-reports','تقارير PDF']].map(([tab,label])=><button key={tab} type="button" onClick={()=>setCurrentTab(tab)} className="rounded-xl border border-cyan-900 bg-slate-800 p-3 text-sm text-white">{label}</button>)}</div>
 </section>
               <div className="zf-pixel-dashboard">
                 <section className="zf-pixel-panel zf-pixel-map">
                   <header><span>التتبع المباشر</span><b className={selectedDevice?.connected?'zf-pixel-live':'zf-pixel-muted'}>{selectedDevice?.connected?'● مباشر':'○ غير متصل'}</b></header>
-                  <div className="zf-pixel-map-content">{selectedDevice?<TripMap device={selectedDevice} latestTelemetry={telemetry} lang={lang}/>:<div className="zf-pixel-empty">لا توجد مركبات مرتبطة بهذا الحساب</div>}</div>
+                  <div className="zf-pixel-map-content">{selectedDevice?<TripMap device={selectedDevice} latestTelemetry={telemetry?.imei===selectedDevice.imei?telemetry:null} lang={lang}/>:<div className="zf-pixel-empty">لا توجد مركبات مرتبطة بهذا الحساب</div>}</div>
                   <div className="zf-pixel-map-overlay"><span>{vehicleName}</span><strong>{gaugeSpeed===null?'—':Math.round(gaugeSpeed)+' كم/س'}</strong></div>
                 </section>
                 <section className="zf-pixel-panel zf-pixel-gauges">
@@ -326,6 +326,9 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
                   <button type="button" onClick={()=>setCurrentTab('alerts')}>عرض سجل التنبيهات <span>‹</span></button>
                 </section>
               </div>
+<section dir="rtl" className="mt-4 rounded-xl border border-slate-700 bg-[#101827] p-4 text-slate-100">
+<div className="flex flex-wrap items-center justify-between gap-3 mb-4"><div><h2 className="text-lg font-bold">جدول المركبات المباشر</h2><p className="text-xs text-slate-400">اختر مركبة لتحديث الخريطة والعدادات أعلاه</p></div><button type="button" onClick={fetchDevices} className="rounded-lg bg-blue-700 px-3 py-2 text-sm">تحديث</button></div>
+<div className="grid gap-4 xl:grid-cols-[2fr_1fr]"><div className="overflow-x-auto"><table className="w-full text-sm text-right"><thead className="bg-slate-800 text-slate-300"><tr>{['المركبة','IMEI','الاتصال','آخر ظهور','التتبع'].map(h=><th key={h} className="p-3 whitespace-nowrap">{h}</th>)}</tr></thead><tbody>{devices.map(d=><tr key={d.imei} className={'border-b border-slate-700 '+(selectedImei===d.imei?'bg-blue-950':'')}><td className="p-3"><button type="button" onClick={()=>setSelectedImei(d.imei)} className="text-cyan-300 font-bold">{customNames[d.imei]||d.name||d.imei}</button></td><td className="p-3 font-mono">{d.imei}</td><td className={'p-3 '+(d.connected?'text-emerald-400':'text-slate-400')}>{d.connected?'● متصلة':'○ غير متصلة'}</td><td className="p-3 whitespace-nowrap">{d.lastSeen?new Date(d.lastSeen).toLocaleString('ar-LY'):'—'}</td><td className="p-3"><button type="button" className="rounded bg-blue-700 px-2 py-1" onClick={()=>{setSelectedImei(d.imei);setCurrentTab('map')}}>الخريطة</button></td></tr>)}</tbody></table>{!devices.length&&<p className="p-4 text-slate-400">لا توجد مركبات متاحة</p>}</div><aside className="rounded-lg border border-slate-700 bg-slate-900 p-4"><h3 className="font-bold mb-4">حالة الاتصال بالأسطول</h3>{[['متصلة',devices.filter(d=>d.connected).length,'bg-emerald-500'],['غير متصلة',devices.filter(d=>!d.connected).length,'bg-slate-500']].map(([label,count,color])=><div key={label} className="mb-4"><div className="flex justify-between text-sm"><span>{label}</span><b>{count}</b></div><div className="mt-2 h-2 rounded bg-slate-700"><div className={'h-2 rounded '+color} style={{width:devices.length?Number(count)/devices.length*100+'%':'0%'}}/></div></div>)}<button type="button" onClick={()=>setCurrentTab('alerts')} className="text-cyan-300 text-sm">عرض التنبيهات ←</button></aside></div></section>
             </>}
         {/* Multi-vehicle Switcher Bar (only when > 1 vehicle exists) */}
         {devices.length > 1 && selectedDevice && (
