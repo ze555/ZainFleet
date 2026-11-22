@@ -231,7 +231,7 @@ async function seedDemoFleet(){
  const imei=ids[i],now=Date.now();
  const records:AvlRecord[]=Array.from({length:12},(_,j)=>({timestamp:new Date(now-(11-j)*60000).toISOString(),timestampMs:now-(11-j)*60000,priority:0,longitude:13.18+i*.025+j*.0005,latitude:32.88-i*.012+j*.0003,altitude:15,angle:90,satellites:10,speed:[42,58,0,35][i],eventIoId:0,ioElements:[{id:115,value:String([910,1080,880,960][i]),byteLength:2},{id:89,value:String([78,12,55,36][i]),byteLength:1},{id:239,value:'1',byteLength:1}]}));
  await persistAvlBatch(imei,records,new Date(now).toISOString());
- await postgresPool.query("INSERT INTO fleet_diagnostic_events(imei,observed_at,source,code,severity,description,evidence) VALUES($1,now(),'manual',$2,$3,$4,$5::jsonb)",[imei,['P0128','P0217','P0562','P0101'][i],i===1?'critical':'warning','محاكاة تجريبية - '+['فحص حرارة التبريد','ارتفاع حرارة المحرك','فحص جهد البطارية','فحص تدفق الهواء'][i],JSON.stringify({demo:true})]);
+ await postgresPool.query("INSERT INTO fleet_diagnostic_events(imei,observed_at,source,code,severity,description,evidence) VALUES($1,now(),'manual',$2,$3,$4,$5::jsonb)",[imei,['P0128','P0217','P0562','P0101'][i],i===1?'critical':'warning',['فحص حرارة التبريد','ارتفاع حرارة المحرك','فحص جهد البطارية','فحص تدفق الهواء'][i],JSON.stringify({demo:true})]);
  deviceCompanies[imei]=companyId;
  }
  fleetCompanies.push(company);
@@ -266,14 +266,21 @@ async function enrichDemoFaults(){
  const result=await client.query(`INSERT INTO fleet_diagnostic_events(imei,observed_at,source,code,severity,description,evidence)
  SELECT $1::varchar(15),now(),'manual',$2::text,$3::text,$4::text,$5::jsonb
  WHERE EXISTS(SELECT 1 FROM tracker_devices WHERE imei=$1)
- AND NOT EXISTS(SELECT 1 FROM fleet_diagnostic_events WHERE imei=$1 AND code=$2 AND evidence->>'demo'='true')`,[imei,code,severity,'محاكاة تجريبية - '+description,JSON.stringify({demo:true,scenario:'fault-demo-v2'})]);
+ AND NOT EXISTS(SELECT 1 FROM fleet_diagnostic_events WHERE imei=$1 AND code=$2 AND evidence->>'demo'='true')`,[imei,code,severity,description,JSON.stringify({demo:true,scenario:'fault-demo-v2'})]);
  added+=result.rowCount||0;
  }
  await client.query('COMMIT');
  console.log('[Demo] Additional diagnostic events inserted: '+added);
  }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
 }
-const postgresReady=initPostgres().then(loadIdentityState).then(()=>seedDemoFleet().catch(e=>console.error('[Demo] Seed failed',e))).then(()=>updateDemoProfileNames().catch(e=>console.error('[Demo] Profile update failed',e))).then(()=>enrichDemoFaults().catch(e=>console.error('[Demo] Fault seed failed',e))).then(restoreRegisteredDevices).catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); throw err; });
+async function normalizeDemoFaultLabels(){
+ if(!postgresPool)return;
+ const ids=Object.keys(deviceCompanies).filter(imei=>deviceCompanies[imei]==='zf-demo-company-v1');
+ if(!ids.length)return;
+ const r=await postgresPool.query("UPDATE fleet_diagnostic_events SET description=regexp_replace(description, '^محاكاة تجريبية - ', '') WHERE imei=ANY($1::text[]) AND evidence->>'demo'='true' AND description LIKE 'محاكاة تجريبية - %'",[ids]);
+ console.log('[Demo] Normalized diagnostic labels: '+r.rowCount);
+}
+const postgresReady=initPostgres().then(loadIdentityState).then(()=>seedDemoFleet().catch(e=>console.error('[Demo] Seed failed',e))).then(()=>updateDemoProfileNames().catch(e=>console.error('[Demo] Profile update failed',e))).then(()=>enrichDemoFaults().catch(e=>console.error('[Demo] Fault seed failed',e))).then(()=>normalizeDemoFaultLabels().catch(e=>console.error('[Demo] Label update failed',e))).then(restoreRegisteredDevices).catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); throw err; });
 
 // --- Teltonika TCP Server (raw TCP socket) ---
 // Separate internal listeners: FMB140 TCP on 5000, web/API on 8080.
