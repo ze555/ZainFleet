@@ -221,7 +221,41 @@ async function seedDemoFleet(){
  await persistIdentityState();
  console.log('[Demo] Demo company initialized');
 }
-const postgresReady=initPostgres().then(loadIdentityState).then(()=>seedDemoFleet().catch(e=>console.error('[Demo] Seed failed',e))).then(restoreRegisteredDevices).catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); throw err; });
+async function enrichDemoFaults(){
+ if(!postgresPool||!fleetCompanies.some(c=>c.id==='zf-demo-company-v1'))return;
+ const faults=[
+ ['000000000000901','P0524','critical','انخفاض ضغط زيت المحرك'],
+ ['000000000000901','P0300','critical','خلل احتراق عشوائي'],
+ ['000000000000901','P0130','warning','خلل حساس الأكسجين'],
+ ['000000000000901','P0420','warning','انخفاض كفاءة المحول الحفاز'],
+ ['000000000000902','P0087','critical','انخفاض ضغط الوقود'],
+ ['000000000000902','P0171','warning','خليط وقود فقير'],
+ ['000000000000902','P0301','warning','خلل احتراق الأسطوانة الأولى'],
+ ['000000000000903','P0563','warning','ارتفاع جهد النظام'],
+ ['000000000000903','P0700','warning','خلل نظام التحكم بناقل الحركة'],
+ ['000000000000903','P0500','warning','خلل حساس سرعة المركبة'],
+ ['000000000000904','P0335','warning','خلل دائرة حساس عمود الكرنك'],
+ ['000000000000904','P0401','warning','تدفق EGR غير كاف'],
+ ['000000000000904','P0172','warning','خليط وقود غني']
+ ];
+ const client=await postgresPool.connect();
+ try{
+ await client.query('BEGIN');
+ await client.query('SELECT pg_advisory_xact_lock(731902)');
+ let added=0;
+ for(const [imei,code,severity,description] of faults){
+ if(deviceCompanies[imei]!=='zf-demo-company-v1'||!fleetUsers.some(u=>u.demo&&u.companyId==='zf-demo-company-v1'&&u.devices.includes(imei)))continue;
+ const result=await client.query(`INSERT INTO fleet_diagnostic_events(imei,observed_at,source,code,severity,description,evidence)
+ SELECT $1,now(),'manual',$2,$3,$4,$5::jsonb
+ WHERE EXISTS(SELECT 1 FROM tracker_devices WHERE imei=$1)
+ AND NOT EXISTS(SELECT 1 FROM fleet_diagnostic_events WHERE imei=$1 AND code=$2 AND evidence->>'demo'='true')`,[imei,code,severity,'محاكاة تجريبية - '+description,JSON.stringify({demo:true,scenario:'fault-demo-v2'})]);
+ added+=result.rowCount||0;
+ }
+ await client.query('COMMIT');
+ console.log('[Demo] Additional diagnostic events inserted: '+added);
+ }catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
+}
+const postgresReady=initPostgres().then(loadIdentityState).then(()=>seedDemoFleet().catch(e=>console.error('[Demo] Seed failed',e))).then(()=>enrichDemoFaults().catch(e=>console.error('[Demo] Fault seed failed',e))).then(restoreRegisteredDevices).catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); throw err; });
 
 // --- Teltonika TCP Server (raw TCP socket) ---
 // Separate internal listeners: FMB140 TCP on 5000, web/API on 8080.
