@@ -246,7 +246,7 @@ async function enrichDemoFaults(){
  for(const [imei,code,severity,description] of faults){
  if(deviceCompanies[imei]!=='zf-demo-company-v1'||!fleetUsers.some(u=>u.demo&&u.companyId==='zf-demo-company-v1'&&u.devices.includes(imei)))continue;
  const result=await client.query(`INSERT INTO fleet_diagnostic_events(imei,observed_at,source,code,severity,description,evidence)
- SELECT $1,now(),'manual',$2,$3,$4,$5::jsonb
+ SELECT $1::varchar(15),now(),'manual',$2::text,$3::text,$4::text,$5::jsonb
  WHERE EXISTS(SELECT 1 FROM tracker_devices WHERE imei=$1)
  AND NOT EXISTS(SELECT 1 FROM fleet_diagnostic_events WHERE imei=$1 AND code=$2 AND evidence->>'demo'='true')`,[imei,code,severity,'محاكاة تجريبية - '+description,JSON.stringify({demo:true,scenario:'fault-demo-v2'})]);
  added+=result.rowCount||0;
