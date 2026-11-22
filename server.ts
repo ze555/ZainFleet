@@ -190,7 +190,16 @@ const telemetryRepo = new PersistentTelemetryRepository();
 
 // PostgreSQL is the durable primary ingest store when DATABASE_URL is set.
 // Startup fails on schema/connectivity errors rather than silently losing records.
-const postgresReady=initPostgres().then(loadIdentityState).catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); throw err; });
+async function restoreRegisteredDevices(){
+ if(!postgresPool)return;
+ const result=await postgresPool.query("SELECT d.imei,d.first_seen,d.last_seen,t.gps_time,t.received_at FROM tracker_devices d LEFT JOIN LATERAL (SELECT gps_time,received_at FROM tracker_telemetry WHERE imei=d.imei ORDER BY gps_time DESC LIMIT 1) t ON true");
+ for(const d of result.rows){
+ if(deviceRepo.get(d.imei))continue;
+ deviceRepo.upsert(d.imei,new Date(d.first_seen).toISOString(),false);
+ if(d.received_at)deviceRepo.upsert(d.imei,new Date(d.received_at).toISOString(),false,new Date(d.gps_time).toISOString(),true);
+ }
+}
+const postgresReady=initPostgres().then(loadIdentityState).then(restoreRegisteredDevices).catch(err => { console.error('[Postgres] Startup failed:', err); process.exit(1); throw err; });
 
 // --- Teltonika TCP Server (raw TCP socket) ---
 // Separate internal listeners: FMB140 TCP on 5000, web/API on 8080.
@@ -928,6 +937,7 @@ app.get('/api/devices', (_req: Request, res: Response) => {
 
 app.get('/api/devices/:imei', (req: Request, res: Response) => {
   const imei = String(req.params.imei);
+  if(!fleetAccess(req,imei)){res.sendStatus(403);return;}
   const device = deviceRepo.get(imei);
   if (!device) {
     res.status(404).json({ error: 'Device not found' });
@@ -936,9 +946,11 @@ app.get('/api/devices/:imei', (req: Request, res: Response) => {
   res.json(device);
 });
 
-app.get('/api/devices/:imei/latest', (req: Request, res: Response) => {
+app.get('/api/devices/:imei/latest', async (req: Request, res: Response) => {
   const imei = String(req.params.imei);
-  const latest = telemetryRepo.getLatest(imei);
+  if(!fleetAccess(req,imei)){res.sendStatus(403);return;}
+  let latest = telemetryRepo.getLatest(imei);
+  if(!latest && postgresPool){try{const q=await postgresPool.query('SELECT record,received_at FROM tracker_telemetry WHERE imei=$1 ORDER BY gps_time DESC LIMIT 1',[imei]);if(q.rows[0])latest={imei,record:q.rows[0].record,receivedAt:new Date(q.rows[0].received_at).toISOString()};}catch(e){console.error('[Postgres] latest lookup',e);res.sendStatus(503);return;}}
   if (!latest) {
     res.status(404).json({ error: 'No telemetry record found for device' });
     return;
