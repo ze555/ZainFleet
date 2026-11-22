@@ -872,6 +872,54 @@ app.get('/api/connection/diagnostics', (_req: Request, res: Response) => {
     reasonCode, reasonAr: reasonAr[reasonCode], checkedAt: new Date().toISOString() });
 });
 
+// Smart fleet endpoints: existing device permissions govern every read and mutation.
+app.get('/api/smart-fleet/:imei', async (req: Request,res: Response) => {
+ const imei=String(req.params.imei);
+ if(!sessionIdentity(req)||!fleetAccess(req,imei)){res.sendStatus(403);return;}
+ if(!postgresPool){res.sendStatus(503);return;}
+ try {
+ const [plans,orders,events]=await Promise.all([
+ postgresPool.query('SELECT * FROM fleet_maintenance_plans WHERE imei=$1 ORDER BY due_at NULLS LAST LIMIT 200',[imei]),
+ postgresPool.query('SELECT w.*, COALESCE((SELECT SUM(p.quantity*p.unit_cost) FROM fleet_work_order_parts p WHERE p.work_order_id=w.id),0) AS parts_cost FROM fleet_work_orders w WHERE imei=$1 ORDER BY opened_at DESC LIMIT 200',[imei]),
+ postgresPool.query('SELECT * FROM fleet_diagnostic_events WHERE imei=$1 ORDER BY observed_at DESC LIMIT 200',[imei])
+ ]);
+ res.setHeader('Cache-Control','no-store');
+ res.json({plans:plans.rows,orders:orders.rows,events:events.rows,canEdit:!!managerScope(req)});
+ }catch(e){console.error('[SmartFleet]',e);res.status(500).json({error:'تعذر تحميل البيانات'});}
+});
+app.post('/api/smart-fleet/:imei/:kind', async (req: Request,res: Response) => {
+ const imei=String(req.params.imei),kind=String(req.params.kind),b=req.body||{};
+ if(!managerScope(req)||!fleetAccess(req,imei)){res.sendStatus(403);return;}
+ if(!postgresPool){res.sendStatus(503);return;}
+ const title=typeof b.title==='string'?b.title.trim():'';
+ if(!title||title.length>300){res.status(400).json({error:'العنوان مطلوب'});return;}
+ try {
+ let result;
+ if(kind==='plans'){
+ const date=typeof b.dueAt==='string'?new Date(b.dueAt):null;
+ if(!date||!Number.isFinite(date.getTime())){res.status(400).json({error:'تاريخ الصيانة مطلوب'});return;}
+ result=await postgresPool.query('INSERT INTO fleet_maintenance_plans(imei,title,due_at) VALUES ($1,$2,$3) RETURNING id',[imei,title,date.toISOString()]);
+ }else if(kind==='orders'){
+ result=await postgresPool.query('INSERT INTO fleet_work_orders(imei,title) VALUES ($1,$2) RETURNING id',[imei,title]);
+ }else if(kind==='events'){
+ const severity=['info','warning','critical','unknown'].includes(b.severity)?b.severity:'unknown';
+ const code=typeof b.code==='string'?b.code.trim().slice(0,30):null;
+ result=await postgresPool.query("INSERT INTO fleet_diagnostic_events(imei,observed_at,source,code,severity,description) VALUES ($1,now(),'manual',$2,$3,$4) RETURNING id",[imei,code,severity,title]);
+ }else{res.sendStatus(404);return;}
+ res.status(201).json(result.rows[0]);
+ }catch(e){console.error('[SmartFleet]',e);res.status(500).json({error:'تعذر الحفظ'});}
+});
+app.patch('/api/smart-fleet/:imei/orders/:id', async(req:Request,res:Response)=>{
+ const imei=String(req.params.imei),id=String(req.params.id),b=req.body||{};
+ if(!managerScope(req)||!fleetAccess(req,imei)){res.sendStatus(403);return;}
+ if(!postgresPool){res.sendStatus(503);return;}
+ if(!/^\d{1,18}$/.test(id)||!['open','in_progress','completed','cancelled'].includes(b.status)||typeof b.laborCost!=='number'||!Number.isFinite(b.laborCost)||b.laborCost<0||b.laborCost>99999999999){res.sendStatus(400);return;}
+ try{
+ const result=await postgresPool.query("UPDATE fleet_work_orders SET status=$1,labor_cost=$2,completed_at=CASE WHEN $1='completed' THEN COALESCE(completed_at,now()) ELSE NULL END WHERE id=$3 AND imei=$4 RETURNING id",[b.status,b.laborCost,id,imei]);
+ if(!result.rowCount){res.sendStatus(404);return;}res.json(result.rows[0]);
+ }catch(e){console.error('[SmartFleet]',e);res.sendStatus(500);}
+});
+
 app.get('/api/devices', (_req: Request, res: Response) => {
   res.setHeader('Cache-Control', 'no-store');
   const who = sessionIdentity(_req);
