@@ -1,3 +1,4 @@
+import { SmartFleet } from './components/SmartFleet.tsx';
 import { AccessControl } from './components/AccessControl.tsx';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Navbar } from './components/Navbar.tsx';
@@ -240,6 +241,8 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
 
       {/* Main Container */}
       <main className="zf-page zf-fleet-page zf-reference-page flex-1 w-full mx-auto p-4 sm:p-6 lg:p-8">
+        <button type="button" className="my-3 rounded-xl bg-cyan-700 px-4 py-3 font-bold text-white" onClick={()=>setCurrentTab(currentTab==='smart-fleet'?'dashboard':'smart-fleet')}>{currentTab==='smart-fleet'?'العودة للوحة القيادة':'ZainFleet AI | الصيانة الذكية'}</button>
+
         {/* Compact mobile top navigation, separate from the desktop toolbar. */}
         <header className="zf-mobile-topnav" dir={isAr ? 'rtl' : 'ltr'}>
           <button type="button" className="zf-mobile-brand" onClick={() => setCurrentTab('dashboard')} aria-label={isAr ? 'الرئيسية' : 'Home'}>
@@ -419,6 +422,7 @@ const DashboardApp: React.FC<{onLogout: () => void; role: 'admin'|'company_admin
         )}
 
         {/* View 7: FMB140 Packet & CAN/OBD Diagnostics & Log Downloader */}
+        {currentTab === 'smart-fleet' && (selectedImei ? <SmartFleet key={selectedImei} imei={selectedImei}/> : <p>اختر مركبة أولاً</p>)}
         {currentTab === 'diagnostics' && (
           <DiagnosticView device={selectedDevice} lang={lang} />
         )}
